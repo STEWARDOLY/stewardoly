@@ -1,0 +1,1169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0a0603">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Kingdom Steward</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="/socket.io/socket.io.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:system-ui,-apple-system,sans-serif}
+html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-action:manipulation;user-select:none}
+.cinzel{font-family:'Cinzel',serif;letter-spacing:.04em}
+#app{height:100vh;display:flex;flex-direction:column;position:relative}
+
+/* HUD */
+.hud{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#160b05;border-bottom:2px solid #3d2410;flex-shrink:0;z-index:5}
+.coins{display:flex;align-items:center;gap:5px;background:linear-gradient(180deg,#3a2410,#1e1208);padding:5px 10px;border-radius:16px;border:1.5px solid #c9922a;min-width:85px}
+.coin-icon{width:18px;height:18px;background:radial-gradient(circle at 30% 30%,#ffd755,#c9922a 50%,#7a5510);border-radius:50%;position:relative;flex-shrink:0;box-shadow:0 0 6px rgba(201,146,42,.5)}
+.coin-icon::after{content:'';position:absolute;inset:3px;border:1.5px solid #ffd755;border-radius:50%;opacity:.6}
+.coin-val{font-family:'Cinzel',serif;font-weight:700;color:#ffd755;font-size:14px;text-shadow:0 1px 2px #000}
+.coin-delta{position:fixed;font-family:'Cinzel',serif;font-weight:700;color:#6ced8d;font-size:14px;pointer-events:none;animation:riseUp 1.2s ease-out forwards;text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:60}
+@keyframes riseUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-40px);opacity:0}}
+.coin-delta.neg{color:#ff7a6e}
+
+.hp-bar{flex:1;display:flex;flex-direction:column;gap:2px;max-width:150px}
+.hp-top{display:flex;justify-content:space-between;align-items:center}
+.hp-lbl{font-family:'Cinzel',serif;font-size:9px;color:#a08060;letter-spacing:.08em}
+.hp-val{font-family:'Cinzel',serif;font-weight:600;color:#ffd755;font-size:11px}
+.hp-track{height:8px;background:#1e1208;border:1px solid #3d2410;border-radius:4px;overflow:hidden}
+.hp-fill{height:100%;background:linear-gradient(90deg,#c9922a,#ffd755);transition:width .5s cubic-bezier(.5,0,.2,1);border-radius:3px;position:relative}
+.hp-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,rgba(255,255,255,.3),transparent 40%);border-radius:3px}
+
+.hud-right{display:flex;gap:6px;margin-left:auto}
+.icon-btn{width:32px;height:32px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1.5px solid #6a4818;border-radius:8px;color:#f2c96e;font-size:15px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s;position:relative}
+.icon-btn:active{transform:scale(.92);background:#2a180a}
+.icon-btn.badge::after{content:attr(data-badge);position:absolute;top:-4px;right:-4px;background:#ff4a3d;color:#fff;font-size:9px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:system-ui;border:1.5px solid #160b05}
+
+/* Player rail */
+.rail{display:flex;gap:6px;padding:6px 10px;background:#0e0704;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.rail::-webkit-scrollbar{display:none}
+.avatar{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.55;transition:.2s;position:relative}
+.avatar.cur{opacity:1;transform:scale(1.08)}
+.avatar.me{opacity:.9}
+.avatar.cur::before{content:'';position:absolute;top:-2px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:5px solid transparent;border-right:5px solid transparent;border-top:6px solid #ffd755;animation:pulseDown 1s ease-in-out infinite}
+@keyframes pulseDown{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(3px)}}
+.av-circ{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:20px;background:linear-gradient(180deg,var(--pc,#5b9bdc),rgba(0,0,0,.3));border:2px solid #1e1208;box-shadow:0 0 0 1.5px var(--pc,#5b9bdc),0 2px 6px rgba(0,0,0,.5)}
+.avatar.cur .av-circ{box-shadow:0 0 0 2px #ffd755,0 0 12px rgba(255,215,85,.6),0 2px 6px rgba(0,0,0,.5)}
+.avatar.me .av-circ{box-shadow:0 0 0 2px #fff,0 0 8px rgba(255,255,255,.3),0 2px 6px rgba(0,0,0,.5)}
+.av-name{font-family:'Cinzel',serif;font-size:9px;font-weight:600;color:#f2c96e;max-width:52px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av-gold{font-family:'Cinzel',serif;font-size:9px;font-weight:600;color:#ffd755;background:#1e1208;padding:1px 5px;border-radius:6px;border:1px solid #6a4818}
+
+/* Map */
+#map-wrap{flex:1;position:relative;overflow:hidden;min-height:0;background:radial-gradient(ellipse at center,#1e1008 0%,#0a0603 80%)}
+#map-c,#fx-c{position:absolute;inset:0;width:100%;height:100%;display:block}
+#fx-c{pointer-events:none;z-index:3}
+
+.combo{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-family:'Cinzel',serif;font-size:13px;color:#ffd755;background:rgba(26,8,3,.92);padding:5px 14px;border-radius:16px;border:1.5px solid #c9922a;box-shadow:0 0 14px rgba(201,146,42,.4);z-index:4;opacity:0;transition:.25s;pointer-events:none}
+.combo.show{opacity:1;animation:comboBounce .35s ease}
+@keyframes comboBounce{0%{transform:translateX(-50%) scale(.5)}60%{transform:translateX(-50%) scale(1.2)}100%{transform:translateX(-50%) scale(1)}}
+
+.goal-card{position:absolute;right:10px;top:12px;background:linear-gradient(180deg,#2a180a,#1a0d05);border:1.5px solid #c9922a;border-radius:10px;padding:7px 10px;z-index:4;min-width:110px;box-shadow:0 3px 10px rgba(0,0,0,.5)}
+.goal-t{font-family:'Cinzel',serif;font-size:9px;color:#a08060;letter-spacing:.1em;margin-bottom:3px}
+.goal-txt{font-size:11px;color:#f2c96e;font-weight:600;line-height:1.3;margin-bottom:4px}
+.goal-prog{height:5px;background:#1e1208;border-radius:3px;overflow:hidden;border:.5px solid #3d2410}
+.goal-prog>div{height:100%;background:linear-gradient(90deg,#c9922a,#ffd755);border-radius:2px;transition:width .5s}
+.goal-rwd{font-size:10px;color:#ffd755;font-weight:700;margin-top:3px;display:flex;align-items:center;gap:3px}
+
+/* Action bar */
+.action-bar{padding:10px 10px 12px;background:linear-gradient(180deg,#160b05,#0e0704);border-top:2px solid #3d2410;flex-shrink:0}
+.roll-mega{width:100%;height:62px;background:linear-gradient(180deg,#ffd755 0%,#c9922a 50%,#7a5510 100%);border:none;border-radius:14px;color:#3d2410;font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:.1em;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:.1s;position:relative;overflow:hidden;box-shadow:0 4px 0 #6a4818,0 6px 12px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4);text-shadow:0 1px 1px rgba(255,255,255,.5)}
+.roll-mega:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 #6a4818,0 2px 4px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4)}
+.roll-mega:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.5)}
+.mega-dice{display:flex;gap:4px}
+.mega-d{width:30px;height:30px;background:#fff8e8;border:2px solid #3d2410;border-radius:6px;font-size:20px;display:flex;align-items:center;justify-content:center;color:#3d2410;transition:.1s}
+.mega-d.rolling{animation:diceFlip .5s ease}
+@keyframes diceFlip{0%{transform:rotateZ(0) scale(1)}25%{transform:rotateZ(-180deg) scale(.8)}75%{transform:rotateZ(180deg) scale(1.2)}100%{transform:rotateZ(360deg) scale(1)}}
+
+.sec-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+.sec-btn{height:42px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1.5px solid #6a4818;border-radius:10px;color:#f2c96e;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:.1s;box-shadow:0 2px 0 #1e1208}
+.sec-btn:active:not(:disabled){transform:translateY(2px);box-shadow:none}
+.sec-btn:disabled{opacity:.3;cursor:not-allowed}
+.sec-btn .emj{font-size:15px}
+.sec-btn.hot{background:linear-gradient(180deg,#9c3a1a,#5e1a08);border-color:#e06540;animation:hotPulse 1.2s ease-in-out infinite}
+@keyframes hotPulse{0%,100%{box-shadow:0 2px 0 #1e1208,0 0 0 rgba(224,101,64,0)}50%{box-shadow:0 2px 0 #1e1208,0 0 14px rgba(224,101,64,.7)}}
+
+/* Overlay & cards */
+.overlay{position:absolute;inset:0;background:rgba(0,0,0,.8);z-index:30;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.overlay.on{display:flex;animation:fadeIn .2s}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.card-big{width:100%;max-width:310px;background:linear-gradient(180deg,#2a180a,#1a0d05);border:3px solid var(--cc,#c9922a);border-radius:18px;padding:0;text-align:center;animation:cardFlip .6s cubic-bezier(.5,1.5,.5,1);position:relative;overflow:hidden;box-shadow:0 0 40px var(--cc,#c9922a),0 8px 24px rgba(0,0,0,.7)}
+@keyframes cardFlip{0%{transform:rotateY(90deg) scale(.5);opacity:0}50%{opacity:1}100%{transform:rotateY(0) scale(1);opacity:1}}
+.card-top{padding:20px 20px 12px;background:linear-gradient(180deg,var(--cc,#c9922a) 0%,transparent 100%);position:relative}
+.card-icon-big{font-size:52px;margin-bottom:6px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));animation:bounceIn .6s ease}
+@keyframes bounceIn{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
+.card-type{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;color:#1a0d05;font-weight:700;margin-bottom:4px}
+.card-name{font-family:'Cinzel',serif;font-size:17px;color:#fff;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.card-body{padding:16px 20px 18px}
+.card-reward{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;padding:12px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid var(--cc,#c9922a)}
+.reward-chip{display:flex;align-items:center;gap:4px;background:linear-gradient(180deg,#3a2410,#1e1208);padding:6px 12px;border-radius:20px;border:1.5px solid #c9922a}
+.reward-val{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:#ffd755;text-shadow:0 1px 2px #000}
+.reward-val.neg{color:#ff7a6e}
+.reward-coin{width:16px;height:16px;background:radial-gradient(circle at 30% 30%,#ffd755,#c9922a);border-radius:50%}
+.card-verse-mini{font-size:10px;color:#a08060;font-style:italic;padding:6px 0;border-top:1px dashed #6a4818;margin-top:4px}
+.card-btns{display:flex;gap:8px;margin-top:12px}
+.card-btn{flex:1;height:40px;border-radius:10px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.05em;border:none;cursor:pointer;transition:.1s}
+.card-btn.claim{background:linear-gradient(180deg,#6ced8d,#2a9d4a);color:#0e2a14;box-shadow:0 3px 0 #1a5028}
+.card-btn.claim:active{transform:translateY(3px);box-shadow:none}
+.card-btn.skip{background:linear-gradient(180deg,#3a2410,#1e1208);color:#a08060;border:1.5px solid #6a4818}
+
+.level-up{position:absolute;top:30%;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#ffd755,#c9922a);padding:12px 24px;border-radius:20px;font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:#1a0d05;z-index:40;opacity:0;pointer-events:none;box-shadow:0 0 40px #ffd755;text-shadow:0 1px 1px rgba(255,255,255,.5)}
+.level-up.show{animation:levelUpAnim 2.5s ease}
+@keyframes levelUpAnim{0%{opacity:0;transform:translateX(-50%) scale(.5)}15%{opacity:1;transform:translateX(-50%) scale(1.15)}30%{transform:translateX(-50%) scale(1)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(.9)}}
+
+.achv{position:absolute;top:60px;left:50%;transform:translateX(-50%) translateY(-60px);background:linear-gradient(180deg,#2a180a,#1a0d05);border:2px solid #ffd755;border-radius:12px;padding:8px 14px;display:flex;align-items:center;gap:10px;z-index:35;opacity:0;transition:transform .5s cubic-bezier(.5,1.8,.5,1),opacity .3s;min-width:200px;box-shadow:0 0 20px rgba(255,215,85,.5)}
+.achv.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.achv-icon{font-size:24px}
+.achv-txt{flex:1}
+.achv-t{font-family:'Cinzel',serif;font-size:10px;color:#ffd755;letter-spacing:.08em;font-weight:700}
+.achv-n{font-size:12px;color:#f2c96e;margin-top:1px}
+
+/* Sheets */
+.sheet{position:absolute;inset:0;background:#0a0603;z-index:50;display:none;flex-direction:column;overflow:hidden}
+.sheet.on{display:flex;animation:slideUp .3s cubic-bezier(.2,.9,.3,1)}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.sheet-head{padding:12px 14px;display:flex;align-items:center;justify-content:space-between;border-bottom:2px solid #3d2410;background:#160b05}
+.sheet-title{font-family:'Cinzel',serif;font-size:15px;color:#ffd755;font-weight:700;letter-spacing:.06em}
+.sheet-body{flex:1;overflow-y:auto;padding:14px}
+
+.rank{display:flex;align-items:center;gap:10px;padding:12px;background:linear-gradient(180deg,#2a180a,#1a0d05);border:1.5px solid #3d2410;border-radius:12px;margin-bottom:7px}
+.rank.me{border-color:#c9922a;box-shadow:0 0 12px rgba(201,146,42,.3)}
+.rank.first{border-color:#ffd755;background:linear-gradient(180deg,#3a2b10,#2a1d08)}
+.rank-medal{font-size:22px;width:36px;text-align:center}
+.rank-av{width:36px;height:36px;border-radius:50%;background:var(--pc,#5b9bdc);display:flex;align-items:center;justify-content:center;font-size:19px;border:2px solid #1e1208;box-shadow:0 0 0 1.5px var(--pc,#5b9bdc)}
+.rank-info{flex:1;min-width:0}
+.rank-name{font-family:'Cinzel',serif;font-size:13px;color:#f2c96e;font-weight:600}
+.rank-stats{font-size:10px;color:#a08060;margin-top:2px;display:flex;gap:8px;flex-wrap:wrap}
+.rank-score{font-family:'Cinzel',serif;font-size:22px;font-weight:700;color:#ffd755;text-shadow:0 1px 2px #000}
+
+.badges-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:14px}
+.bg-sec-title{font-family:'Cinzel',serif;font-size:11px;color:#a08060;letter-spacing:.08em;font-weight:600;margin-bottom:8px;text-transform:uppercase}
+.badge-it{aspect-ratio:1;background:linear-gradient(180deg,#2a180a,#1a0d05);border:1.5px solid #3d2410;border-radius:10px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;transition:.2s}
+.badge-it.earned{border-color:#ffd755;background:linear-gradient(180deg,#3a2b10,#2a1d08);box-shadow:0 0 10px rgba(255,215,85,.3)}
+.badge-it.earned .badge-emj{filter:none}
+.badge-emj{font-size:22px;filter:grayscale(1) opacity(.35)}
+.badge-nm{font-size:8px;color:#a08060;text-align:center;padding:0 3px;line-height:1.1;font-weight:600}
+.badge-it.earned .badge-nm{color:#ffd755}
+
+/* Lobby */
+#lobby-scr{flex:1;overflow-y:auto}
+#lobby{flex:1;overflow-y:auto;padding:16px;background:radial-gradient(ellipse at top,#2a180a,#0a0603 60%)}
+.lobby-inner{max-width:340px;margin:0 auto;text-align:center;padding-bottom:20px}
+.banner{padding:14px 10px 10px;margin-bottom:14px}
+.banner-crown{font-size:32px;margin-bottom:3px;filter:drop-shadow(0 3px 6px rgba(255,215,85,.5))}
+.banner-ttl{font-family:'Cinzel',serif;font-size:24px;color:#ffd755;font-weight:700;letter-spacing:.1em;text-shadow:0 2px 6px rgba(201,146,42,.6)}
+.banner-sub{font-size:11px;color:#a08060;font-style:italic;margin-top:3px}
+
+.lobby-card{background:linear-gradient(180deg,#2a180a,#1a0d05);border:1.5px solid #3d2410;border-radius:14px;padding:14px;margin-bottom:10px;text-align:left}
+.lc-title{font-family:'Cinzel',serif;font-size:10px;color:#a08060;letter-spacing:.1em;font-weight:700;margin-bottom:8px}
+.token-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.tok{aspect-ratio:1;background:linear-gradient(180deg,#3a2410,#1e1208);border:1.5px solid #6a4818;border-radius:12px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:pointer;transition:.15s;position:relative}
+.tok.on{border-color:#ffd755;background:linear-gradient(180deg,#5a3b1a,#3a2410);transform:scale(1.05);box-shadow:0 0 14px rgba(255,215,85,.4)}
+.tok.on::before{content:'✓';position:absolute;top:3px;right:5px;font-size:11px;color:#6ced8d;font-weight:700}
+.tok.taken{opacity:.3;pointer-events:none}
+.tok-emj{font-size:26px}
+.tok-nm{font-family:'Cinzel',serif;font-size:9px;color:#a08060;font-weight:600}
+.tok.on .tok-nm{color:#ffd755}
+
+.inp{width:100%;background:#1a0d05;border:1.5px solid #3d2410;border-radius:10px;padding:10px 12px;font-family:system-ui,sans-serif;font-size:14px;color:#f2c96e;outline:none;margin-bottom:8px}
+.inp:focus{border-color:#c9922a}
+.inp::placeholder{color:#5a4828}
+
+.mega-play{width:100%;height:52px;background:linear-gradient(180deg,#6ced8d,#2a9d4a);border:none;border-radius:12px;color:#0e2a14;font-family:'Cinzel',serif;font-size:15px;font-weight:700;letter-spacing:.08em;cursor:pointer;box-shadow:0 4px 0 #1a5028,0 6px 14px rgba(106,237,141,.3);transition:.12s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
+.mega-play:active{transform:translateY(4px);box-shadow:0 0 0 #1a5028,0 2px 4px rgba(106,237,141,.2)}
+.mega-play.gold{background:linear-gradient(180deg,#ffd755,#c9922a);box-shadow:0 4px 0 #6a4818,0 6px 14px rgba(201,146,42,.3);color:#1a0d05}
+.mega-play.gold:active{box-shadow:0 0 0 #6a4818,0 2px 4px rgba(201,146,42,.2)}
+
+.room-display{text-align:center;padding:14px}
+.room-code{font-family:'Cinzel',serif;font-size:30px;color:#ffd755;letter-spacing:.25em;font-weight:700;text-shadow:0 2px 8px rgba(255,215,85,.5);margin:6px 0;cursor:pointer}
+.room-hint{font-size:10px;color:#a08060;font-style:italic}
+
+.lobby-players{margin-top:10px;padding-top:10px;border-top:1px dashed #3d2410}
+.lp-row{display:flex;align-items:center;gap:8px;padding:5px 0}
+.lp-icon{font-size:18px;width:28px;height:28px;border-radius:50%;background:var(--pc,#5b9bdc);display:flex;align-items:center;justify-content:center;border:1.5px solid #1e1208;box-shadow:0 0 0 1.5px var(--pc,#5b9bdc)}
+.lp-name{font-family:'Cinzel',serif;font-size:12px;color:#f2c96e;font-weight:600}
+.lp-dot{width:7px;height:7px;border-radius:50%;background:#6ced8d;margin-left:auto;box-shadow:0 0 6px #6ced8d}
+
+.err-msg{font-size:11px;color:#ff7a6e;font-style:italic;text-align:center;padding:4px 0;min-height:18px}
+
+/* Tutorial coach marks */
+.tut-dim{position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:65;pointer-events:none;display:none}
+.tut-dim.on{display:block;pointer-events:all}
+.tut-hl{position:absolute;border:3px solid #ffd755;border-radius:12px;z-index:66;pointer-events:none;box-shadow:0 0 30px rgba(255,215,85,.6),0 0 0 9999px rgba(0,0,0,.55);animation:hlPulse 1.2s ease-in-out infinite;transition:.3s}
+@keyframes hlPulse{0%,100%{box-shadow:0 0 30px rgba(255,215,85,.6),0 0 0 9999px rgba(0,0,0,.55)}50%{box-shadow:0 0 40px rgba(255,215,85,.9),0 0 0 9999px rgba(0,0,0,.55)}}
+.coach{position:absolute;background:linear-gradient(180deg,#2a180a,#1a0d05);border:2px solid #ffd755;border-radius:12px;padding:12px;max-width:240px;z-index:70;box-shadow:0 0 30px rgba(255,215,85,.4);pointer-events:all;display:none}
+.coach.on{display:block}
+.coach-arrow-t{position:absolute;top:-10px;left:20px;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-bottom:10px solid #ffd755}
+.coach-arrow-b{position:absolute;bottom:-10px;left:20px;width:0;height:0;border-left:10px solid transparent;border-right:10px solid transparent;border-top:10px solid #ffd755}
+.coach-step{font-family:'Cinzel',serif;font-size:9px;color:#a08060;letter-spacing:.12em;font-weight:700;margin-bottom:4px}
+.coach-title{font-family:'Cinzel',serif;font-size:13px;color:#ffd755;font-weight:700;margin-bottom:4px}
+.coach-body{font-size:11px;color:#f2c96e;line-height:1.4;margin-bottom:10px}
+.coach-btns{display:flex;gap:6px;justify-content:space-between;align-items:center}
+.coach-dots{display:flex;gap:3px}
+.cd{width:5px;height:5px;border-radius:50%;background:#6a4818;transition:.2s}
+.cd.on{background:#ffd755;width:14px;border-radius:3px}
+.coach-btn{padding:5px 12px;border-radius:7px;font-family:'Cinzel',serif;font-size:10px;font-weight:700;border:none;cursor:pointer;background:linear-gradient(180deg,#ffd755,#c9922a);color:#1a0d05;letter-spacing:.06em}
+
+/* Waiting banner */
+.waiting-bar{display:none;background:rgba(201,146,42,.08);border-top:1px solid rgba(201,146,42,.2);padding:4px 10px;text-align:center;font-style:italic;font-size:11px;color:#a08060;flex-shrink:0}
+
+.screen{display:none;flex-direction:column;height:100%}
+.screen.active{display:flex}
+
+/* Chat */
+#chat-wrap{position:absolute;bottom:0;right:0;width:min(240px,80vw);max-height:180px;display:flex;flex-direction:column;z-index:20;background:rgba(6,3,0,.88);border-top-left-radius:10px;border:1px solid rgba(201,146,42,.2);border-bottom:none;border-right:none}
+.chat-msgs{flex:1;overflow-y:auto;padding:6px 8px;max-height:130px;scrollbar-width:thin}
+.chat-msg{font-size:10px;color:#a08060;padding:2px 0;line-height:1.3}
+.chat-msg b{color:#f2c96e;font-weight:600;font-family:'Cinzel',serif;font-size:10px}
+.chat-row{display:flex;gap:4px;padding:4px 6px;border-top:1px solid rgba(201,146,42,.15)}
+.chat-row input{font-size:10px;padding:4px 7px;border-radius:5px;background:#1a0d05;border:1px solid #3d2410;color:#f2c96e;outline:none;flex:1}
+.chat-row button{padding:4px 7px;font-size:9px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1px solid #6a4818;color:#f2c96e;border-radius:5px;font-family:'Cinzel',serif;cursor:pointer}
+
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
+</style>
+</head>
+<body>
+<div id="app">
+<h2 style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)">Kingdom Steward — gamified biblical board game</h2>
+
+<!-- LOBBY -->
+<div id="lobby-scr" class="screen active">
+<div id="lobby">
+  <div class="lobby-inner">
+    <div class="banner">
+      <div class="banner-crown">👑</div>
+      <div class="banner-ttl">KINGDOM STEWARD</div>
+      <div class="banner-sub">A quest of faith &amp; fortune</div>
+    </div>
+
+    <div class="lobby-card">
+      <div class="lc-title">CHOOSE YOUR HERO</div>
+      <div class="token-grid" id="tok-grid"></div>
+      <input type="text" class="inp" id="hero-name" placeholder="Your name" maxlength="14">
+    </div>
+
+    <!-- Create room card -->
+    <div class="lobby-card" id="create-section">
+      <div class="lc-title">CREATE A ROOM</div>
+      <button class="mega-play" onclick="doCreate()">
+        <span>⚔️</span><span>CREATE ROOM</span><span>→</span>
+      </button>
+    </div>
+
+    <!-- Room code display (after create) -->
+    <div class="lobby-card" id="room-section" style="display:none">
+      <div class="lc-title">YOUR ROOM CODE</div>
+      <div class="room-display">
+        <div class="room-code" id="room-code" onclick="copyCode()">----</div>
+        <div class="room-hint">Tap to copy · share to play together</div>
+      </div>
+      <div class="lobby-players" id="lobby-players"></div>
+      <div class="err-msg" id="lobby-err"></div>
+      <button class="mega-play" id="start-btn" onclick="doStartGame()">
+        <span>⚔️</span><span>START QUEST</span><span>→</span>
+      </button>
+    </div>
+
+    <!-- Join room card -->
+    <div class="lobby-card" id="join-section">
+      <div class="lc-title">OR JOIN A ROOM</div>
+      <div style="display:flex;gap:6px">
+        <input type="text" class="inp" id="join-code" placeholder="Enter code" maxlength="4" style="flex:1;text-transform:uppercase;letter-spacing:.15em;text-align:center" onkeyup="this.value=this.value.toUpperCase()">
+        <button class="sec-btn" style="width:70px" onclick="doJoin()">Join</button>
+      </div>
+      <div class="err-msg" id="join-err"></div>
+    </div>
+
+    <button class="mega-play gold" onclick="startTutorial()">
+      <span>🎓</span><span>HOW TO PLAY</span>
+    </button>
+  </div>
+</div>
+</div>
+
+<!-- GAME -->
+<div id="game-scr" class="screen">
+
+<div class="hud">
+  <div class="coins" id="coins-box">
+    <div class="coin-icon"></div>
+    <div class="coin-val" id="coins">1,500</div>
+  </div>
+  <div class="hp-bar">
+    <div class="hp-top">
+      <div class="hp-lbl">⭐ XP</div>
+      <div class="hp-val"><span id="xp-cur">0</span>/<span id="xp-max">100</span></div>
+    </div>
+    <div class="hp-track"><div class="hp-fill" id="xp-fill" style="width:0%"></div></div>
+  </div>
+  <div class="hud-right">
+    <div class="icon-btn" onclick="openSheet('scores')">🏆</div>
+    <div class="icon-btn" id="badges-btn" onclick="openSheet('badges')">🎖</div>
+    <div class="icon-btn" id="snd-btn" onclick="toggleSound()">🔊</div>
+    <div class="icon-btn" onclick="goLobby()">☰</div>
+  </div>
+</div>
+
+<div class="rail" id="rail"></div>
+<div class="waiting-bar" id="waiting-bar">Waiting for <span id="waiting-name"></span>...</div>
+
+<div id="map-wrap">
+  <canvas id="map-c"></canvas>
+  <canvas id="fx-c"></canvas>
+
+  <div class="combo" id="combo">COMBO x2! 🔥</div>
+
+  <div class="goal-card" id="goal-card">
+    <div class="goal-t">DAILY QUEST</div>
+    <div class="goal-txt" id="goal-txt">Tithe 3 times</div>
+    <div class="goal-prog"><div id="goal-prog" style="width:0%"></div></div>
+    <div class="goal-rwd"><span>🎁</span> <span id="goal-rwd">+200 gold</span></div>
+  </div>
+
+  <div class="achv" id="achv">
+    <div class="achv-icon" id="achv-i">🏆</div>
+    <div class="achv-txt">
+      <div class="achv-t">ACHIEVEMENT UNLOCKED</div>
+      <div class="achv-n" id="achv-n">First Tithe!</div>
+    </div>
+  </div>
+
+  <div class="level-up" id="lvl-up">⭐ LEVEL UP! ⭐</div>
+
+  <div class="overlay" id="card-ov">
+    <div class="card-big" id="card-big">
+      <div class="card-top">
+        <div class="card-icon-big" id="c-icon">📜</div>
+        <div class="card-type" id="c-type">SCROLL OF WISDOM</div>
+        <div class="card-name" id="c-name">The Generous Lender</div>
+      </div>
+      <div class="card-body">
+        <div class="card-reward">
+          <div class="reward-chip">
+            <div class="reward-coin"></div>
+            <div class="reward-val" id="c-reward">+150</div>
+          </div>
+        </div>
+        <div class="card-verse-mini" id="c-verse">"Deut 28:12"</div>
+        <div class="card-btns">
+          <button class="card-btn claim" onclick="claimCard(true)">✦ CLAIM</button>
+          <button class="card-btn skip" onclick="claimCard(false)" id="c-skip">Skip</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tut-dim" id="tut-dim" onclick="nextCoach()"></div>
+  <div class="tut-hl" id="tut-hl" style="display:none"></div>
+  <div class="coach" id="coach"></div>
+
+  <!-- Chat -->
+  <div id="chat-wrap">
+    <div class="chat-msgs" id="chat-msgs"></div>
+    <div class="chat-row">
+      <input id="chat-in" placeholder="Message..." maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
+      <button onclick="sendChat()">Send</button>
+    </div>
+  </div>
+</div>
+
+<div class="action-bar">
+  <button class="roll-mega" id="roll-btn" onclick="doRoll()" disabled>
+    <div class="mega-dice">
+      <div class="mega-d" id="d1">⚀</div>
+      <div class="mega-d" id="d2">⚀</div>
+    </div>
+    <span id="roll-label">ROLL TO MOVE</span>
+  </button>
+  <div class="sec-actions">
+    <button class="sec-btn" id="buy-btn" onclick="doBuyMinistry()" disabled><span class="emj">🏛</span><span>BUILD (200g)</span></button>
+    <button class="sec-btn" id="end-btn" onclick="doEndTurn()" disabled><span class="emj">➡️</span><span>END TURN</span></button>
+  </div>
+</div>
+</div>
+
+<!-- SCORES SHEET -->
+<div class="sheet" id="sheet-scores">
+  <div class="sheet-head">
+    <div class="sheet-title">🏆 LEADERBOARD</div>
+    <div class="icon-btn" onclick="closeSheet()">✕</div>
+  </div>
+  <div class="sheet-body" id="rank-list"></div>
+</div>
+
+<!-- BADGES SHEET -->
+<div class="sheet" id="sheet-badges">
+  <div class="sheet-head">
+    <div class="sheet-title">🎖 ACHIEVEMENTS</div>
+    <div class="icon-btn" onclick="closeSheet()">✕</div>
+  </div>
+  <div class="sheet-body">
+    <div class="bg-sec-title">Progress: <span id="bg-count">0</span> / 12</div>
+    <div class="badges-grid" id="bg-grid"></div>
+  </div>
+</div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  SOCKET.IO
+// ═══════════════════════════════════════════════════
+const socket = io({transports:['websocket','polling']});
+let myId=null, myRoomCode=null, gameState=null, myPlayerIndex=-1, isHost=false;
+
+socket.on('connect',()=>{myId=socket.id});
+socket.on('state',(s)=>{gameState=s;myPlayerIndex=s.players.findIndex(p=>p.id===myId);renderAll()});
+socket.on('dice_rolled',({playerId,d1,d2})=>{
+  SFX.dice();animateDiceFaces(d1,d2);
+  const p=gameState?.players.find(pl=>pl.id===playerId);
+  if(p){const old=p.pos;const nw=(p.pos+d1+d2)%40;animateMove(p,old,nw,()=>{})}
+});
+socket.on('card_drawn',({card})=>{if(card)showCard(card)});
+socket.on('chat',({name,icon,msg})=>addChatMsg(name,icon,msg));
+socket.on('disconnect',()=>{});
+
+// ═══════════════════════════════════════════════════
+//  DATA
+// ═══════════════════════════════════════════════════
+const HEROES=[
+  {n:'Dove',   emj:'🕊', color:'#5b9bdc', role:'The Dove'},
+  {n:'Lion',   emj:'🦁', color:'#e8a23a', role:'The Lion'},
+  {n:'Vine',   emj:'🌿', color:'#4aad70', role:'The Vine'},
+  {n:'Sword',  emj:'⚔️', color:'#dc6b5b', role:'The Sword'},
+  {n:'Rose',   emj:'🌸', color:'#e08ac8', role:'The Rose'},
+  {n:'Scholar',emj:'📖', color:'#7098d0', role:'The Scholar'},
+];
+let selectedHero=0;
+
+const SPACES=[
+  {n:'Begin',t:'corner',rx:.50,ry:.08,c:'#ffd755'},
+  {n:'Capernaum',t:'property',rx:.60,ry:.09,c:'#4aad9e'},
+  {n:'Bethsaida',t:'property',rx:.68,ry:.11,c:'#4aad9e'},
+  {n:'Scroll',t:'card-w',rx:.76,ry:.15,c:'#a785e0'},
+  {n:'Antioch',t:'property',rx:.82,ry:.20,c:'#a785e0'},
+  {n:'Babylon Gate',t:'property',rx:.86,ry:.28,c:'#d85a3a'},
+  {n:'Temptation',t:'special',rx:.87,ry:.36,c:'#d85a3a'},
+  {n:'Babylon Ct',t:'property',rx:.86,ry:.44,c:'#d85a3a'},
+  {n:'Jordan Ford',t:'property',rx:.82,ry:.51,c:'#5b9bdc'},
+  {n:'Decapolis',t:'property',rx:.78,ry:.58,c:'#5b9bdc'},
+  {n:'Wilderness',t:'corner',rx:.72,ry:.63,c:'#c9922a'},
+  {n:'Peraea',t:'property',rx:.65,ry:.67,c:'#b88a40'},
+  {n:'Tithe',t:'tax',rx:.58,ry:.71,c:'#ffd755'},
+  {n:'Machaerus',t:'property',rx:.51,ry:.74,c:'#b88a40'},
+  {n:'Scroll',t:'card-w',rx:.44,ry:.76,c:'#a785e0'},
+  {n:'Dead Sea N',t:'property',rx:.37,ry:.77,c:'#3a7aa5'},
+  {n:'Dead Sea S',t:'property',rx:.30,ry:.76,c:'#3a7aa5'},
+  {n:'Acts',t:'card-a',rx:.24,ry:.73,c:'#4aad70'},
+  {n:'Temptation',t:'special',rx:.18,ry:.69,c:'#d85a3a'},
+  {n:'Negev',t:'property',rx:.13,ry:.64,c:'#d4a060'},
+  {n:'Jubilee',t:'corner',rx:.10,ry:.58,c:'#ffd755'},
+  {n:'Nile Trade',t:'property',rx:.09,ry:.51,c:'#4aad70'},
+  {n:'Sinai',t:'property',rx:.08,ry:.44,c:'#e8a23a'},
+  {n:'Tithe',t:'tax',rx:.09,ry:.37,c:'#ffd755'},
+  {n:'Parable',t:'card-p',rx:.10,ry:.30,c:'#5b9bdc'},
+  {n:'Hebron',t:'property',rx:.13,ry:.24,c:'#b88a40'},
+  {n:'Acts',t:'card-a',rx:.17,ry:.18,c:'#4aad70'},
+  {n:'Judea Hills',t:'property',rx:.22,ry:.13,c:'#b88a40'},
+  {n:'Nazareth',t:'property',rx:.28,ry:.09,c:'#4aad70'},
+  {n:'Mt Carmel',t:'property',rx:.35,ry:.07,c:'#4aad70'},
+  {n:'Temple',t:'corner',rx:.50,ry:.42,c:'#ffd755'},
+  {n:'Jerusalem',t:'property',rx:.42,ry:.37,c:'#e8c860'},
+  {n:'Zion Gate',t:'property',rx:.38,ry:.30,c:'#e8c860'},
+  {n:'Scroll',t:'card-w',rx:.34,ry:.24,c:'#a785e0'},
+  {n:'Samaria',t:'property',rx:.30,ry:.19,c:'#b8a040'},
+  {n:'Sychar',t:'property',rx:.27,ry:.14,c:'#b8a040'},
+  {n:'Mt Gerizim',t:'property',rx:.36,ry:.17,c:'#b8a040'},
+  {n:'Temptation',t:'special',rx:.43,ry:.21,c:'#d85a3a'},
+  {n:'Acts',t:'card-a',rx:.48,ry:.28,c:'#4aad70'},
+  {n:'Tiberias',t:'property',rx:.52,ry:.33,c:'#4aad9e'},
+];
+
+const ACHIEVEMENTS=[
+  {id:'first_move',emj:'👣',n:'First Step',desc:'Take your first roll'},
+  {id:'first_tithe',emj:'⚖️',n:'First Tithe',desc:'Pay your first tithe'},
+  {id:'first_ministry',emj:'🏛',n:'Builder',desc:'Build your first ministry'},
+  {id:'first_wisdom',emj:'📜',n:'Wise One',desc:'Collect a wisdom card'},
+  {id:'five_tithes',emj:'🎖',n:'Faithful Giver',desc:'Pay 5 tithes'},
+  {id:'three_min',emj:'⛪',n:'Congregation',desc:'Own 3 ministries'},
+  {id:'level_5',emj:'⭐',n:'Level 5',desc:'Reach level 5'},
+  {id:'jubilee',emj:'✨',n:'Jubilee',desc:'Reach a Jubilee corner'},
+  {id:'resist',emj:'🛡',n:'Resist Temptation',desc:'Skip 3 temptations'},
+  {id:'combo3',emj:'🔥',n:'Combo x3',desc:'Land 3 rewards in a row'},
+  {id:'rich',emj:'💰',n:'Wealthy',desc:'Hold 3000 gold'},
+  {id:'complete',emj:'👑',n:'Kingdom Heir',desc:'Earn all badges'},
+];
+
+// ═══════════════════════════════════════════════════
+//  LOCAL STATE (gamification layer)
+// ═══════════════════════════════════════════════════
+let xp=0, xpMax=100, level=1;
+let rollCount=0, titheCount=0, ministriesOwned=0, resistCount=0, comboStreak=0;
+let earnedBadges=new Set();
+let pendingCard=null;
+let prevTalents=null;
+
+// ═══════════════════════════════════════════════════
+//  SOUND
+// ═══════════════════════════════════════════════════
+let AudioCtx=null, soundOn=true;
+function getACtx(){if(!AudioCtx)AudioCtx=new(window.AudioContext||window.webkitAudioContext)();if(AudioCtx.state==='suspended')AudioCtx.resume();return AudioCtx}
+function tone(f,type,dur,vol,delay=0){if(!soundOn)return;try{const a=getACtx(),o=a.createOscillator(),g=a.createGain();o.connect(g);g.connect(a.destination);o.type=type;o.frequency.value=f;const t=a.currentTime+delay;g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.start(t);o.stop(t+dur+.05)}catch(e){}}
+const SFX={
+  dice(){for(let i=0;i<6;i++)tone(150+Math.random()*300,'square',.04,.12,i*.07);setTimeout(()=>tone(440,'triangle',.15,.2),450)},
+  step(){tone(600+Math.random()*120,'sine',.06,.09)},
+  coin(){tone(880,'triangle',.08,.18);tone(1320,'triangle',.1,.15,.06);tone(1760,'triangle',.12,.1,.14)},
+  reward(){[659,784,988,1319].forEach((f,i)=>tone(f,'sine',.15,.15,i*.08))},
+  penalty(){[440,330,220].forEach((f,i)=>tone(f,'sawtooth',.15,.12,i*.08))},
+  levelUp(){[523,659,784,1047,1319].forEach((f,i)=>tone(f,'triangle',.2,.2,i*.08));setTimeout(()=>[1319,1568].forEach((f,i)=>tone(f,'sine',.3,.15,i*.1)),500)},
+  achievement(){[523,784,1047].forEach((f,i)=>tone(f,'sine',.18,.18,i*.1));tone(1319,'triangle',.4,.15,.3)},
+  combo(){tone(880,'triangle',.08,.15);tone(1320,'triangle',.08,.12,.05);tone(1760,'triangle',.1,.1,.1)},
+  build(){tone(330,'sine',.1,.15);tone(440,'sine',.12,.15,.1);tone(660,'triangle',.2,.15,.22)},
+  tap(){tone(800,'sine',.04,.08)},
+  error(){tone(220,'sawtooth',.1,.1)},
+  nextTurn(){tone(784,'sine',.15,.15);tone(1047,'sine',.2,.12,.1)},
+  corner(){[392,523,659,880].forEach((f,i)=>tone(f,'triangle',.25,.08,i*.05))},
+};
+function toggleSound(){soundOn=!soundOn;document.getElementById('snd-btn').textContent=soundOn?'🔊':'🔇';SFX.tap()}
+
+// ═══════════════════════════════════════════════════
+//  LOBBY
+// ═══════════════════════════════════════════════════
+function buildTokens(){
+  const taken=(gameState?.players||[]).filter(p=>p.connected&&p.id!==myId).map(p=>p.icon);
+  document.getElementById('tok-grid').innerHTML=HEROES.map((h,i)=>{
+    const isTaken=taken.includes(h.emj);
+    return `<div class="tok ${i===selectedHero?'on':''} ${isTaken?'taken':''}" onclick="selectTok(${i})" style="--pc:${h.color}">
+      <div class="tok-emj">${h.emj}</div>
+      <div class="tok-nm">${h.n}</div>
+    </div>`;
+  }).join('');
+}
+function selectTok(i){selectedHero=i;SFX.tap();buildTokens()}
+function copyCode(){
+  const c=document.getElementById('room-code').textContent;
+  try{navigator.clipboard.writeText(c)}catch(e){}
+  const el=document.getElementById('room-code');el.textContent='COPIED!';SFX.coin();
+  setTimeout(()=>el.textContent=c,1200);
+}
+
+function doCreate(){
+  const name=document.getElementById('hero-name').value.trim()||'Host';
+  const token=HEROES[selectedHero];
+  socket.emit('create_room',{name,token:{icon:token.emj,color:token.color,role:token.role}},(res)=>{
+    if(!res.ok){showErr('lobby-err',res.err);return}
+    myRoomCode=res.code;gameState=res.state;myPlayerIndex=0;isHost=true;
+    document.getElementById('create-section').style.display='none';
+    document.getElementById('join-section').style.display='none';
+    document.getElementById('room-section').style.display='block';
+    document.getElementById('room-code').textContent=res.code;
+    renderLobbyPlayers();
+    SFX.corner();
+  });
+}
+
+function doJoin(){
+  const name=document.getElementById('hero-name').value.trim()||'Pilgrim';
+  const code=document.getElementById('join-code').value.toUpperCase().trim();
+  if(code.length!==4){showErr('join-err','Enter 4-letter code');return}
+  const token=HEROES[selectedHero];
+  socket.emit('join_room',{code,name,token:{icon:token.emj,color:token.color,role:token.role}},(res)=>{
+    if(!res.ok){showErr('join-err',res.err);SFX.error();return}
+    myRoomCode=res.code;gameState=res.state;myPlayerIndex=res.state.players.findIndex(p=>p.id===myId);isHost=false;
+    if(res.state.phase==='playing'){enterGame()}
+    else{
+      document.getElementById('create-section').style.display='none';
+      document.getElementById('join-section').style.display='none';
+      document.getElementById('room-section').style.display='block';
+      document.getElementById('room-code').textContent=res.code;
+      document.getElementById('start-btn').style.display='none';
+      renderLobbyPlayers();
+      SFX.corner();
+    }
+  });
+}
+
+function doStartGame(){
+  socket.emit('start_game',{},(res)=>{
+    if(!res?.ok){showErr('lobby-err',res?.err||'Cannot start');return}
+    enterGame();
+  });
+}
+
+function renderLobbyPlayers(){
+  if(!gameState)return;
+  document.getElementById('lobby-players').innerHTML=gameState.players.filter(p=>p.connected).map(p=>`
+    <div class="lp-row">
+      <div class="lp-icon" style="--pc:${p.color}">${p.icon}</div>
+      <div class="lp-name">${p.name}${p.id===myId?' (you)':''}</div>
+      <div class="lp-dot"></div>
+    </div>`).join('');
+}
+
+function enterGame(){
+  document.getElementById('lobby-scr').classList.remove('active');
+  document.getElementById('game-scr').classList.add('active');
+  initCanvas();setupMapClick();
+  renderAll();
+  SFX.levelUp();
+}
+
+function goLobby(){
+  document.getElementById('game-scr').classList.remove('active');
+  document.getElementById('lobby-scr').classList.add('active');
+}
+
+function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;setTimeout(()=>el.textContent='',3000)}
+
+// ═══════════════════════════════════════════════════
+//  CANVAS & MAP
+// ═══════════════════════════════════════════════════
+let MC,MCTX,AC,ACTX,mW,mH;
+let anims=[],particles=[],rafId=null;
+
+function initCanvas(){
+  MC=document.getElementById('map-c');MCTX=MC.getContext('2d');
+  AC=document.getElementById('fx-c');ACTX=AC.getContext('2d');
+  resize();
+}
+function resize(){
+  const w=document.getElementById('map-wrap');
+  mW=w.clientWidth;mH=w.clientHeight;
+  MC.width=mW;MC.height=mH;AC.width=mW;AC.height=mH;
+  drawMap();
+}
+window.addEventListener('resize',()=>{if(MC)resize()});
+function sx(r){return r*mW}function sy(r){return r*mH}
+
+function drawMap(){
+  if(!MCTX)return;
+  const W=mW,H=mH;MCTX.clearRect(0,0,W,H);
+  const og=MCTX.createLinearGradient(0,0,0,H);
+  og.addColorStop(0,'#1e4a68');og.addColorStop(1,'#0a2840');
+  MCTX.fillStyle=og;MCTX.fillRect(0,0,W,H);
+
+  const T=[
+    {p:[[.05,.05],[.95,.05],[.95,.38],[.05,.38]],c:'#4a7a3a'},
+    {p:[[.05,.38],[.55,.38],[.55,.62],[.05,.62]],c:'#7a8a40'},
+    {p:[[.05,.62],[.60,.62],[.60,.92],[.05,.92]],c:'#9a7040'},
+    {p:[[.55,.38],[.95,.38],[.95,.92],[.55,.92]],c:'#8a6a3a'},
+    {p:[[.36,.48],[.64,.48],[.64,.80],[.36,.80]],c:'#1a4a62'},
+  ];
+  T.forEach(r=>{
+    MCTX.beginPath();
+    r.p.forEach(([px,py],i)=>i===0?MCTX.moveTo(px*W,py*H):MCTX.lineTo(px*W,py*H));
+    MCTX.closePath();MCTX.fillStyle=r.c;MCTX.fill();
+    MCTX.strokeStyle='rgba(0,0,0,.25)';MCTX.lineWidth=1;MCTX.stroke();
+  });
+
+  MCTX.setLineDash([Math.max(3,W*.005),Math.max(4,W*.007)]);
+  MCTX.strokeStyle='rgba(255,215,85,.45)';MCTX.lineWidth=Math.max(1.5,W*.004);
+  MCTX.beginPath();
+  SPACES.forEach((sp,i)=>i===0?MCTX.moveTo(sx(sp.rx),sy(sp.ry)):MCTX.lineTo(sx(sp.rx),sy(sp.ry)));
+  MCTX.lineTo(sx(SPACES[0].rx),sy(SPACES[0].ry));
+  MCTX.stroke();MCTX.setLineDash([]);
+
+  const tc={x:.50*W,y:.42*H};
+  const glowG=MCTX.createRadialGradient(tc.x,tc.y,0,tc.x,tc.y,W*.06);
+  glowG.addColorStop(0,'rgba(255,215,85,.3)');glowG.addColorStop(1,'rgba(255,215,85,0)');
+  MCTX.fillStyle=glowG;MCTX.beginPath();MCTX.arc(tc.x,tc.y,W*.06,0,Math.PI*2);MCTX.fill();
+  MCTX.font=`${Math.max(24,W*.06)}px serif`;
+  MCTX.textAlign='center';MCTX.textBaseline='middle';
+  MCTX.fillText('🏛',tc.x,tc.y-W*.005);
+  MCTX.font=`bold ${Math.max(10,W*.018)}px 'Cinzel',serif`;
+  MCTX.fillStyle='#ffd755';MCTX.fillText((gameState?.tithePool||200)+'g',tc.x,tc.y+W*.045);
+
+  SPACES.forEach((sp,i)=>drawSpace(sp,i));
+
+  if(gameState&&anims.every(a=>a.done)){
+    const active=gameState.players.filter(p=>p.connected);
+    active.forEach((p,i)=>drawToken(p,i,active.length));
+  }
+}
+
+function spaceR(sp){return sp.t==='corner'?Math.max(11,mW*.028):Math.max(8,mW*.022)}
+
+function drawSpace(sp,idx){
+  const x=sx(sp.rx),y=sy(sp.ry),r=spaceR(sp);
+  if(!gameState)return;
+  const own=gameState.players.find(p=>p.owned?.includes(idx));
+  const cur=gameState.players[gameState.currentPlayerIndex];
+  const isCur=cur?.pos===idx;
+
+  if(own){MCTX.beginPath();MCTX.arc(x,y,r+5,0,Math.PI*2);MCTX.fillStyle=own.color+'55';MCTX.fill()}
+  if(isCur){MCTX.beginPath();MCTX.arc(x,y,r+7,0,Math.PI*2);MCTX.strokeStyle='rgba(255,215,85,.8)';MCTX.lineWidth=2;MCTX.stroke()}
+
+  const tileG=MCTX.createLinearGradient(x-r,y-r,x+r,y+r);
+  tileG.addColorStop(0,sp.c);tileG.addColorStop(1,shade(sp.c,-30));
+  MCTX.beginPath();MCTX.arc(x,y,r,0,Math.PI*2);MCTX.fillStyle=tileG;MCTX.fill();
+  MCTX.strokeStyle='rgba(255,255,255,.5)';MCTX.lineWidth=sp.t==='corner'?2:1;MCTX.stroke();
+
+  const ICONS={corner:{Begin:'▶',Wilderness:'🏜',Jubilee:'✨',Temple:'🏛'},'card-w':'📜','card-a':'🤝','card-p':'❓',tax:'⚖️',special:'⚠️',property:'🏠'};
+  const ic=sp.t==='corner'?(ICONS.corner[sp.n]||'✦'):(ICONS[sp.t]||'·');
+  MCTX.font=`${Math.max(11,mW*.024)}px serif`;
+  MCTX.textAlign='center';MCTX.textBaseline='middle';
+  MCTX.fillText(ic,x,y);
+
+  if(own){MCTX.font=`${Math.max(8,mW*.014)}px serif`;MCTX.fillStyle='#ffd755';MCTX.fillText('⭐',x+r-3,y-r+3)}
+}
+
+function drawToken(p,idx,total){
+  const sp=SPACES[p.pos];
+  const ang=(idx/total)*Math.PI*2-Math.PI/2;
+  const off=total>1?Math.max(9,mW*.02):0;
+  const x=sx(sp.rx)+Math.cos(ang)*off;
+  const y=sy(sp.ry)+Math.sin(ang)*off;
+  const r=Math.max(10,mW*.024);
+
+  MCTX.beginPath();MCTX.ellipse(x,y+r*.7,r*.8,r*.25,0,0,Math.PI*2);
+  MCTX.fillStyle='rgba(0,0,0,.4)';MCTX.fill();
+
+  const g=MCTX.createRadialGradient(x-r*.3,y-r*.3,0,x,y,r);
+  g.addColorStop(0,lighten(p.color,30));g.addColorStop(.7,p.color);g.addColorStop(1,shade(p.color,-30));
+  MCTX.beginPath();MCTX.arc(x,y,r,0,Math.PI*2);MCTX.fillStyle=g;MCTX.fill();
+
+  const isCur=gameState?.players[gameState.currentPlayerIndex]?.id===p.id;
+  MCTX.strokeStyle=p.id===myId?'#fff':(isCur?'#ffd755':'rgba(255,255,255,.5)');
+  MCTX.lineWidth=(isCur||p.id===myId)?2.5:1.5;MCTX.stroke();
+
+  MCTX.font=`${Math.max(12,mW*.024)}px serif`;
+  MCTX.textAlign='center';MCTX.textBaseline='middle';
+  MCTX.fillText(p.icon,x,y);
+
+  if(p.id===myId){
+    MCTX.beginPath();MCTX.arc(x+r*.7,y-r*.7,r*.4,0,Math.PI*2);
+    MCTX.fillStyle='#ffd755';MCTX.fill();
+    MCTX.strokeStyle='#1a0d05';MCTX.lineWidth=1;MCTX.stroke();
+    MCTX.fillStyle='#1a0d05';
+    MCTX.font=`bold ${Math.max(8,mW*.014)}px 'Cinzel',serif`;
+    MCTX.fillText(level,x+r*.7,y-r*.7);
+  }
+}
+
+function shade(hex,amt){const n=parseInt(hex.slice(1),16);let r=(n>>16)+amt,g=(n>>8&255)+amt,b=(n&255)+amt;r=Math.max(0,Math.min(255,r));g=Math.max(0,Math.min(255,g));b=Math.max(0,Math.min(255,b));return'#'+((r<<16)|(g<<8)|b).toString(16).padStart(6,'0')}
+function lighten(h,a){return shade(h,a)}
+
+// ═══════════════════════════════════════════════════
+//  ANIMATIONS
+// ═══════════════════════════════════════════════════
+function animateMove(player,from,to,done){
+  const steps=[];let p=from;
+  while(p!==to){p=(p+1)%40;steps.push(p)}
+  let step=0;
+  const active=gameState.players.filter(q=>q.connected);
+  const idx=active.findIndex(q=>q.id===player.id);
+  const total=active.length;
+
+  function next(){
+    if(step>=steps.length){done();return}
+    SFX.step();
+    const fromSp=SPACES[step===0?from:steps[step-1]];
+    const toSp=SPACES[steps[step]];
+    const ang=(idx/total)*Math.PI*2-Math.PI/2;
+    const off=total>1?Math.max(9,mW*.02):0;
+    anims=[{
+      player,
+      from:{x:sx(fromSp.rx)+Math.cos(ang)*off,y:sy(fromSp.ry)+Math.sin(ang)*off},
+      to:{x:sx(toSp.rx)+Math.cos(ang)*off,y:sy(toSp.ry)+Math.sin(ang)*off},
+      t:0,done:false
+    }];
+    step++;
+    cancelAnimationFrame(rafId);
+    rafId=requestAnimationFrame(animLoop);
+    const chk=setInterval(()=>{if(anims.every(a=>a.done)){clearInterval(chk);setTimeout(next,50)}},30);
+  }
+  next();
+}
+
+function animLoop(){
+  if(!ACTX)return;
+  ACTX.clearRect(0,0,mW,mH);
+  let any=false;
+  anims.forEach(a=>{
+    if(a.done)return;
+    a.t+=.05;if(a.t>=1){a.t=1;a.done=true}
+    const e=a.t<.5?2*a.t*a.t:1-Math.pow(-2*a.t+2,2)/2;
+    const cx=a.from.x+(a.to.x-a.from.x)*e;
+    const hop=Math.sin(a.t*Math.PI)*Math.max(14,mW*.035);
+    const cy=a.from.y+(a.to.y-a.from.y)*e-hop;
+    const p=a.player;const r=Math.max(10,mW*.024);
+    ACTX.beginPath();ACTX.ellipse(cx,cy+r*.7,r*.8,r*.25,0,0,Math.PI*2);
+    ACTX.fillStyle='rgba(0,0,0,.4)';ACTX.fill();
+    const g=ACTX.createRadialGradient(cx-r*.3,cy-r*.3,0,cx,cy,r);
+    g.addColorStop(0,lighten(p.color,30));g.addColorStop(1,shade(p.color,-30));
+    ACTX.beginPath();ACTX.arc(cx,cy,r,0,Math.PI*2);ACTX.fillStyle=g;ACTX.fill();
+    ACTX.strokeStyle='#ffd755';ACTX.lineWidth=2.5;ACTX.stroke();
+    ACTX.font=`${Math.max(12,mW*.024)}px serif`;
+    ACTX.textAlign='center';ACTX.textBaseline='middle';
+    ACTX.fillText(p.icon,cx,cy);
+    any=true;
+  });
+  particles=particles.filter(p=>{
+    p.x+=p.vx;p.y+=p.vy;p.vy+=.3;p.life-=.02;
+    if(p.life<=0)return false;
+    ACTX.globalAlpha=p.life;ACTX.fillStyle=p.col;
+    ACTX.beginPath();ACTX.arc(p.x,p.y,p.r,0,Math.PI*2);ACTX.fill();
+    ACTX.globalAlpha=1;return true;
+  });
+  if(particles.length)any=true;
+  if(any)rafId=requestAnimationFrame(animLoop);
+  else{anims=[];drawMap()}
+}
+
+function burstParticles(x,y,col,count=20){
+  for(let i=0;i<count;i++){
+    particles.push({x,y,vx:(Math.random()-.5)*8,vy:(Math.random()-.5)*8-2,r:2+Math.random()*3,life:1,col});
+  }
+  cancelAnimationFrame(rafId);
+  rafId=requestAnimationFrame(animLoop);
+}
+
+function animateDiceFaces(d1,d2){
+  const faces=['⚀','⚁','⚂','⚃','⚄','⚅'];
+  const e1=document.getElementById('d1'),e2=document.getElementById('d2');
+  e1.classList.add('rolling');e2.classList.add('rolling');
+  setTimeout(()=>{e1.classList.remove('rolling');e2.classList.remove('rolling');e1.textContent=faces[d1-1];e2.textContent=faces[d2-1]},500);
+}
+
+function setupMapClick(){
+  MC.addEventListener('click',e=>{
+    if(document.getElementById('tut-dim').classList.contains('on'))return;
+    const r=MC.getBoundingClientRect();
+    const mx=(e.clientX-r.left)*(mW/r.width);
+    const my=(e.clientY-r.top)*(mH/r.height);
+    SPACES.forEach((sp,i)=>{
+      const dx=sx(sp.rx)-mx,dy=sy(sp.ry)-my;
+      if(Math.sqrt(dx*dx+dy*dy)<spaceR(sp)+8){SFX.tap();flashAchv('📍','LOCATION',sp.n)}
+    });
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  GAME ACTIONS
+// ═══════════════════════════════════════════════════
+function isMyTurn(){return gameState?.players[gameState.currentPlayerIndex]?.id===myId}
+
+function doRoll(){
+  if(!isMyTurn()||gameState.rolled)return;
+  socket.emit('roll',{},(res)=>{if(!res?.ok)SFX.error()});
+}
+function doBuyMinistry(){
+  if(!isMyTurn())return;
+  socket.emit('buy_ministry',{},(res)=>{
+    if(res?.err){SFX.error();shake('buy-btn');flashAchv('⚠️','CANNOT BUILD',res.err)}
+    else if(res?.ok){SFX.build();burstParticles(mW/2,mH/2,'#ffd755',25);addXP(30);
+      ministriesOwned=(gameState.players.find(p=>p.id===myId)?.ministries||0);
+      if(ministriesOwned===1)earnBadge('first_ministry');
+      if(ministriesOwned>=3)earnBadge('three_min');}
+  });
+}
+function doEndTurn(){
+  if(!isMyTurn())return;
+  socket.emit('end_turn',{},(res)=>{if(!res?.ok)SFX.error();else SFX.nextTurn();comboStreak=0});
+}
+
+function claimCard(accept){
+  document.getElementById('card-ov').classList.remove('on');
+  if(!isMyTurn()){pendingCard=null;return}
+  socket.emit('apply_card',{accepted:accept},(res)=>{
+    if(!res?.ok)return;
+    const c=pendingCard;
+    if(accept){
+      if(c.fx>0){addXP(15);earnBadge('first_wisdom');comboStreak++;if(comboStreak>=3)earnBadge('combo3');if(comboStreak>1)showCombo(comboStreak);SFX.reward();}
+      else if(c.fx<0){comboStreak=0;SFX.penalty()}
+      else SFX.tap();
+    } else {
+      if(c.badge==='Temptation'||c.title?.includes('Greed')||c.title?.includes('Temptation')){resistCount++;addXP(10);if(resistCount>=3)earnBadge('resist')}
+    }
+    pendingCard=null;
+  });
+}
+
+function showCard(c){
+  pendingCard=c;
+  const ccol={'Scroll of Wisdom':'#a785e0','Acts of Apostles':'#4aad70','Parable Challenge':'#5b9bdc','Temptation':'#d85a3a','Wilderness':'#d85a3a','Bitter Waters':'#d85a3a'};
+  const mapped=ccol[c.badge]||'#c9922a';
+  document.getElementById('c-icon').textContent=c.icon;
+  document.getElementById('c-type').textContent=(c.badge||'').toUpperCase();
+  document.getElementById('c-name').textContent=c.title;
+  document.getElementById('c-verse').textContent=c.verse;
+  const r=document.getElementById('c-reward');
+  r.textContent=c.fx>0?`+${c.fx}`:(c.fx<0?`${c.fx}`:'+BLESSING');
+  r.className='reward-val'+(c.fx<0?' neg':'');
+  document.getElementById('card-big').style.setProperty('--cc',mapped);
+  document.getElementById('card-ov').classList.add('on');
+}
+
+function sendChat(){
+  const i=document.getElementById('chat-in');
+  const msg=i.value.trim();if(!msg)return;
+  socket.emit('chat',{msg});i.value='';
+}
+function addChatMsg(name,icon,msg){
+  const el=document.getElementById('chat-msgs');
+  const d=document.createElement('div');d.className='chat-msg';
+  d.innerHTML=`<b>${icon} ${name}:</b> ${msg}`;
+  el.appendChild(d);el.scrollTop=el.scrollHeight;
+}
+
+// ═══════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════
+function renderAll(){
+  if(!gameState){buildTokens();return}
+  if(gameState.phase==='lobby'){
+    renderLobbyPlayers();buildTokens();return;
+  }
+  if(gameState.phase==='playing'&&document.getElementById('lobby-scr').classList.contains('active')){
+    enterGame();
+  }
+  const me=gameState.players.find(p=>p.id===myId);
+  if(me){
+    // Detect talent changes for coin pop
+    if(prevTalents!==null&&me.talents!==prevTalents){
+      coinPop(me.talents-prevTalents);
+    }
+    prevTalents=me.talents;
+    document.getElementById('coins').textContent=me.talents.toLocaleString();
+    // Quest progress
+    titheCount=me.titheTokens;
+    document.getElementById('goal-prog').style.width=Math.min(100,titheCount/3*100)+'%';
+    if(titheCount>=3){
+      document.getElementById('goal-txt').textContent='Quest complete!';
+      document.getElementById('goal-rwd').innerHTML='<span>✓</span> <span>+200 gold earned</span>';
+    } else {
+      document.getElementById('goal-txt').textContent=`Tithe ${3-titheCount} more times`;
+    }
+    // Badges from server state
+    if(titheCount>=1)earnBadge('first_tithe');
+    if(titheCount>=5)earnBadge('five_tithes');
+    if(me.wisdomCards>0)earnBadge('first_wisdom');
+    if(me.ministries>=1)earnBadge('first_ministry');
+    if(me.ministries>=3)earnBadge('three_min');
+    if(me.talents>=3000)earnBadge('rich');
+  }
+
+  // XP
+  document.getElementById('xp-cur').textContent=xp;
+  document.getElementById('xp-max').textContent=xpMax;
+  document.getElementById('xp-fill').style.width=Math.min(100,(xp/xpMax)*100)+'%';
+
+  // Rail
+  document.getElementById('rail').innerHTML=gameState.players.filter(p=>p.connected).map(p=>`
+    <div class="avatar ${gameState.players[gameState.currentPlayerIndex]?.id===p.id?'cur':''} ${p.id===myId?'me':''}" style="--pc:${p.color}">
+      <div class="av-circ">${p.icon}</div>
+      <div class="av-name">${p.name}</div>
+      <div class="av-gold">${p.talents>=1000?Math.floor(p.talents/100)/10+'k':p.talents}g</div>
+    </div>`).join('');
+
+  // Waiting bar
+  const cur=gameState.players[gameState.currentPlayerIndex];
+  const wb=document.getElementById('waiting-bar');
+  if(!isMyTurn()&&cur){wb.style.display='block';document.getElementById('waiting-name').textContent=cur.name}
+  else{wb.style.display='none'}
+
+  // Buttons
+  const myTurn=isMyTurn(),playing=gameState.phase==='playing';
+  const canRoll=myTurn&&playing&&!gameState.rolled;
+  document.getElementById('roll-btn').disabled=!canRoll;
+  document.getElementById('end-btn').disabled=!myTurn||!playing;
+  const me2=gameState.players.find(p=>p.id===myId);
+  const onProperty=me2&&SPACES[me2.pos]?.t==='property'&&!me2.owned.includes(me2.pos)&&me2.talents>=200;
+  document.getElementById('buy-btn').disabled=!myTurn||!playing||!onProperty;
+  document.getElementById('buy-btn').classList.toggle('hot',myTurn&&playing&&onProperty);
+
+  if(!myTurn&&cur){document.getElementById('roll-label').textContent=`${cur.name}'s turn...`}
+  else if(myTurn&&!gameState.rolled){document.getElementById('roll-label').textContent='ROLL TO MOVE'}
+  else if(myTurn&&gameState.rolled){document.getElementById('roll-label').textContent='TAKE ACTION'}
+
+  drawMap();
+
+  // Pending card for me?
+  if(gameState.pendingCard&&myTurn&&!document.getElementById('card-ov').classList.contains('on')){
+    showCard(gameState.pendingCard);
+  }
+
+  // Achievements from state
+  if(rollCount===0&&gameState.rolled)earnBadge('first_move');
+  if(cur&&cur.pos===30)earnBadge('jubilee');
+}
+
+function coinPop(n){
+  if(n===0)return;
+  const box=document.getElementById('coins-box');
+  const rect=box.getBoundingClientRect();
+  const el=document.createElement('div');
+  el.className='coin-delta'+(n<0?' neg':'');
+  el.textContent=(n>0?'+':'')+n;
+  el.style.left=(rect.left+rect.width/2-10)+'px';
+  el.style.top=rect.top+'px';
+  document.body.appendChild(el);
+  SFX.coin();
+  setTimeout(()=>el.remove(),1300);
+}
+
+function addXP(amt){
+  xp+=amt;
+  while(xp>=xpMax){
+    xp-=xpMax;level++;xpMax=Math.floor(xpMax*1.4);
+    levelUpFX();
+  }
+}
+function levelUpFX(){
+  const el=document.getElementById('lvl-up');
+  el.textContent=`⭐ LEVEL ${level}! ⭐`;
+  el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
+  SFX.levelUp();
+  if(level>=5)earnBadge('level_5');
+  burstParticles(mW/2,mH/3,'#ffd755',40);
+}
+function showCombo(n){
+  const el=document.getElementById('combo');
+  el.textContent=`COMBO x${n}! 🔥`;
+  el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
+  SFX.combo();
+  setTimeout(()=>el.classList.remove('show'),1500);
+}
+function earnBadge(id){
+  if(earnedBadges.has(id))return;
+  earnedBadges.add(id);
+  const b=ACHIEVEMENTS.find(a=>a.id===id);
+  if(!b)return;
+  flashAchv(b.emj,'ACHIEVEMENT UNLOCKED',b.n);
+  SFX.achievement();
+  const bb=document.getElementById('badges-btn');
+  if(earnedBadges.size<ACHIEVEMENTS.length){bb.classList.add('badge');bb.setAttribute('data-badge',earnedBadges.size)}
+  if(earnedBadges.size===ACHIEVEMENTS.length-1&&!earnedBadges.has('complete'))setTimeout(()=>earnBadge('complete'),800);
+}
+let achvT=null;
+function flashAchv(icon,title,name){
+  document.getElementById('achv-i').textContent=icon;
+  document.querySelector('.achv-t').textContent=title;
+  document.getElementById('achv-n').textContent=name;
+  const el=document.getElementById('achv');
+  el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
+  clearTimeout(achvT);
+  achvT=setTimeout(()=>el.classList.remove('show'),2500);
+}
+function shake(id){const el=document.getElementById(id);el.style.animation='none';void el.offsetWidth;el.style.animation='shake .3s'}
+
+// ═══════════════════════════════════════════════════
+//  SHEETS
+// ═══════════════════════════════════════════════════
+function calcScore(p){return Math.floor(p.talents/100)+p.ministries*5+p.wisdomCards*3+p.titheTokens*2+level*10}
+function openSheet(w){
+  SFX.tap();
+  if(w==='scores'&&gameState){
+    const sorted=[...gameState.players].filter(p=>p.connected).sort((a,b)=>calcScore(b)-calcScore(a));
+    document.getElementById('rank-list').innerHTML=sorted.map((p,i)=>`
+      <div class="rank ${p.id===myId?'me':''} ${i===0?'first':''}" style="--pc:${p.color}">
+        <div class="rank-medal">${['🥇','🥈','🥉','4️⃣','5️⃣','6️⃣'][i]||''}</div>
+        <div class="rank-av">${p.icon}</div>
+        <div class="rank-info">
+          <div class="rank-name">${p.name}${p.id===myId?' (you)':''}</div>
+          <div class="rank-stats"><span>💰 ${p.talents.toLocaleString()}</span><span>🏛 ${p.ministries}</span><span>⚖️ ${p.titheTokens}</span><span>📜 ${p.wisdomCards}</span></div>
+        </div>
+        <div class="rank-score">${calcScore(p)}</div>
+      </div>`).join('');
+    document.getElementById('sheet-scores').classList.add('on');
+  } else if(w==='badges'){
+    document.getElementById('bg-count').textContent=earnedBadges.size;
+    document.getElementById('bg-grid').innerHTML=ACHIEVEMENTS.map(a=>`
+      <div class="badge-it ${earnedBadges.has(a.id)?'earned':''}" title="${a.desc}">
+        <div class="badge-emj">${a.emj}</div>
+        <div class="badge-nm">${a.n}</div>
+      </div>`).join('');
+    document.getElementById('sheet-badges').classList.add('on');
+  }
+}
+function closeSheet(){SFX.tap();document.querySelectorAll('.sheet').forEach(s=>s.classList.remove('on'))}
+
+// ═══════════════════════════════════════════════════
+//  TUTORIAL
+// ═══════════════════════════════════════════════════
+const COACHES=[
+  {target:null,title:'👑 Welcome, Steward!',body:'Kingdom Steward is a quest of faith & fortune. Build ministries, tithe faithfully, and climb the leaderboard!'},
+  {target:'coins-box',pos:'bottom',title:'💰 Your Gold',body:'Earn gold by passing Begin, collecting Wisdom cards, and building ministries. Watch it rise and fall!'},
+  {target:'xp-fill',pos:'bottom',title:'⭐ XP Bar',body:'Every action gives XP. Fill the bar to LEVEL UP with golden particles and a fanfare!'},
+  {target:'goal-card',pos:'left',title:'🎯 Daily Quest',body:'Your first quest: tithe 3 times! Watch the bar fill as you play.'},
+  {target:'rail',pos:'bottom',title:'⚔️ Players',body:'All players show here. Gold arrow ↓ shows whose turn it is. Your token has a white ring.'},
+  {target:'roll-btn',pos:'top',title:'🎲 Roll to Move',body:'Big gold button activates on your turn. Tap it — juicy dice, animated movement, instant rewards!'},
+  {target:'badges-btn',pos:'bottom',title:'🎖 12 Achievements',body:'Earn badges for milestones: First Tithe, Level 5, Combo x3, Kingdom Heir. Tap to see your progress!'},
+];
+let coachIdx=0;
+function startTutorial(){coachIdx=0;showCoach();SFX.levelUp()}
+function showCoach(){
+  const c=COACHES[coachIdx];
+  const coach=document.getElementById('coach');
+  const dim=document.getElementById('tut-dim');
+  const hl=document.getElementById('tut-hl');
+  // switch to game screen temporarily so targets exist
+  if(coachIdx>0&&!document.getElementById('game-scr').classList.contains('active')){
+    document.getElementById('lobby-scr').classList.remove('active');
+    document.getElementById('game-scr').classList.add('active');
+    if(!MC)initCanvas();
+  }
+  dim.classList.add('on');
+  coach.classList.add('on');
+  if(c.target){
+    const t=document.getElementById(c.target);
+    if(t){
+      const r=t.getBoundingClientRect();
+      const appR=document.getElementById('app').getBoundingClientRect();
+      hl.style.display='block';
+      hl.style.left=(r.left-appR.left-4)+'px';
+      hl.style.top=(r.top-appR.top-4)+'px';
+      hl.style.width=(r.width+8)+'px';
+      hl.style.height=(r.height+8)+'px';
+      const cw=240;
+      let cx,cy;
+      if(c.pos==='bottom'){cx=Math.max(10,Math.min(appR.width-cw-10,r.left-appR.left-20));cy=r.bottom-appR.top+14}
+      else if(c.pos==='top'){cx=Math.max(10,Math.min(appR.width-cw-10,r.left-appR.left-20));cy=r.top-appR.top-140}
+      else if(c.pos==='left'){cx=Math.max(10,r.left-appR.left-cw-10);cy=r.top-appR.top}
+      else{cx=r.right-appR.left+10;cy=r.top-appR.top}
+      coach.style.left=cx+'px';coach.style.top=cy+'px';
+    }
+  } else {
+    hl.style.display='none';
+    coach.style.left='50%';coach.style.top='50%';coach.style.transform='translate(-50%,-50%)';
+  }
+  const dots=COACHES.map((_,i)=>`<div class="cd ${i===coachIdx?'on':''}"></div>`).join('');
+  coach.innerHTML=`
+    ${c.pos==='bottom'?'<div class="coach-arrow-t"></div>':''}
+    ${c.pos==='top'?'<div class="coach-arrow-b"></div>':''}
+    <div class="coach-step">STEP ${coachIdx+1} OF ${COACHES.length}</div>
+    <div class="coach-title">${c.title}</div>
+    <div class="coach-body">${c.body}</div>
+    <div class="coach-btns">
+      <div class="coach-dots">${dots}</div>
+      <button class="coach-btn" onclick="nextCoach()">${coachIdx===COACHES.length-1?'Got it ✨':'Next →'}</button>
+    </div>
+  `;
+  SFX.tap();
+}
+function nextCoach(){
+  coachIdx++;
+  if(coachIdx>=COACHES.length){endTutorial();return}
+  showCoach();
+}
+function endTutorial(){
+  document.getElementById('tut-dim').classList.remove('on');
+  document.getElementById('tut-hl').style.display='none';
+  document.getElementById('coach').classList.remove('on');
+  // return to lobby if not in game yet
+  if(!gameState||gameState.phase!=='playing'){
+    document.getElementById('game-scr').classList.remove('active');
+    document.getElementById('lobby-scr').classList.add('active');
+  }
+}
+
+// ═══════════════════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════════════════
+buildTokens();
+</script>
+</body>
+</html>
