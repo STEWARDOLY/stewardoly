@@ -324,37 +324,58 @@ io.on('connection', (socket) => {
   socket.on('join_room', ({ code, name, token }, cb) => {
     const state = rooms.get(code.toUpperCase());
     if (!state) return cb({ ok: false, err: 'Room not found. Check the code and try again.' });
-    if (state.phase === 'playing' && !state.players.find(p => p.id === socket.id)) {
-      return cb({ ok: false, err: 'Game already in progress. Ask the host to restart.' });
-    }
 
-    // Reconnection
-    const existing = state.players.find(p => p.id === socket.id);
-    if (!existing) {
-      // Check token not already taken
-      const takenIcon = state.players.find(p => p.icon === token.icon && p.connected);
-      if (takenIcon) return cb({ ok: false, err: `${token.icon} is already taken. Choose another token.` });
+    // Try to reconnect as existing player (by name match, case-insensitive)
+    const trimmedName = (name || '').trim();
+    const existing = state.players.find(p =>
+      p.name.toLowerCase() === trimmedName.toLowerCase() && !p.connected
+    );
 
-      state.players.push({
-        id: socket.id,
-        name: name || 'Pilgrim',
-        icon: token.icon,
-        color: token.color,
-        role: token.role,
-        pos: 0,
-        talents: 1500,
-        ministries: 0,
-        titheTokens: 0,
-        wisdomCards: 0,
-        owned: [],
-        skipTurn: false,
-        connected: true,
-      });
-      addLog(state, `${name} joined the room ✦`);
-    } else {
+    if (existing) {
+      // Reconnection — restore the player's spot and update their socket.id
+      existing.id = socket.id;
       existing.connected = true;
-      addLog(state, `${existing.name} reconnected`);
+      addLog(state, `${existing.name} rejoined the room ✦`);
+      socket.join(code.toUpperCase());
+      socket.data.roomCode = code.toUpperCase();
+      socket.data.playerId = socket.id;
+      // If it's their turn, update the currentPlayerIndex (by finding them again)
+      broadcastState(code.toUpperCase());
+      return cb({ ok: true, code: code.toUpperCase(), state: getPublicState(state), reconnected: true });
     }
+
+    // Block new joins if game is already playing
+    if (state.phase === 'playing') {
+      return cb({ ok: false, err: 'Game already in progress. Use your original name to rejoin.' });
+    }
+
+    // Check name not already taken by connected player
+    const nameTaken = state.players.find(p =>
+      p.name.toLowerCase() === trimmedName.toLowerCase() && p.connected
+    );
+    if (nameTaken) return cb({ ok: false, err: `Name "${trimmedName}" is already taken. Choose another.` });
+
+    // Check token not already taken
+    const takenIcon = state.players.find(p => p.icon === token.icon && p.connected);
+    if (takenIcon) return cb({ ok: false, err: `${token.icon} is already taken. Choose another hero.` });
+
+    // New player joining
+    state.players.push({
+      id: socket.id,
+      name: trimmedName || 'Pilgrim',
+      icon: token.icon,
+      color: token.color,
+      role: token.role,
+      pos: 0,
+      talents: 1500,
+      ministries: 0,
+      titheTokens: 0,
+      wisdomCards: 0,
+      owned: [],
+      skipTurn: false,
+      connected: true,
+    });
+    addLog(state, `${trimmedName} joined the room ✦`);
 
     socket.join(code.toUpperCase());
     socket.data.roomCode = code.toUpperCase();
@@ -455,7 +476,7 @@ io.on('connection', (socket) => {
     const p = state.players.find(pl => pl.id === socket.id);
     if (p) {
       p.connected = false;
-      addLog(state, `${p.name} disconnected (will reconnect)`);
+      addLog(state, `${p.name} left — can rejoin with same name & code`);
       broadcastState(code);
     }
     console.log('Disconnected:', socket.id);
