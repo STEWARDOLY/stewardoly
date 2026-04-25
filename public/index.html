@@ -680,7 +680,10 @@ function renderLobbyPlayers(){
 }
 
 let mapClickAttached=false;
+let inGame=false;
 function enterGame(){
+  if(inGame)return; // prevent double-init
+  inGame=true;
   document.getElementById('lobby-scr').classList.remove('active');
   document.getElementById('game-scr').classList.add('active');
   // Wait for the screen to actually be painted before sizing the canvas
@@ -693,6 +696,8 @@ function enterGame(){
         mapClickAttached=true;
       }
       renderAll();
+      // One more render after a tick to make sure everything is sized correctly
+      setTimeout(()=>{if(MC){resize();renderAll();}},150);
     });
   });
   SFX.levelUp();
@@ -703,6 +708,7 @@ function goLobby(){
   if(gameState && gameState.phase==='playing'){
     if(!confirm('Leave the game?\n\nYour spot will be saved — you can rejoin with the same name & room code.')){return}
   }
+  inGame=false;
   document.getElementById('game-scr').classList.remove('active');
   document.getElementById('lobby-scr').classList.add('active');
   // Reset lobby UI
@@ -1070,16 +1076,27 @@ function renderAll(){
   // Buttons
   const myTurn=isMyTurn(),playing=gameState.phase==='playing';
   const canRoll=myTurn&&playing&&!gameState.rolled;
-  document.getElementById('roll-btn').disabled=!canRoll;
-  document.getElementById('end-btn').disabled=!myTurn||!playing;
+  const rollBtn=document.getElementById('roll-btn');
+  const endBtn=document.getElementById('end-btn');
+  const buyBtn=document.getElementById('buy-btn');
+
+  rollBtn.disabled=!canRoll;
+  endBtn.disabled=!myTurn||!playing;
   const me2=gameState.players.find(p=>p.id===myId);
   const onProperty=me2&&SPACES[me2.pos]?.t==='property'&&!me2.owned.includes(me2.pos)&&me2.talents>=200;
-  document.getElementById('buy-btn').disabled=!myTurn||!playing||!onProperty;
-  document.getElementById('buy-btn').classList.toggle('hot',myTurn&&playing&&onProperty);
+  buyBtn.disabled=!myTurn||!playing||!onProperty;
+  buyBtn.classList.toggle('hot',myTurn&&playing&&onProperty);
+
+  // After rolling, make End Turn visually prominent (it becomes the primary action)
+  if(myTurn && playing && gameState.rolled && !gameState.pendingCard){
+    endBtn.classList.add('hot');
+  } else {
+    if(!onProperty)endBtn.classList.remove('hot');
+  }
 
   if(!myTurn&&cur){document.getElementById('roll-label').textContent=`${cur.name}'s turn...`}
   else if(myTurn&&!gameState.rolled){document.getElementById('roll-label').textContent='ROLL TO MOVE'}
-  else if(myTurn&&gameState.rolled){document.getElementById('roll-label').textContent='TAKE ACTION'}
+  else if(myTurn&&gameState.rolled){document.getElementById('roll-label').textContent='✓ ROLLED — choose action below'}
 
   drawMap();
 
