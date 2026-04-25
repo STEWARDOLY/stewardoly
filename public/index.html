@@ -2,21 +2,35 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="theme-color" content="#0a0603">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <title>Kingdom Steward</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;font-family:system-ui,-apple-system,sans-serif}
-html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-action:manipulation;user-select:none}
+html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-action:manipulation;user-select:none;position:fixed;width:100%;top:0;left:0;right:0;bottom:0}
 .cinzel{font-family:'Cinzel',serif;letter-spacing:.04em}
-#app{height:100vh;display:flex;flex-direction:column;position:relative}
+/* iOS Safari fix: use dvh (dynamic viewport height) which excludes browser chrome.
+   Fall back to vh, then to JS-set --vh custom property for older iOS versions. */
+#app{
+  height:100vh;
+  height:calc(var(--vh,1vh) * 100);
+  height:100dvh;
+  display:flex;flex-direction:column;position:relative;
+  /* Safe area padding for iPhone notch/home indicator */
+  padding-top:env(safe-area-inset-top);
+  padding-bottom:env(safe-area-inset-bottom);
+  padding-left:env(safe-area-inset-left);
+  padding-right:env(safe-area-inset-right);
+  background:#0a0603;
+}
 
 /* HUD */
-.hud{display:flex;align-items:center;gap:8px;padding:8px 10px;background:#160b05;border-bottom:2px solid #3d2410;flex-shrink:0;z-index:5}
+.hud{display:flex;align-items:center;gap:8px;padding:6px 10px;background:#160b05;border-bottom:2px solid #3d2410;flex-shrink:0;z-index:5}
 .coins{display:flex;align-items:center;gap:5px;background:linear-gradient(180deg,#3a2410,#1e1208);padding:5px 10px;border-radius:16px;border:1.5px solid #c9922a;min-width:85px}
 .coin-icon{width:18px;height:18px;background:radial-gradient(circle at 30% 30%,#ffd755,#c9922a 50%,#7a5510);border-radius:50%;position:relative;flex-shrink:0;box-shadow:0 0 6px rgba(201,146,42,.5)}
 .coin-icon::after{content:'';position:absolute;inset:3px;border:1.5px solid #ffd755;border-radius:50%;opacity:.6}
@@ -39,7 +53,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .icon-btn.badge::after{content:attr(data-badge);position:absolute;top:-4px;right:-4px;background:#ff4a3d;color:#fff;font-size:9px;font-weight:700;width:15px;height:15px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:system-ui;border:1.5px solid #160b05}
 
 /* Player rail */
-.rail{display:flex;gap:6px;padding:6px 10px;background:#0e0704;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
+.rail{display:flex;gap:6px;padding:4px 10px;background:#0e0704;overflow-x:auto;flex-shrink:0;scrollbar-width:none}
 .rail::-webkit-scrollbar{display:none}
 .avatar{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:2px;opacity:.55;transition:.2s;position:relative}
 .avatar.cur{opacity:1;transform:scale(1.08)}
@@ -69,17 +83,17 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .goal-rwd{font-size:10px;color:#ffd755;font-weight:700;margin-top:3px;display:flex;align-items:center;gap:3px}
 
 /* Action bar */
-.action-bar{padding:10px 10px 12px;background:linear-gradient(180deg,#160b05,#0e0704);border-top:2px solid #3d2410;flex-shrink:0}
-.roll-mega{width:100%;height:62px;background:linear-gradient(180deg,#ffd755 0%,#c9922a 50%,#7a5510 100%);border:none;border-radius:14px;color:#3d2410;font-family:'Cinzel',serif;font-size:18px;font-weight:700;letter-spacing:.1em;display:flex;align-items:center;justify-content:center;gap:12px;cursor:pointer;transition:.1s;position:relative;overflow:hidden;box-shadow:0 4px 0 #6a4818,0 6px 12px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4);text-shadow:0 1px 1px rgba(255,255,255,.5)}
-.roll-mega:active:not(:disabled){transform:translateY(4px);box-shadow:0 0 0 #6a4818,0 2px 4px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4)}
+.action-bar{padding:8px 8px max(10px, env(safe-area-inset-bottom));background:linear-gradient(180deg,#160b05,#0e0704);border-top:2px solid #3d2410;flex-shrink:0}
+.roll-mega{width:100%;height:54px;background:linear-gradient(180deg,#ffd755 0%,#c9922a 50%,#7a5510 100%);border:none;border-radius:12px;color:#3d2410;font-family:'Cinzel',serif;font-size:16px;font-weight:700;letter-spacing:.08em;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;transition:.1s;position:relative;overflow:hidden;box-shadow:0 3px 0 #6a4818,0 5px 10px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4);text-shadow:0 1px 1px rgba(255,255,255,.5)}
+.roll-mega:active:not(:disabled){transform:translateY(3px);box-shadow:0 0 0 #6a4818,0 2px 4px rgba(0,0,0,.4),inset 0 2px 0 rgba(255,255,255,.4)}
 .roll-mega:disabled{opacity:.35;cursor:not-allowed;filter:grayscale(.5)}
-.mega-dice{display:flex;gap:4px}
-.mega-d{width:30px;height:30px;background:#fff8e8;border:2px solid #3d2410;border-radius:6px;font-size:20px;display:flex;align-items:center;justify-content:center;color:#3d2410;transition:.1s}
+.mega-dice{display:flex;gap:3px}
+.mega-d{width:26px;height:26px;background:#fff8e8;border:2px solid #3d2410;border-radius:5px;font-size:17px;display:flex;align-items:center;justify-content:center;color:#3d2410;transition:.1s}
 .mega-d.rolling{animation:diceFlip .5s ease}
 @keyframes diceFlip{0%{transform:rotateZ(0) scale(1)}25%{transform:rotateZ(-180deg) scale(.8)}75%{transform:rotateZ(180deg) scale(1.2)}100%{transform:rotateZ(360deg) scale(1)}}
 
-.sec-actions{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
-.sec-btn{height:42px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1.5px solid #6a4818;border-radius:10px;color:#f2c96e;font-family:'Cinzel',serif;font-size:11px;font-weight:600;letter-spacing:.06em;display:flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:.1s;box-shadow:0 2px 0 #1e1208}
+.sec-actions{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px}
+.sec-btn{height:38px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1.5px solid #6a4818;border-radius:9px;color:#f2c96e;font-family:'Cinzel',serif;font-size:10.5px;font-weight:600;letter-spacing:.05em;display:flex;align-items:center;justify-content:center;gap:5px;cursor:pointer;transition:.1s;box-shadow:0 2px 0 #1e1208}
 .sec-btn:active:not(:disabled){transform:translateY(2px);box-shadow:none}
 .sec-btn:disabled{opacity:.3;cursor:not-allowed}
 .sec-btn .emj{font-size:15px}
@@ -214,13 +228,21 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .screen.active{display:flex}
 
 /* Chat */
-#chat-wrap{position:absolute;bottom:0;right:0;width:min(240px,80vw);max-height:180px;display:flex;flex-direction:column;z-index:20;background:rgba(6,3,0,.88);border-top-left-radius:10px;border:1px solid rgba(201,146,42,.2);border-bottom:none;border-right:none}
-.chat-msgs{flex:1;overflow-y:auto;padding:6px 8px;max-height:130px;scrollbar-width:thin}
+#chat-wrap{position:absolute;bottom:0;right:0;width:min(220px,70vw);max-height:160px;display:flex;flex-direction:column;z-index:20;background:rgba(6,3,0,.92);border-top-left-radius:10px;border:1px solid rgba(201,146,42,.2);border-bottom:none;border-right:none;transition:.2s}
+#chat-wrap.collapsed .chat-msgs,#chat-wrap.collapsed .chat-row,#chat-wrap.collapsed > div:not(.chat-toggle){display:none}
+#chat-wrap.collapsed{width:auto;max-height:0;border:none;background:transparent}
+.chat-toggle{position:absolute;bottom:0;right:0;background:rgba(6,3,0,.92);border:1px solid rgba(201,146,42,.3);color:#f2c96e;font-size:11px;padding:4px 10px;border-top-left-radius:8px;cursor:pointer;font-family:'Cinzel',serif;letter-spacing:.05em;display:flex;align-items:center;gap:4px;font-weight:600}
+#chat-wrap:not(.collapsed) .chat-toggle{display:none}
+.chat-msgs{flex:1;overflow-y:auto;padding:6px 8px;max-height:120px;scrollbar-width:thin}
 .chat-msg{font-size:10px;color:#a08060;padding:2px 0;line-height:1.3}
 .chat-msg b{color:#f2c96e;font-weight:600;font-family:'Cinzel',serif;font-size:10px}
 .chat-row{display:flex;gap:4px;padding:4px 6px;border-top:1px solid rgba(201,146,42,.15)}
-.chat-row input{font-size:10px;padding:4px 7px;border-radius:5px;background:#1a0d05;border:1px solid #3d2410;color:#f2c96e;outline:none;flex:1}
-.chat-row button{padding:4px 7px;font-size:9px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1px solid #6a4818;color:#f2c96e;border-radius:5px;font-family:'Cinzel',serif;cursor:pointer}
+.chat-row input{font-size:11px;padding:5px 7px;border-radius:5px;background:#1a0d05;border:1px solid #3d2410;color:#f2c96e;outline:none;flex:1}
+.chat-row button{padding:5px 8px;font-size:10px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1px solid #6a4818;color:#f2c96e;border-radius:5px;font-family:'Cinzel',serif;cursor:pointer}
+
+@media(max-width:480px){
+  #chat-wrap{width:min(180px,55vw)}
+}
 
 @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-6px)}75%{transform:translateX(6px)}}
 </style>
@@ -358,7 +380,12 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
   </div>
 
   <!-- Chat -->
-  <div id="chat-wrap">
+  <div id="chat-wrap" class="collapsed">
+    <button class="chat-toggle" onclick="toggleChat()" id="chat-toggle">💬 Chat</button>
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:5px 8px;border-bottom:1px solid rgba(201,146,42,.15);background:rgba(6,3,0,.95)">
+      <span style="font-family:'Cinzel',serif;font-size:10px;color:#f2c96e;font-weight:600">💬 CHAT</span>
+      <span onclick="toggleChat()" style="cursor:pointer;color:#a08060;font-size:14px;padding:0 4px">✕</span>
+    </div>
     <div class="chat-msgs" id="chat-msgs"></div>
     <div class="chat-row">
       <input id="chat-in" placeholder="Message..." maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
@@ -1010,11 +1037,28 @@ function sendChat(){
   const msg=i.value.trim();if(!msg)return;
   socket.emit('chat',{msg});i.value='';
 }
+let chatUnread=0;
 function addChatMsg(name,icon,msg){
   const el=document.getElementById('chat-msgs');
   const d=document.createElement('div');d.className='chat-msg';
   d.innerHTML=`<b>${icon} ${name}:</b> ${msg}`;
   el.appendChild(d);el.scrollTop=el.scrollHeight;
+  // If chat is collapsed, increment unread badge
+  const wrap=document.getElementById('chat-wrap');
+  if(wrap.classList.contains('collapsed')){
+    chatUnread++;
+    document.getElementById('chat-toggle').innerHTML=`💬 Chat <span style="background:#ff4a3d;color:#fff;font-size:9px;padding:1px 5px;border-radius:8px;margin-left:3px">${chatUnread}</span>`;
+  }
+}
+function toggleChat(){
+  const wrap=document.getElementById('chat-wrap');
+  wrap.classList.toggle('collapsed');
+  if(!wrap.classList.contains('collapsed')){
+    chatUnread=0;
+    document.getElementById('chat-toggle').innerHTML='💬 Chat';
+    setTimeout(()=>{const el=document.getElementById('chat-msgs');el.scrollTop=el.scrollHeight;},50);
+  }
+  SFX.tap();
 }
 
 // ═══════════════════════════════════════════════════
@@ -1312,6 +1356,25 @@ function endTutorial(){
 // ═══════════════════════════════════════════════════
 //  INIT
 // ═══════════════════════════════════════════════════
+
+// iOS Safari viewport fix: set --vh CSS variable based on actual visible viewport
+function setVH(){
+  // Use visualViewport if available (more accurate on iOS), fallback to innerHeight
+  const h = (window.visualViewport ? window.visualViewport.height : window.innerHeight);
+  document.documentElement.style.setProperty('--vh', (h * 0.01) + 'px');
+  // Also force-resize canvas if game is showing
+  if(typeof MC!=='undefined' && MC && document.getElementById('game-scr').classList.contains('active')){
+    setTimeout(()=>{if(typeof resize==='function')resize()},50);
+  }
+}
+setVH();
+window.addEventListener('resize', setVH);
+window.addEventListener('orientationchange', ()=>setTimeout(setVH,200));
+if(window.visualViewport){
+  window.visualViewport.addEventListener('resize', setVH);
+  window.visualViewport.addEventListener('scroll', setVH);
+}
+
 buildTokens();
 </script>
 </body>
