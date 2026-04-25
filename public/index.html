@@ -190,7 +190,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .err-msg{font-size:11px;color:#ff7a6e;font-style:italic;text-align:center;padding:4px 0;min-height:18px}
 
 /* Tutorial coach marks */
-.tut-dim{position:absolute;inset:0;background:rgba(0,0,0,.7);z-index:65;pointer-events:none;display:none}
+.tut-dim{position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:999;pointer-events:none;display:none}
 .tut-dim.on{display:block;pointer-events:all}
 .tut-hl{position:absolute;border:3px solid #ffd755;border-radius:12px;z-index:66;pointer-events:none;box-shadow:0 0 30px rgba(255,215,85,.6),0 0 0 9999px rgba(0,0,0,.55);animation:hlPulse 1.2s ease-in-out infinite;transition:.3s}
 @keyframes hlPulse{0%,100%{box-shadow:0 0 30px rgba(255,215,85,.6),0 0 0 9999px rgba(0,0,0,.55)}50%{box-shadow:0 0 40px rgba(255,215,85,.9),0 0 0 9999px rgba(0,0,0,.55)}}
@@ -357,10 +357,6 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     </div>
   </div>
 
-  <div class="tut-dim" id="tut-dim" onclick="nextCoach()"></div>
-  <div class="tut-hl" id="tut-hl" style="display:none"></div>
-  <div class="coach" id="coach"></div>
-
   <!-- Chat -->
   <div id="chat-wrap">
     <div class="chat-msgs" id="chat-msgs"></div>
@@ -407,6 +403,10 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
   </div>
 </div>
 
+<!-- Tutorial overlay (top-level so it works on every screen) -->
+<div class="tut-dim" id="tut-dim" onclick="nextCoach()"></div>
+<div class="coach" id="coach"></div>
+
 </div>
 
 <script>
@@ -416,8 +416,76 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 const socket = io({transports:['websocket','polling']});
 let myId=null, myRoomCode=null, gameState=null, myPlayerIndex=-1, isHost=false;
 
-socket.on('connect',()=>{myId=socket.id});
-socket.on('state',(s)=>{gameState=s;myPlayerIndex=s.players.findIndex(p=>p.id===myId);renderAll()});
+// ─── PERSISTENT SESSION (survives page refresh) ───
+const SESSION_KEY = 'ks_session';
+function saveSession(data){
+  try{localStorage.setItem(SESSION_KEY,JSON.stringify({...data,ts:Date.now()}))}catch(e){}
+}
+function loadSession(){
+  try{
+    const raw=localStorage.getItem(SESSION_KEY);
+    if(!raw)return null;
+    const s=JSON.parse(raw);
+    // Sessions older than 6 hours are stale
+    if(Date.now()-s.ts > 6*60*60*1000){clearSession();return null}
+    return s;
+  }catch(e){return null}
+}
+function clearSession(){try{localStorage.removeItem(SESSION_KEY)}catch(e){}}
+
+socket.on('connect',()=>{
+  myId=socket.id;
+  // Try auto-rejoin on (re)connect using saved session
+  const saved=loadSession();
+  if(saved && saved.code && saved.name && saved.heroIdx !== undefined){
+    selectedHero=saved.heroIdx;
+    const token=HEROES[selectedHero];
+    socket.emit('join_room',{
+      code:saved.code,
+      name:saved.name,
+      token:{icon:token.emj,color:token.color,role:token.role}
+    },(res)=>{
+      if(res?.ok){
+        myRoomCode=res.code;gameState=res.state;
+        myPlayerIndex=res.state.players.findIndex(p=>p.id===myId);
+        isHost=(res.state.hostId===myId);
+        if(res.reconnected){
+          // Successful reconnect into a live game — go straight to game screen
+          if(res.state.phase==='playing'){
+            enterGame();
+            setTimeout(()=>flashAchv('✦','WELCOME BACK',saved.name),700);
+          } else {
+            // Back in lobby
+            document.getElementById('create-section').style.display='none';
+            document.getElementById('join-section').style.display='none';
+            document.getElementById('room-section').style.display='block';
+            document.getElementById('room-code').textContent=res.code;
+            document.getElementById('start-btn').style.display=isHost?'flex':'none';
+            renderLobbyPlayers();
+          }
+        }
+      } else {
+        // Saved session no longer valid (room expired, name taken, etc.) — clear it
+        clearSession();
+      }
+    });
+  }
+});
+socket.on('state',(s)=>{
+  gameState=s;
+  myPlayerIndex=s.players.findIndex(p=>p.id===myId);
+  isHost=(s.hostId===myId);
+  // Auto-switch into game if I'm in a playing room
+  if(s.phase==='playing' && myPlayerIndex>=0 && document.getElementById('lobby-scr').classList.contains('active')){
+    enterGame();
+  }
+  // Update start button visibility if in lobby
+  if(s.phase==='lobby'){
+    const sb=document.getElementById('start-btn');
+    if(sb)sb.style.display=isHost?'flex':'none';
+  }
+  renderAll();
+});
 socket.on('dice_rolled',({playerId,d1,d2})=>{
   SFX.dice();animateDiceFaces(d1,d2);
   const p=gameState?.players.find(pl=>pl.id===playerId);
@@ -557,6 +625,7 @@ function doCreate(){
   socket.emit('create_room',{name,token:{icon:token.emj,color:token.color,role:token.role}},(res)=>{
     if(!res.ok){showErr('lobby-err',res.err);return}
     myRoomCode=res.code;gameState=res.state;myPlayerIndex=0;isHost=true;
+    saveSession({code:res.code,name,heroIdx:selectedHero});
     document.getElementById('create-section').style.display='none';
     document.getElementById('join-section').style.display='none';
     document.getElementById('room-section').style.display='block';
@@ -574,7 +643,8 @@ function doJoin(){
   const token=HEROES[selectedHero];
   socket.emit('join_room',{code,name,token:{icon:token.emj,color:token.color,role:token.role}},(res)=>{
     if(!res.ok){showErr('join-err',res.err);SFX.error();return}
-    myRoomCode=res.code;gameState=res.state;myPlayerIndex=res.state.players.findIndex(p=>p.id===myId);isHost=false;
+    myRoomCode=res.code;gameState=res.state;myPlayerIndex=res.state.players.findIndex(p=>p.id===myId);isHost=(res.state.hostId===myId);
+    saveSession({code:res.code,name,heroIdx:selectedHero});
     if(res.reconnected){
       SFX.levelUp();
       setTimeout(()=>flashAchv('✦','WELCOME BACK',name),500);
@@ -585,7 +655,7 @@ function doJoin(){
       document.getElementById('join-section').style.display='none';
       document.getElementById('room-section').style.display='block';
       document.getElementById('room-code').textContent=res.code;
-      document.getElementById('start-btn').style.display='none';
+      document.getElementById('start-btn').style.display=isHost?'flex':'none';
       renderLobbyPlayers();
       SFX.corner();
     }
@@ -609,17 +679,43 @@ function renderLobbyPlayers(){
     </div>`).join('');
 }
 
+let mapClickAttached=false;
 function enterGame(){
   document.getElementById('lobby-scr').classList.remove('active');
   document.getElementById('game-scr').classList.add('active');
-  initCanvas();setupMapClick();
-  renderAll();
+  // Wait for the screen to actually be painted before sizing the canvas
+  requestAnimationFrame(()=>{
+    requestAnimationFrame(()=>{
+      initCanvas();
+      // Only attach map click listener once to avoid duplicates
+      if(!mapClickAttached){
+        setupMapClick();
+        mapClickAttached=true;
+      }
+      renderAll();
+    });
+  });
   SFX.levelUp();
 }
 
 function goLobby(){
+  // Confirm before leaving since session will be cleared
+  if(gameState && gameState.phase==='playing'){
+    if(!confirm('Leave the game?\n\nYour spot will be saved — you can rejoin with the same name & room code.')){return}
+  }
   document.getElementById('game-scr').classList.remove('active');
   document.getElementById('lobby-scr').classList.add('active');
+  // Reset lobby UI
+  document.getElementById('create-section').style.display='block';
+  document.getElementById('join-section').style.display='block';
+  document.getElementById('room-section').style.display='none';
+  // Don't clear session — they might want to rejoin from the lobby
+}
+
+function fullyLeaveGame(){
+  // Used if we want to truly forget the session
+  clearSession();
+  goLobby();
 }
 
 function showErr(id,msg){const el=document.getElementById(id);el.textContent=msg;setTimeout(()=>el.textContent='',3000)}
@@ -1091,44 +1187,92 @@ function closeSheet(){SFX.tap();document.querySelectorAll('.sheet').forEach(s=>s
 //  TUTORIAL
 // ═══════════════════════════════════════════════════
 const COACHES=[
-  {emj:'👑',title:'Welcome, Steward!',body:'Kingdom Steward is a multiplayer quest of faith & fortune. Roll dice, build ministries, tithe faithfully, and climb the leaderboard!'},
-  {emj:'💰',title:'Earn Gold',body:'Every lap around the board earns 200g. Wisdom cards give bonus gold. Don\'t forget to tithe 10% each lap — it fills the communal pool!'},
-  {emj:'⭐',title:'XP & Levels',body:'Every action earns XP. Fill your XP bar to LEVEL UP with golden particles and fanfare sounds. Higher levels give score bonuses!'},
-  {emj:'🎯',title:'Daily Quests',body:'Watch the top-right card for your current quest — like "tithe 3 times" for bonus gold. Complete quests for extra rewards!'},
-  {emj:'🎲',title:'Roll & Move',body:'On your turn, tap the big gold ROLL button. Your token hops across the Holy Land map space by space. Other players see it in real-time!'},
-  {emj:'🏛',title:'Build Ministries',body:'Land on a property space and tap BUILD (200g) to own it. A gold star ⭐ appears on your owned spaces. More ministries = higher score.'},
-  {emj:'📜',title:'Card Types',body:'Purple Scrolls = Wisdom rewards · Green hands = Community blessings · Blue ? = Parable challenges · Red ⚠️ = Temptations to resist!'},
-  {emj:'🎖',title:'12 Achievements',body:'Earn badges for milestones: First Tithe, Builder, Combo x3, Wealthy, Kingdom Heir. The 🎖 button shows your badge collection!'},
-  {emj:'🏆',title:'Win the Kingdom',body:'Highest Kingdom Impact Score wins! Score = gold + ministries + wisdom + tithes + level bonuses. Most generous player gets a 20pt bonus!'},
+  {
+    emj:'👑',
+    title:'Welcome, Steward!',
+    body:'Kingdom Steward is a faith-based reimagining of the classic board game — but with a twist. Instead of bankrupting opponents, you build the Kingdom of God through wise stewardship. Let\'s learn how!'
+  },
+  {
+    emj:'🎲',
+    title:'How a Turn Works',
+    body:'On your turn:<br><br>① <b>Cast Lots</b> — tap the gold dice button<br>② <b>Move</b> — your token hops across the Holy Land map<br>③ <b>Land & Act</b> — draw a card, pay tithe, or buy a ministry<br>④ <b>End Turn</b> — pass to the next pilgrim',
+    html:true
+  },
+  {
+    emj:'🃏',
+    title:'Cards You\'ll Draw',
+    body:'Just like Monopoly\'s Chance & Community Chest cards, you\'ll draw cards when landing on certain spaces:<br><br>📜 <b>Scroll of Wisdom</b> — blessings & gold<br>🤝 <b>Acts of Apostles</b> — community giving<br>❓ <b>Parable Challenge</b> — Bible trivia for bonus<br>⚠️ <b>Temptation</b> — tests of character',
+    html:true
+  },
+  {
+    emj:'🏆',
+    title:'WIN: Kingdom Impact',
+    body:'Maximize your Kingdom Impact Score through:<br><br>💰 Talents (gold) held<br>🏛 Ministries built<br>⚖️ Tithes given<br>🤝 Community served<br>📜 Wisdom cards collected<br><br>Most generous player gets a +20pt bonus!',
+    html:true
+  },
+  {
+    emj:'💔',
+    title:'LOSE: Spiritual Bankruptcy',
+    body:'You can fall into Spiritual Bankruptcy by:<br><br>🪙 Falling into debt with no assets<br>🐍 Accepting 3 Temptation cards in a row<br>⚖️ Failing to tithe for 3 consecutive laps<br>👥 Community trust reaching zero',
+    html:true
+  },
+  {
+    emj:'⚔️',
+    title:'Monopoly vs Kingdom Steward',
+    body:'<b>Monopoly</b> 🎩<br>• Bankrupt opponents<br>• Rent extraction<br>• Hotels for profit<br>• Go to Jail<br><br><b>Kingdom Steward</b> 👑<br>• Build the community<br>• Blessings & tithes<br>• Ministries for impact<br>• Wilderness testing',
+    html:true
+  },
+  {
+    emj:'⭐',
+    title:'XP, Levels & Combos',
+    body:'Every action earns XP. Fill the bar to LEVEL UP! Chain 3+ positive cards in a row for a COMBO 🔥 with bonus rewards.<br><br>The 🎖 button shows your 12 achievements — earn them all to become a Kingdom Heir!',
+    html:true
+  },
+  {
+    emj:'🌐',
+    title:'Multiplayer Tips',
+    body:'Share your 4-letter code with friends — they join on their own phones. Up to 6 players!<br><br>💡 <b>Got disconnected?</b> Type your original name + room code to rejoin exactly where you left off.',
+    html:true
+  },
+  {
+    emj:'🙏',
+    title:'Ready to Begin!',
+    body:'"Well done, good and faithful servant! You have been faithful with a few things; I will put you in charge of many things." — Matthew 25:21<br><br>May your stewardship be faithful!',
+    html:true
+  },
 ];
 let coachIdx=0;
-function startTutorial(){coachIdx=0;showCoach();SFX.levelUp()}
+function startTutorial(){
+  coachIdx=0;
+  showCoach();
+  SFX.levelUp();
+}
 function showCoach(){
   const c=COACHES[coachIdx];
   const coach=document.getElementById('coach');
   const dim=document.getElementById('tut-dim');
-  const hl=document.getElementById('tut-hl');
+  if(!coach||!dim){console.error('Tutorial elements missing');return}
   dim.classList.add('on');
-  coach.classList.add('on');
-  hl.style.display='none'; // no element-targeting, just centered slides
   const dots=COACHES.map((_,i)=>`<div class="cd ${i===coachIdx?'on':''}"></div>`).join('');
+  const bodyContent = c.html ? c.body : c.body;
   coach.innerHTML=`
-    <div style="text-align:center;font-size:44px;margin-bottom:8px;filter:drop-shadow(0 3px 6px rgba(255,215,85,.5))">${c.emj}</div>
+    <div style="text-align:center;font-size:48px;margin-bottom:8px;filter:drop-shadow(0 3px 6px rgba(255,215,85,.5))">${c.emj}</div>
     <div class="coach-step" style="text-align:center">STEP ${coachIdx+1} OF ${COACHES.length}</div>
-    <div class="coach-title" style="text-align:center;font-size:16px">${c.title}</div>
-    <div class="coach-body" style="text-align:center">${c.body}</div>
-    <div class="coach-btns">
+    <div class="coach-title" style="text-align:center;font-size:17px;margin-bottom:10px">${c.title}</div>
+    <div class="coach-body" style="text-align:left;line-height:1.6">${bodyContent}</div>
+    <div class="coach-btns" style="margin-top:14px">
+      ${coachIdx>0?'<button class="coach-btn" style="background:transparent;color:#a08060;border:1px solid #6a4818" onclick="prevCoach()">← Back</button>':'<div></div>'}
       <div class="coach-dots">${dots}</div>
       <button class="coach-btn" onclick="nextCoach()">${coachIdx===COACHES.length-1?'Got it ✨':'Next →'}</button>
     </div>
   `;
-  // Center the coach card in the viewport
   coach.style.cssText = `
-    left:50%;top:50%;transform:translate(-50%,-50%);
-    max-width:300px;width:calc(100% - 40px);display:block;
+    position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+    max-width:330px;width:calc(100% - 32px);max-height:85vh;overflow-y:auto;
+    display:block;
     background:linear-gradient(180deg,#2a180a,#1a0d05);
-    border:2px solid #ffd755;border-radius:14px;padding:18px;
-    z-index:70;box-shadow:0 0 40px rgba(255,215,85,.5);
+    border:2px solid #ffd755;border-radius:14px;padding:20px 18px;
+    z-index:1000;box-shadow:0 0 40px rgba(255,215,85,.5);
     animation:cardFlip .35s ease;
   `;
   SFX.tap();
@@ -1138,12 +1282,13 @@ function nextCoach(){
   if(coachIdx>=COACHES.length){endTutorial();return}
   showCoach();
 }
+function prevCoach(){
+  if(coachIdx>0){coachIdx--;showCoach()}
+}
 function endTutorial(){
   document.getElementById('tut-dim').classList.remove('on');
-  document.getElementById('tut-hl').style.display='none';
   const coach=document.getElementById('coach');
-  coach.classList.remove('on');
-  coach.style.cssText='';
+  coach.style.cssText='display:none';
   SFX.levelUp();
 }
 

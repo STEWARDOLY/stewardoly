@@ -135,6 +135,7 @@ function getPublicState(state) {
   return {
     code: state.code,
     phase: state.phase,
+    hostId: state.hostId,
     players: state.players,
     currentPlayerIndex: state.currentPlayerIndex,
     round: state.round,
@@ -333,13 +334,15 @@ io.on('connection', (socket) => {
 
     if (existing) {
       // Reconnection — restore the player's spot and update their socket.id
+      const wasHost = state.hostId === existing.id;
       existing.id = socket.id;
       existing.connected = true;
+      // If this player was the host, update hostId to new socket.id
+      if (wasHost) state.hostId = socket.id;
       addLog(state, `${existing.name} rejoined the room ✦`);
       socket.join(code.toUpperCase());
       socket.data.roomCode = code.toUpperCase();
       socket.data.playerId = socket.id;
-      // If it's their turn, update the currentPlayerIndex (by finding them again)
       broadcastState(code.toUpperCase());
       return cb({ ok: true, code: code.toUpperCase(), state: getPublicState(state), reconnected: true });
     }
