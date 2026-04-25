@@ -101,28 +101,32 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 @keyframes hotPulse{0%,100%{box-shadow:0 2px 0 #1e1208,0 0 0 rgba(224,101,64,0)}50%{box-shadow:0 2px 0 #1e1208,0 0 14px rgba(224,101,64,.7)}}
 
 /* Overlay & cards */
-.overlay{position:absolute;inset:0;background:rgba(0,0,0,.8);z-index:30;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
 .overlay.on{display:flex;animation:fadeIn .2s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.card-big{width:100%;max-width:310px;background:linear-gradient(180deg,#2a180a,#1a0d05);border:3px solid var(--cc,#c9922a);border-radius:18px;padding:0;text-align:center;animation:cardFlip .6s cubic-bezier(.5,1.5,.5,1);position:relative;overflow:hidden;box-shadow:0 0 40px var(--cc,#c9922a),0 8px 24px rgba(0,0,0,.7)}
+.card-big{width:100%;max-width:300px;max-height:calc(100dvh - 32px);max-height:calc(100vh - 32px);overflow-y:auto;background:linear-gradient(180deg,#2a180a,#1a0d05);border:3px solid var(--cc,#c9922a);border-radius:18px;padding:0;text-align:center;animation:cardFlip .6s cubic-bezier(.5,1.5,.5,1);position:relative;box-shadow:0 0 40px var(--cc,#c9922a),0 8px 24px rgba(0,0,0,.7);scrollbar-width:thin}
 @keyframes cardFlip{0%{transform:rotateY(90deg) scale(.5);opacity:0}50%{opacity:1}100%{transform:rotateY(0) scale(1);opacity:1}}
-.card-top{padding:20px 20px 12px;background:linear-gradient(180deg,var(--cc,#c9922a) 0%,transparent 100%);position:relative}
-.card-icon-big{font-size:52px;margin-bottom:6px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));animation:bounceIn .6s ease}
+.card-top{padding:14px 18px 10px;background:linear-gradient(180deg,var(--cc,#c9922a) 0%,transparent 100%);position:relative}
+.card-icon-big{font-size:42px;margin-bottom:4px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));animation:bounceIn .6s ease}
 @keyframes bounceIn{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
-.card-type{font-family:'Cinzel',serif;font-size:10px;letter-spacing:.15em;color:#1a0d05;font-weight:700;margin-bottom:4px}
-.card-name{font-family:'Cinzel',serif;font-size:17px;color:#fff;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.5)}
-.card-body{padding:16px 20px 18px}
-.card-reward{display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:14px;padding:12px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid var(--cc,#c9922a)}
-.reward-chip{display:flex;align-items:center;gap:4px;background:linear-gradient(180deg,#3a2410,#1e1208);padding:6px 12px;border-radius:20px;border:1.5px solid #c9922a}
-.reward-val{font-family:'Cinzel',serif;font-size:20px;font-weight:700;color:#ffd755;text-shadow:0 1px 2px #000}
+.card-type{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.15em;color:#1a0d05;font-weight:700;margin-bottom:3px}
+.card-name{font-family:'Cinzel',serif;font-size:15px;color:#fff;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.card-body{padding:12px 18px 14px}
+.card-desc{font-size:12px;color:#f2c96e;line-height:1.5;margin-bottom:10px;text-align:left}
+.card-reward{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;padding:10px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid var(--cc,#c9922a)}
+.reward-chip{display:flex;align-items:center;gap:4px;background:linear-gradient(180deg,#3a2410,#1e1208);padding:5px 11px;border-radius:20px;border:1.5px solid #c9922a}
+.reward-val{font-family:'Cinzel',serif;font-size:18px;font-weight:700;color:#ffd755;text-shadow:0 1px 2px #000}
 .reward-val.neg{color:#ff7a6e}
-.reward-coin{width:16px;height:16px;background:radial-gradient(circle at 30% 30%,#ffd755,#c9922a);border-radius:50%}
-.card-verse-mini{font-size:10px;color:#a08060;font-style:italic;padding:6px 0;border-top:1px dashed #6a4818;margin-top:4px}
-.card-btns{display:flex;gap:8px;margin-top:12px}
-.card-btn{flex:1;height:40px;border-radius:10px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;letter-spacing:.05em;border:none;cursor:pointer;transition:.1s}
+.reward-coin{width:14px;height:14px;background:radial-gradient(circle at 30% 30%,#ffd755,#c9922a);border-radius:50%}
+.card-verse-mini{font-size:10px;color:#a08060;font-style:italic;padding:6px 0;border-top:1px dashed #6a4818;margin-top:4px;line-height:1.4}
+.card-watcher{font-size:11px;color:#a08060;font-style:italic;padding:8px 12px;background:rgba(0,0,0,.2);border-radius:8px;margin-top:8px;text-align:center;line-height:1.4}
+.card-watcher b{color:#ffd755;font-style:normal;font-family:'Cinzel',serif;font-weight:600}
+.card-btns{display:flex;gap:7px;margin-top:10px}
+.card-btn{flex:1;height:38px;border-radius:9px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.05em;border:none;cursor:pointer;transition:.1s}
 .card-btn.claim{background:linear-gradient(180deg,#6ced8d,#2a9d4a);color:#0e2a14;box-shadow:0 3px 0 #1a5028}
 .card-btn.claim:active{transform:translateY(3px);box-shadow:none}
 .card-btn.skip{background:linear-gradient(180deg,#3a2410,#1e1208);color:#a08060;border:1.5px solid #6a4818}
+.card-btn.watch{background:linear-gradient(180deg,#3a2410,#1e1208);color:#a08060;border:1.5px solid #6a4818;width:100%}
 
 .level-up{position:absolute;top:30%;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#ffd755,#c9922a);padding:12px 24px;border-radius:20px;font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:#1a0d05;z-index:40;opacity:0;pointer-events:none;box-shadow:0 0 40px #ffd755;text-shadow:0 1px 1px rgba(255,255,255,.5)}
 .level-up.show{animation:levelUpAnim 2.5s ease}
@@ -356,29 +360,6 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 
   <div class="level-up" id="lvl-up">⭐ LEVEL UP! ⭐</div>
 
-  <div class="overlay" id="card-ov">
-    <div class="card-big" id="card-big">
-      <div class="card-top">
-        <div class="card-icon-big" id="c-icon">📜</div>
-        <div class="card-type" id="c-type">SCROLL OF WISDOM</div>
-        <div class="card-name" id="c-name">The Generous Lender</div>
-      </div>
-      <div class="card-body">
-        <div class="card-reward">
-          <div class="reward-chip">
-            <div class="reward-coin"></div>
-            <div class="reward-val" id="c-reward">+150</div>
-          </div>
-        </div>
-        <div class="card-verse-mini" id="c-verse">"Deut 28:12"</div>
-        <div class="card-btns">
-          <button class="card-btn claim" onclick="claimCard(true)">✦ CLAIM</button>
-          <button class="card-btn skip" onclick="claimCard(false)" id="c-skip">Skip</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <!-- Chat -->
   <div id="chat-wrap" class="collapsed">
     <button class="chat-toggle" onclick="toggleChat()" id="chat-toggle">💬 Chat</button>
@@ -433,6 +414,35 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 <!-- Tutorial overlay (top-level so it works on every screen) -->
 <div class="tut-dim" id="tut-dim" onclick="nextCoach()"></div>
 <div class="coach" id="coach"></div>
+
+<!-- Card overlay (top-level so it never gets clipped by parent containers) -->
+<div class="overlay" id="card-ov">
+  <div class="card-big" id="card-big">
+    <div class="card-top">
+      <div class="card-icon-big" id="c-icon">📜</div>
+      <div class="card-type" id="c-type">SCROLL OF WISDOM</div>
+      <div class="card-name" id="c-name">The Generous Lender</div>
+    </div>
+    <div class="card-body">
+      <div class="card-desc" id="c-desc"></div>
+      <div class="card-reward">
+        <div class="reward-chip">
+          <div class="reward-coin"></div>
+          <div class="reward-val" id="c-reward">+150</div>
+        </div>
+      </div>
+      <div class="card-verse-mini" id="c-verse">"Deut 28:12"</div>
+      <div class="card-watcher" id="c-watcher" style="display:none"></div>
+      <div class="card-btns" id="c-btns">
+        <button class="card-btn claim" onclick="claimCard(true)">✦ CLAIM</button>
+        <button class="card-btn skip" onclick="claimCard(false)" id="c-skip">Skip</button>
+      </div>
+      <div class="card-btns" id="c-watch-btns" style="display:none">
+        <button class="card-btn watch" onclick="closeWatcherCard()">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
 
 </div>
 
@@ -1017,19 +1027,50 @@ function claimCard(accept){
   });
 }
 
-function showCard(c){
-  pendingCard=c;
+function showCard(c, mode){
+  // mode: 'active' = it's my turn, show with action buttons
+  //       'watcher' = another player's turn, show as informational only
+  // If mode not specified, decide based on turn
+  if(!mode) mode = isMyTurn() ? 'active' : 'watcher';
+
+  pendingCard = mode==='active' ? c : null;
+
   const ccol={'Scroll of Wisdom':'#a785e0','Acts of Apostles':'#4aad70','Parable Challenge':'#5b9bdc','Temptation':'#d85a3a','Wilderness':'#d85a3a','Bitter Waters':'#d85a3a'};
   const mapped=ccol[c.badge]||'#c9922a';
   document.getElementById('c-icon').textContent=c.icon;
   document.getElementById('c-type').textContent=(c.badge||'').toUpperCase();
   document.getElementById('c-name').textContent=c.title;
   document.getElementById('c-verse').textContent=c.verse;
+  // Show description body if available
+  const descEl=document.getElementById('c-desc');
+  if(c.body){descEl.textContent=c.body;descEl.style.display='block'}
+  else{descEl.style.display='none'}
   const r=document.getElementById('c-reward');
   r.textContent=c.fx>0?`+${c.fx}`:(c.fx<0?`${c.fx}`:'+BLESSING');
   r.className='reward-val'+(c.fx<0?' neg':'');
   document.getElementById('card-big').style.setProperty('--cc',mapped);
+
+  // Show appropriate buttons + watcher info
+  if(mode==='watcher'){
+    // Show whose turn it is, hide claim/skip, show "Got it" button
+    const cur=gameState?.players[gameState.currentPlayerIndex];
+    const watcher=document.getElementById('c-watcher');
+    watcher.innerHTML=`<b>${cur?cur.icon+' '+cur.name:'A player'}</b> drew this card on their turn. Watch to see what they decide!`;
+    watcher.style.display='block';
+    document.getElementById('c-btns').style.display='none';
+    document.getElementById('c-watch-btns').style.display='flex';
+  } else {
+    document.getElementById('c-watcher').style.display='none';
+    document.getElementById('c-btns').style.display='flex';
+    document.getElementById('c-watch-btns').style.display='none';
+  }
+
   document.getElementById('card-ov').classList.add('on');
+}
+
+function closeWatcherCard(){
+  document.getElementById('card-ov').classList.remove('on');
+  SFX.tap();
 }
 
 function sendChat(){
@@ -1144,9 +1185,13 @@ function renderAll(){
 
   drawMap();
 
-  // Pending card for me?
-  if(gameState.pendingCard&&myTurn&&!document.getElementById('card-ov').classList.contains('on')){
-    showCard(gameState.pendingCard);
+  // Pending card — show to everyone, but in different modes
+  if(gameState.pendingCard&&!document.getElementById('card-ov').classList.contains('on')){
+    showCard(gameState.pendingCard, myTurn?'active':'watcher');
+  }
+  // If card was drawn but it's no longer my turn (or pending card cleared), close any open card
+  if(!gameState.pendingCard && document.getElementById('card-ov').classList.contains('on')){
+    document.getElementById('card-ov').classList.remove('on');
   }
 
   // Achievements from state
