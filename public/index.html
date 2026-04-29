@@ -128,6 +128,16 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .card-btn.skip{background:linear-gradient(180deg,#3a2410,#1e1208);color:#a08060;border:1.5px solid #6a4818}
 .card-btn.watch{background:linear-gradient(180deg,#3a2410,#1e1208);color:#a08060;border:1.5px solid #6a4818;width:100%}
 
+/* Trivia option buttons — selectable answer choices */
+.trivia-opt{width:100%;background:linear-gradient(180deg,#3a2410,#1e1208);border:2px solid #6a4818;border-radius:9px;padding:10px 12px;color:#f2c96e;font-family:system-ui,sans-serif;font-size:13px;font-weight:500;text-align:left;cursor:pointer;transition:.15s;display:flex;align-items:center;gap:8px}
+.trivia-opt:hover{border-color:#c9922a;background:linear-gradient(180deg,#4a3010,#2e1c08)}
+.trivia-opt.selected{border-color:#ffd755;background:linear-gradient(180deg,#5a3b1a,#3a2410);box-shadow:0 0 12px rgba(255,215,85,.3)}
+.trivia-opt.correct{border-color:#6ced8d;background:linear-gradient(180deg,#1e3a14,#0e2a08);color:#6ced8d}
+.trivia-opt.wrong{border-color:#ff7a6e;background:linear-gradient(180deg,#3a1a14,#2a0e08);color:#ff7a6e}
+.trivia-opt-letter{display:inline-flex;width:22px;height:22px;border-radius:50%;background:rgba(201,146,42,.2);align-items:center;justify-content:center;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:#ffd755;flex-shrink:0}
+.trivia-opt.correct .trivia-opt-letter{background:#6ced8d;color:#0e2a14}
+.trivia-opt.wrong .trivia-opt-letter{background:#ff7a6e;color:#3a1a14}
+
 .level-up{position:absolute;top:30%;left:50%;transform:translateX(-50%);background:linear-gradient(180deg,#ffd755,#c9922a);padding:12px 24px;border-radius:20px;font-family:'Cinzel',serif;font-size:15px;font-weight:700;color:#1a0d05;z-index:40;opacity:0;pointer-events:none;box-shadow:0 0 40px #ffd755;text-shadow:0 1px 1px rgba(255,255,255,.5)}
 .level-up.show{animation:levelUpAnim 2.5s ease}
 @keyframes levelUpAnim{0%{opacity:0;transform:translateX(-50%) scale(.5)}15%{opacity:1;transform:translateX(-50%) scale(1.15)}30%{transform:translateX(-50%) scale(1)}85%{opacity:1}100%{opacity:0;transform:translateX(-50%) scale(.9)}}
@@ -425,7 +435,14 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     </div>
     <div class="card-body">
       <div class="card-desc" id="c-desc"></div>
-      <div class="card-reward">
+      <!-- Trivia question (only shown for trivia cards) -->
+      <div id="c-trivia" style="display:none">
+        <div id="c-question" style="font-size:14px;color:#f2c96e;font-weight:600;line-height:1.4;margin-bottom:10px;text-align:left"></div>
+        <div id="c-options" style="display:flex;flex-direction:column;gap:6px;margin-bottom:8px"></div>
+        <div id="c-warn" style="font-size:11px;color:#ff9266;background:rgba(192,58,26,.15);border:1px solid rgba(192,58,26,.4);border-radius:8px;padding:7px 10px;margin-bottom:8px;line-height:1.4"></div>
+      </div>
+      <!-- Reward chip (regular cards only) -->
+      <div class="card-reward" id="c-reward-row">
         <div class="reward-chip">
           <div class="reward-coin"></div>
           <div class="reward-val" id="c-reward">+150</div>
@@ -439,6 +456,28 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
       </div>
       <div class="card-btns" id="c-watch-btns" style="display:none">
         <button class="card-btn watch" onclick="closeWatcherCard()">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Card OFFER overlay — asks "Want to draw a card?" before drawing -->
+<div class="overlay" id="offer-ov">
+  <div class="card-big" id="offer-big" style="--cc:#c9922a">
+    <div class="card-top">
+      <div class="card-icon-big" id="o-icon">📜</div>
+      <div class="card-type" id="o-type">CARD AVAILABLE</div>
+      <div class="card-name" id="o-name">Draw a card?</div>
+    </div>
+    <div class="card-body">
+      <div class="card-desc" id="o-desc">You landed on a card space. Would you like to draw a card?</div>
+      <div class="card-watcher" id="o-watcher" style="display:none"></div>
+      <div class="card-btns" id="o-btns">
+        <button class="card-btn claim" onclick="acceptCardOffer()">✦ DRAW</button>
+        <button class="card-btn skip" onclick="declineCardOffer()">Decline</button>
+      </div>
+      <div class="card-btns" id="o-watch-btns" style="display:none">
+        <button class="card-btn watch" onclick="document.getElementById('offer-ov').classList.remove('on')">Got it</button>
       </div>
     </div>
   </div>
@@ -1010,52 +1049,120 @@ function doEndTurn(){
   socket.emit('end_turn',{},(res)=>{if(!res?.ok)SFX.error();else SFX.nextTurn();comboStreak=0});
 }
 
+let selectedTriviaIdx = null;
+
+function selectTriviaOption(idx){
+  if(!isMyTurn())return;
+  selectedTriviaIdx=idx;
+  document.querySelectorAll('.trivia-opt').forEach((el,i)=>{
+    el.classList.toggle('selected',i===idx);
+  });
+  SFX.tap();
+}
+
 function claimCard(accept){
+  if(!isMyTurn()){
+    document.getElementById('card-ov').classList.remove('on');
+    pendingCard=null;return;
+  }
+  const c=pendingCard;
+  if(!c){document.getElementById('card-ov').classList.remove('on');return}
+
+  // For trivia cards, an answer must be selected to claim
+  if(c.options && accept && selectedTriviaIdx===null){
+    // Highlight the question prompt
+    const q=document.getElementById('c-question');
+    q.style.animation='shake .3s';
+    setTimeout(()=>q.style.animation='',300);
+    SFX.error();
+    return;
+  }
+
   document.getElementById('card-ov').classList.remove('on');
-  if(!isMyTurn()){pendingCard=null;return}
-  socket.emit('apply_card',{accepted:accept},(res)=>{
+  socket.emit('apply_card',{accepted:accept,triviaAnswer:selectedTriviaIdx},(res)=>{
     if(!res?.ok)return;
-    const c=pendingCard;
-    if(accept){
-      if(c.fx>0){addXP(15);earnBadge('first_wisdom');comboStreak++;if(comboStreak>=3)earnBadge('combo3');if(comboStreak>1)showCombo(comboStreak);SFX.reward();}
+    if(c.options && accept){
+      // Show feedback briefly via achievement bar
+      const wasCorrect = selectedTriviaIdx===c.correct;
+      if(wasCorrect){
+        flashAchv('🎉','CORRECT!','+'+c.fx+' Talents');
+        SFX.reward();addXP(c.difficulty==='hard'?30:c.difficulty==='medium'?20:10);
+        earnBadge('first_wisdom');
+        comboStreak++;
+        if(comboStreak>=3)earnBadge('combo3');
+        if(comboStreak>1)showCombo(comboStreak);
+      } else {
+        flashAchv('❌','WRONG!',c.options[c.correct]+' was correct');
+        SFX.penalty();comboStreak=0;
+      }
+    } else if(accept){
+      if(c.fx>0){addXP(15);earnBadge('first_wisdom');comboStreak++;if(comboStreak>=3)earnBadge('combo3');if(comboStreak>1)showCombo(comboStreak);SFX.reward()}
       else if(c.fx<0){comboStreak=0;SFX.penalty()}
       else SFX.tap();
     } else {
       if(c.badge==='Temptation'||c.title?.includes('Greed')||c.title?.includes('Temptation')){resistCount++;addXP(10);if(resistCount>=3)earnBadge('resist')}
     }
-    pendingCard=null;
+    pendingCard=null;selectedTriviaIdx=null;
   });
 }
 
 function showCard(c, mode){
-  // mode: 'active' = it's my turn, show with action buttons
-  //       'watcher' = another player's turn, show as informational only
-  // If mode not specified, decide based on turn
   if(!mode) mode = isMyTurn() ? 'active' : 'watcher';
 
   pendingCard = mode==='active' ? c : null;
+  selectedTriviaIdx = null;
 
-  const ccol={'Scroll of Wisdom':'#a785e0','Acts of Apostles':'#4aad70','Parable Challenge':'#5b9bdc','Temptation':'#d85a3a','Wilderness':'#d85a3a','Bitter Waters':'#d85a3a'};
-  const mapped=ccol[c.badge]||'#c9922a';
+  const ccol={'Scroll of Wisdom':'#a785e0','Acts of Apostles':'#4aad70','Temptation':'#d85a3a','Wilderness':'#d85a3a','Bitter Waters':'#d85a3a'};
+  // Difficulty-based color for trivia
+  let mapped=ccol[c.badge]||'#c9922a';
+  if(c.difficulty==='easy')mapped='#6ced8d';
+  else if(c.difficulty==='medium')mapped='#5b9bdc';
+  else if(c.difficulty==='hard')mapped='#d85a3a';
+  else if(c.options)mapped='#5b9bdc';
+
   document.getElementById('c-icon').textContent=c.icon;
   document.getElementById('c-type').textContent=(c.badge||'').toUpperCase();
   document.getElementById('c-name').textContent=c.title;
   document.getElementById('c-verse').textContent=c.verse;
-  // Show description body if available
-  const descEl=document.getElementById('c-desc');
-  if(c.body){descEl.textContent=c.body;descEl.style.display='block'}
-  else{descEl.style.display='none'}
-  const r=document.getElementById('c-reward');
-  r.textContent=c.fx>0?`+${c.fx}`:(c.fx<0?`${c.fx}`:'+BLESSING');
-  r.className='reward-val'+(c.fx<0?' neg':'');
   document.getElementById('card-big').style.setProperty('--cc',mapped);
 
-  // Show appropriate buttons + watcher info
+  const descEl=document.getElementById('c-desc');
+  const triviaEl=document.getElementById('c-trivia');
+  const rewardRow=document.getElementById('c-reward-row');
+
+  // ─── TRIVIA CARD ───
+  if(c.options && typeof c.correct==='number'){
+    descEl.style.display='none';
+    rewardRow.style.display='none';
+    triviaEl.style.display='block';
+    document.getElementById('c-question').textContent=c.question;
+    const optsEl=document.getElementById('c-options');
+    optsEl.innerHTML=c.options.map((opt,i)=>{
+      const letter=String.fromCharCode(65+i); // A, B, C
+      const disabled=mode==='watcher'?' style="pointer-events:none;opacity:.7"':'';
+      return `<button class="trivia-opt" onclick="selectTriviaOption(${i})"${disabled}><span class="trivia-opt-letter">${letter}</span><span>${opt}</span></button>`;
+    }).join('');
+    // Warning about penalty
+    document.getElementById('c-warn').innerHTML = `⚠️ <b>Risk:</b> +${c.fx}T if correct, ${c.penalty}T if wrong. Skip to avoid the risk.`;
+  } else {
+    triviaEl.style.display='none';
+    rewardRow.style.display='flex';
+    if(c.body){descEl.textContent=c.body;descEl.style.display='block'}
+    else{descEl.style.display='none'}
+    const r=document.getElementById('c-reward');
+    r.textContent=c.fx>0?`+${c.fx}`:(c.fx<0?`${c.fx}`:'✦ BLESSING');
+    r.className='reward-val'+(c.fx<0?' neg':'');
+  }
+
+  // Watcher vs active mode
   if(mode==='watcher'){
-    // Show whose turn it is, hide claim/skip, show "Got it" button
     const cur=gameState?.players[gameState.currentPlayerIndex];
     const watcher=document.getElementById('c-watcher');
-    watcher.innerHTML=`<b>${cur?cur.icon+' '+cur.name:'A player'}</b> drew this card on their turn. Watch to see what they decide!`;
+    if(c.options){
+      watcher.innerHTML=`<b>${cur?cur.icon+' '+cur.name:'A player'}</b> is answering a trivia question. Watch to see how they do!`;
+    } else {
+      watcher.innerHTML=`<b>${cur?cur.icon+' '+cur.name:'A player'}</b> drew this card. Watch to see what they decide!`;
+    }
     watcher.style.display='block';
     document.getElementById('c-btns').style.display='none';
     document.getElementById('c-watch-btns').style.display='flex';
@@ -1063,6 +1170,9 @@ function showCard(c, mode){
     document.getElementById('c-watcher').style.display='none';
     document.getElementById('c-btns').style.display='flex';
     document.getElementById('c-watch-btns').style.display='none';
+    // Update claim button text for trivia
+    const claimBtn=document.querySelector('#c-btns .claim');
+    if(claimBtn) claimBtn.textContent=c.options?'Submit Answer':'✦ CLAIM';
   }
 
   document.getElementById('card-ov').classList.add('on');
@@ -1071,6 +1181,100 @@ function showCard(c, mode){
 function closeWatcherCard(){
   document.getElementById('card-ov').classList.remove('on');
   SFX.tap();
+}
+
+// ─── CARD OFFER (Draw/Decline prompt) ───
+// Place-themed icons and short descriptions for offer screen
+const PLACE_INFO = {
+  'Capernaum': {icon:'🐟', desc:'Sea of Galilee — fishing villages and miracles.'},
+  'Bethsaida': {icon:'🍞', desc:'Where 5,000 were fed — town of fishermen and faith.'},
+  'Antioch': {icon:'✉️', desc:'Where believers were first called Christians — mission base.'},
+  'Babylon Gate': {icon:'🐍', desc:'Pride and pagan empire — risky territory.'},
+  'Babylon Ct': {icon:'👑', desc:'Babylonian court — temptations of power.'},
+  'Jordan Ford': {icon:'🕊️', desc:'Sacred river of baptism and crossing.'},
+  'Decapolis': {icon:'🏛️', desc:'Ten Greek cities — Gentile mission field.'},
+  'Peraea': {icon:'🤲', desc:'Beyond the Jordan — gathering crowds.'},
+  'Machaerus': {icon:'⛓️', desc:'Fortress where John the Baptist was held.'},
+  'Dead Sea N': {icon:'🧂', desc:'Dead Sea region — judgment and prophecy.'},
+  'Dead Sea S': {icon:'🔥', desc:'Sodom & Gomorrah — places of judgment.'},
+  'Negev': {icon:'🐪', desc:'Southern desert — Abraham\'s journey.'},
+  'Nile Trade': {icon:'⚓', desc:'Egypt — Joseph\'s rise, Moses\' rescue.'},
+  'Sinai': {icon:'⛰️', desc:'Mountain of God — the Law and the Covenant.'},
+  'Hebron': {icon:'🏔️', desc:'David\'s first capital, Caleb\'s inheritance.'},
+  'Judea Hills': {icon:'🌿', desc:'Hill country — John the Baptist\'s wilderness.'},
+  'Nazareth': {icon:'🌟', desc:'Jesus\' hometown — annunciation & rejection.'},
+  'Mt Carmel': {icon:'🔥', desc:'Where Elijah called down fire from heaven.'},
+  'Jerusalem': {icon:'👑', desc:'Holy City — David\'s capital, Resurrection morning.'},
+  'Zion Gate': {icon:'🏛️', desc:'Temple gate — Pentecost outpouring.'},
+  'Samaria': {icon:'💧', desc:'Land of mercy crossing borders.'},
+  'Sychar': {icon:'🪣', desc:'Jacob\'s Well — woman of living water.'},
+  'Mt Gerizim': {icon:'🙌', desc:'Mountain of blessing & true worship.'},
+  'Tiberias': {icon:'⚓', desc:'Sea shore — restoration and 153 fish.'},
+};
+
+function showOffer(offer, mode){
+  const labels = {
+    'card-w': {name:'Scroll of Wisdom', icon:'📜', color:'#a785e0', desc:'Bigger swings — fortunes & blessings await!'},
+    'card-a': {name:'Acts of the Apostles', icon:'🤝', color:'#4aad70', desc:'Community giving & shared blessings.'},
+    'card-p': {name:'Parable Trivia', icon:'❓', color:'#5b9bdc', desc:'Test your Bible knowledge! Easy/Medium/Hard tiers — wrong answers cost Talents.'},
+    'special': {name:'Temptation', icon:'🐍', color:'#d85a3a', desc:'⚠️ Risky! May cost Talents. Decline to skip safely.'},
+  };
+
+  let info;
+  let locationName = '';
+  if(offer.cardType === 'place'){
+    // Place-themed card
+    const placeMeta = PLACE_INFO[offer.placeName] || {icon:'🏠', desc:'A biblical location with its own story.'};
+    info = {
+      name: offer.placeName,
+      icon: placeMeta.icon,
+      color: '#c9922a',
+      desc: placeMeta.desc + ' Draw to discover what happens here!'
+    };
+    locationName = offer.placeName;
+  } else {
+    info = labels[offer.cardType] || {name:'Card', icon:'📜', color:'#c9922a', desc:''};
+    if(offer.placeName) locationName = ' at ' + offer.placeName;
+  }
+
+  document.getElementById('o-icon').textContent=info.icon;
+  document.getElementById('o-type').textContent=info.name.toUpperCase();
+  document.getElementById('o-name').textContent= offer.cardType==='place' ? 'Story of '+offer.placeName : 'Want to draw a card?';
+  document.getElementById('o-desc').textContent=info.desc;
+  document.getElementById('offer-big').style.setProperty('--cc',info.color);
+
+  if(mode==='watcher'){
+    const cur=gameState?.players[gameState.currentPlayerIndex];
+    const what = offer.cardType==='place' ? `${offer.placeName} story` : `${info.name} card`;
+    document.getElementById('o-watcher').innerHTML=`<b>${cur?cur.icon+' '+cur.name:'A player'}</b> is deciding whether to draw a ${what}...`;
+    document.getElementById('o-watcher').style.display='block';
+    document.getElementById('o-btns').style.display='none';
+    document.getElementById('o-watch-btns').style.display='flex';
+  } else {
+    document.getElementById('o-watcher').style.display='none';
+    document.getElementById('o-btns').style.display='flex';
+    document.getElementById('o-watch-btns').style.display='none';
+  }
+
+  document.getElementById('offer-ov').classList.add('on');
+  SFX.tap();
+}
+
+function acceptCardOffer(){
+  if(!isMyTurn())return;
+  document.getElementById('offer-ov').classList.remove('on');
+  socket.emit('draw_card',{},(res)=>{
+    if(!res?.ok)SFX.error();
+  });
+}
+
+function declineCardOffer(){
+  if(!isMyTurn())return;
+  document.getElementById('offer-ov').classList.remove('on');
+  socket.emit('skip_offer',{},(res)=>{
+    if(!res?.ok)SFX.error();
+    else SFX.tap();
+  });
 }
 
 function sendChat(){
@@ -1165,15 +1369,16 @@ function renderAll(){
   const endBtn=document.getElementById('end-btn');
   const buyBtn=document.getElementById('buy-btn');
 
+  const hasPendingDecision = !!(gameState.cardOffer || gameState.pendingCard);
   rollBtn.disabled=!canRoll;
-  endBtn.disabled=!myTurn||!playing;
+  endBtn.disabled=!myTurn||!playing||hasPendingDecision;
   const me2=gameState.players.find(p=>p.id===myId);
   const onProperty=me2&&SPACES[me2.pos]?.t==='property'&&!me2.owned.includes(me2.pos)&&me2.talents>=200;
-  buyBtn.disabled=!myTurn||!playing||!onProperty;
-  buyBtn.classList.toggle('hot',myTurn&&playing&&onProperty);
+  buyBtn.disabled=!myTurn||!playing||!onProperty||hasPendingDecision;
+  buyBtn.classList.toggle('hot',myTurn&&playing&&onProperty&&!hasPendingDecision);
 
-  // After rolling, make End Turn visually prominent (it becomes the primary action)
-  if(myTurn && playing && gameState.rolled && !gameState.pendingCard){
+  // After rolling and resolving any card, make End Turn visually prominent
+  if(myTurn && playing && gameState.rolled && !hasPendingDecision){
     endBtn.classList.add('hot');
   } else {
     if(!onProperty)endBtn.classList.remove('hot');
@@ -1185,11 +1390,18 @@ function renderAll(){
 
   drawMap();
 
-  // Pending card — show to everyone, but in different modes
-  if(gameState.pendingCard&&!document.getElementById('card-ov').classList.contains('on')){
+  // ─── Card OFFER (player can choose to draw or decline) ───
+  if(gameState.cardOffer && !gameState.pendingCard && !document.getElementById('offer-ov').classList.contains('on')){
+    showOffer(gameState.cardOffer, myTurn?'active':'watcher');
+  }
+  if(!gameState.cardOffer && document.getElementById('offer-ov').classList.contains('on')){
+    document.getElementById('offer-ov').classList.remove('on');
+  }
+
+  // ─── Pending CARD (already drawn, awaiting action) ───
+  if(gameState.pendingCard && !document.getElementById('card-ov').classList.contains('on')){
     showCard(gameState.pendingCard, myTurn?'active':'watcher');
   }
-  // If card was drawn but it's no longer my turn (or pending card cleared), close any open card
   if(!gameState.pendingCard && document.getElementById('card-ov').classList.contains('on')){
     document.getElementById('card-ov').classList.remove('on');
   }
@@ -1306,8 +1518,20 @@ const COACHES=[
   },
   {
     emj:'🃏',
-    title:'Cards You\'ll Draw',
-    body:'Just like Monopoly\'s Chance & Community Chest cards, you\'ll draw cards when landing on certain spaces:<br><br>📜 <b>Scroll of Wisdom</b> — blessings & gold<br>🤝 <b>Acts of Apostles</b> — community giving<br>❓ <b>Parable Challenge</b> — Bible trivia for bonus<br>⚠️ <b>Temptation</b> — tests of character',
+    title:"Cards — Choose to Draw",
+    body:'Like Monopoly\'s Chance & Community Chest, but you choose! Land on a card space → a prompt asks <b>"Want to draw a card?"</b> Decline to play it safe, or draw for the chance at rewards (or risks!).<br><br>📜 <b>Scroll of Wisdom</b> — blessings, advances, & gold<br>🤝 <b>Acts of Apostles</b> — community giving<br>❓ <b>Parable Trivia</b> — Bible knowledge with risk<br>⚠️ <b>Temptation</b> — tests of character',
+    html:true
+  },
+  {
+    emj:'🗺️',
+    title:"Place-Themed Stories",
+    body:'Each property on the map has its own biblical stories!<br><br>Land on <b>Capernaum</b> → fishing miracles & healings<br>Land on <b>Sinai</b> → the Ten Commandments<br>Land on <b>Babylon</b> → Daniel\'s lions, fiery furnace<br>Land on <b>Jerusalem</b> → Resurrection morning<br><br>Each location offers cards uniquely tied to events that happened there!',
+    html:true
+  },
+  {
+    emj:'❓',
+    title:"Trivia: Easy / Medium / Hard",
+    body:'Parable trivia comes in three difficulty tiers — risk grows faster than reward at higher tiers!<br><br>🟢 <b>Easy:</b> +60T correct / -30T wrong<br>🔵 <b>Medium:</b> +150T correct / -100T wrong<br>🔴 <b>Hard:</b> +300T correct / -250T wrong<br><br>If you don\'t know the answer, <b>Skip</b> the card to avoid the penalty!',
     html:true
   },
   {
