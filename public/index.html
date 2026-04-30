@@ -425,9 +425,10 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     </div>
     <span id="roll-label">ROLL TO MOVE</span>
   </button>
-  <div class="sec-actions">
-    <button class="sec-btn" id="buy-btn" onclick="doBuyMinistry()" disabled><span class="emj">🏛</span><span>BUILD (200g)</span></button>
-    <button class="sec-btn" id="end-btn" onclick="doEndTurn()" disabled><span class="emj">➡️</span><span>END TURN</span></button>
+  <div class="sec-actions" style="grid-template-columns:1fr 1fr 1fr">
+    <button class="sec-btn" id="buy-btn" onclick="doBuyMinistry()" disabled><span class="emj">🏛</span><span>BUILD</span></button>
+    <button class="sec-btn" id="interact-btn" onclick="openInteractPicker()"><span class="emj">🤝</span><span>INTERACT</span></button>
+    <button class="sec-btn" id="end-btn" onclick="doEndTurn()" disabled><span class="emj">➡️</span><span>END</span></button>
   </div>
 </div>
 </div>
@@ -510,6 +511,92 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
       </div>
       <div class="card-btns" id="o-watch-btns" style="display:none">
         <button class="card-btn watch" onclick="document.getElementById('offer-ov').classList.remove('on')">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- APOSTLE NPC overlay -->
+<div class="overlay" id="apostle-ov">
+  <div class="card-big" style="--cc:#ffd755">
+    <div class="card-top">
+      <div class="card-icon-big" id="ap-icon">✉️</div>
+      <div class="card-type" id="ap-type">DIVINE ENCOUNTER</div>
+      <div class="card-name" id="ap-name">Paul of Tarsus</div>
+    </div>
+    <div class="card-body">
+      <div class="card-desc" id="ap-intro" style="font-style:italic;color:#ffd755"></div>
+      <div class="card-desc" id="ap-body" style="margin-top:6px"></div>
+      <div class="card-verse-mini" id="ap-quote"></div>
+      <div class="card-watcher" id="ap-watcher" style="display:none"></div>
+      <div class="card-btns" id="ap-btns">
+        <button class="card-btn claim" onclick="respondApostle(true)">✦ ACCEPT</button>
+        <button class="card-btn skip" onclick="respondApostle(false)">Decline</button>
+      </div>
+      <div class="card-btns" id="ap-watch-btns" style="display:none">
+        <button class="card-btn watch" onclick="document.getElementById('apostle-ov').classList.remove('on')">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CO-LOCATION (Mandatory interaction) overlay -->
+<div class="overlay" id="colo-ov">
+  <div class="card-big" style="--cc:#dc6b5b">
+    <div class="card-top">
+      <div class="card-icon-big">⚔️</div>
+      <div class="card-type">ENCOUNTER</div>
+      <div class="card-name" id="colo-title">You meet a fellow pilgrim!</div>
+    </div>
+    <div class="card-body">
+      <div class="card-desc" id="colo-desc" style="text-align:center"></div>
+      <div class="card-watcher" id="colo-watcher" style="display:none"></div>
+      <div id="colo-actions" style="display:flex;flex-direction:column;gap:6px;margin-top:10px"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PENDING INTERACTION (target receives proposal) overlay -->
+<div class="overlay" id="pi-ov">
+  <div class="card-big" style="--cc:#5b9bdc">
+    <div class="card-top">
+      <div class="card-icon-big" id="pi-icon">🤝</div>
+      <div class="card-type" id="pi-type">PROPOSAL</div>
+      <div class="card-name" id="pi-title">Player wants to interact</div>
+    </div>
+    <div class="card-body">
+      <div class="card-desc" id="pi-desc" style="text-align:center"></div>
+      <div class="card-watcher" id="pi-watcher" style="display:none"></div>
+      <div class="card-btns" id="pi-btns">
+        <button class="card-btn claim" onclick="respondInteraction(true)">✦ ACCEPT</button>
+        <button class="card-btn skip" onclick="respondInteraction(false)">Decline</button>
+      </div>
+      <div class="card-btns" id="pi-watch-btns" style="display:none">
+        <button class="card-btn watch" onclick="document.getElementById('pi-ov').classList.remove('on')">Got it</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INTERACT WITH OTHER PLAYER picker (free-form, anytime) -->
+<div class="overlay" id="interact-ov">
+  <div class="card-big" style="--cc:#a785e0">
+    <div class="card-top">
+      <div class="card-icon-big">🤝</div>
+      <div class="card-type">INTERACT</div>
+      <div class="card-name">Choose a fellow pilgrim</div>
+    </div>
+    <div class="card-body">
+      <div id="interact-step1">
+        <div class="card-desc" style="text-align:center;margin-bottom:8px">Who do you want to interact with?</div>
+        <div id="interact-players" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div id="interact-step2" style="display:none">
+        <div id="interact-target-label" style="text-align:center;font-family:'Cinzel',serif;font-size:13px;color:#ffd755;margin-bottom:8px"></div>
+        <div id="interact-options" style="display:flex;flex-direction:column;gap:6px"></div>
+      </div>
+      <div class="card-btns" style="margin-top:10px">
+        <button class="card-btn skip" onclick="closeInteractPicker()">Cancel</button>
       </div>
     </div>
   </div>
@@ -601,9 +688,39 @@ socket.on('dice_rolled',({playerId,d1,d2})=>{
 });
 socket.on('card_drawn',({card})=>{if(card)showCard(card)});
 socket.on('card_resolved',(result)=>{
-  // Show the active player's decision/outcome to watchers
-  if(isMyTurn())return; // active player already saw their own outcome
+  if(isMyTurn())return;
   showResolutionToWatcher(result);
+});
+socket.on('ministry_built',({playerName, playerIcon, placeName})=>{
+  // Show toast announcement to all players
+  flashAchv('🏛','MINISTRY BUILT', `${playerIcon} ${playerName} built at ${placeName}!`);
+  SFX.build();
+  // Particle burst at the location
+  if(MC){
+    const sp = SPACES.find(s => s.n === placeName);
+    if(sp) burstParticles(sx(sp.rx), sy(sp.ry), '#ffd755', 25);
+  }
+});
+socket.on('apostle_resolved',(result)=>{
+  // Show outcome toast to everyone
+  const apostle = result.apostle;
+  if(result.accepted){
+    flashAchv(apostle.emj, apostle.name.toUpperCase(), result.message);
+    if(result.delta && result.delta > 0) SFX.reward();
+    else if(result.delta && result.delta < 0) SFX.coin();
+    else SFX.tap();
+  } else {
+    flashAchv(apostle.emj, apostle.name.toUpperCase(), result.message);
+    SFX.tap();
+  }
+});
+socket.on('interaction_resolved',(result)=>{
+  const verb = result.accepted ? 'accepted' : 'declined';
+  const i = result.interaction;
+  flashAchv(i.emj, i.name.toUpperCase(),
+    `${result.targetIcon} ${result.targetName} ${verb} ${result.initiatorIcon} ${result.initiatorName}'s offer`);
+  if(result.accepted) SFX.reward();
+  else SFX.tap();
 });
 socket.on('chat',({name,icon,msg})=>addChatMsg(name,icon,msg));
 socket.on('disconnect',()=>{});
@@ -1360,6 +1477,188 @@ function declineCardOffer(){
   });
 }
 
+// ═══════════════════════════════════════════════════
+//  APOSTLE NPC ENCOUNTER
+// ═══════════════════════════════════════════════════
+function showApostle(apostle, mode){
+  document.getElementById('ap-icon').textContent=apostle.emj;
+  document.getElementById('ap-type').textContent='DIVINE ENCOUNTER';
+  document.getElementById('ap-name').textContent=apostle.name;
+  document.getElementById('ap-intro').textContent=apostle.intro;
+  document.getElementById('ap-body').textContent=apostle.body;
+  document.getElementById('ap-quote').innerHTML=apostle.quote;
+
+  if(mode==='watcher'){
+    const cur=gameState?.players[gameState.currentPlayerIndex];
+    document.getElementById('ap-watcher').innerHTML=
+      `<b>${cur?cur.icon+' '+cur.name:'A pilgrim'}</b> is meeting ${apostle.emj} ${apostle.name}. Watch what they decide!`;
+    document.getElementById('ap-watcher').style.display='block';
+    document.getElementById('ap-btns').style.display='none';
+    document.getElementById('ap-watch-btns').style.display='flex';
+  } else {
+    document.getElementById('ap-watcher').style.display='none';
+    document.getElementById('ap-btns').style.display='flex';
+    document.getElementById('ap-watch-btns').style.display='none';
+  }
+  document.getElementById('apostle-ov').classList.add('on');
+  SFX.corner();
+}
+function respondApostle(accept){
+  if(!isMyTurn())return;
+  document.getElementById('apostle-ov').classList.remove('on');
+  socket.emit('respond_apostle',{accepted:accept},(res)=>{
+    if(!res?.ok){SFX.error();flashAchv('⚠️','CANNOT',res?.err||'Cannot accept right now')}
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  CO-LOCATION (mandatory interaction when on same space)
+// ═══════════════════════════════════════════════════
+function showCoLocation(coloc, mode){
+  const myMove = coloc.playerAId === myId;
+  document.getElementById('colo-title').textContent =
+    myMove ? `You meet ${coloc.playerBIcon} ${coloc.playerBName}!` : `${coloc.playerAIcon} ${coloc.playerAName} meets you!`;
+  document.getElementById('colo-desc').innerHTML =
+    `Both pilgrims at <b>${coloc.placeName}</b>!<br>${myMove?'Choose how to interact — or pass peacefully.':'Wait for them to choose how to engage with you.'}`;
+
+  const actionsEl = document.getElementById('colo-actions');
+  const watcherEl = document.getElementById('colo-watcher');
+
+  if(mode==='watcher' && !myMove && coloc.playerBId !== myId){
+    // Pure watcher (not involved at all)
+    watcherEl.innerHTML = `<b>${coloc.playerAIcon} ${coloc.playerAName}</b> meets <b>${coloc.playerBIcon} ${coloc.playerBName}</b> at ${coloc.placeName}!`;
+    watcherEl.style.display = 'block';
+    actionsEl.innerHTML = '';
+    actionsEl.style.display = 'none';
+  } else if (myMove) {
+    // I'm the active player who landed on them
+    watcherEl.style.display = 'none';
+    actionsEl.style.display = 'flex';
+    actionsEl.innerHTML = INTERACTIONS.map(i =>
+      `<button class="trivia-opt" onclick="proposeInteraction('${coloc.playerBId}','${i.id}')">
+         <span class="trivia-opt-letter">${i.emj}</span>
+         <div style="flex:1;text-align:left">
+           <div style="font-weight:600;color:#ffd755">${i.name}${i.cost?' · '+i.cost+'T':' · Free'}</div>
+           <div style="font-size:11px;color:#a08060;line-height:1.3">${i.desc}</div>
+         </div>
+       </button>`
+    ).join('') + `<button class="card-btn skip" onclick="skipCoLocation()">Pass peacefully</button>`;
+  } else {
+    // I'm the player they landed on — they choose, I wait
+    watcherEl.innerHTML = `<b>${coloc.playerAIcon} ${coloc.playerAName}</b> is choosing how to engage with you...`;
+    watcherEl.style.display = 'block';
+    actionsEl.innerHTML = '';
+    actionsEl.style.display = 'none';
+  }
+
+  document.getElementById('colo-ov').classList.add('on');
+  if(myMove) SFX.dice();
+}
+function skipCoLocation(){
+  document.getElementById('colo-ov').classList.remove('on');
+  socket.emit('skip_colocation',{},(res)=>{
+    if(!res?.ok)SFX.error();
+    else SFX.tap();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  PROPOSE / RESPOND TO INTERACTION
+// ═══════════════════════════════════════════════════
+const INTERACTIONS = [
+  { id:'encourage', emj:'💛', name:'Encourage', desc:'Pay 30T to give them a 50T blessing.', cost:30 },
+  { id:'pray',      emj:'🙏', name:'Pray Together', desc:'Both gain 1 Wisdom Card. Free!', cost:0 },
+  { id:'trade',     emj:'🤝', name:'Tithe-Trade', desc:'Pay 80T to swap board positions.', cost:80 },
+  { id:'challenge', emj:'⚔️', name:'Wisdom Duel', desc:'Coin-flip for 100T from loser.', cost:0 },
+  { id:'tax-collector', emj:'🧾', name:'Tax Collector', desc:'Demand 60T (target must have 2x your wealth).', cost:0 },
+];
+
+function proposeInteraction(targetId, interactionId){
+  document.getElementById('colo-ov').classList.remove('on');
+  document.getElementById('interact-ov').classList.remove('on');
+  socket.emit('propose_interaction',{targetId,interactionId},(res)=>{
+    if(!res?.ok){SFX.error();flashAchv('⚠️','CANNOT',res?.err||'Could not propose')}
+    else SFX.tap();
+  });
+}
+
+function showPendingInteraction(pi){
+  // pi has initiator, target, interactionId — only show to the target
+  if(pi.targetId !== myId){
+    // I'm a watcher
+    const i = INTERACTIONS.find(x=>x.id===pi.interactionId);
+    document.getElementById('pi-icon').textContent = i?.emj || '🤝';
+    document.getElementById('pi-type').textContent = (i?.name || 'Proposal').toUpperCase();
+    document.getElementById('pi-title').textContent = `${pi.initiatorIcon} ${pi.initiatorName} → ${pi.targetIcon} ${pi.targetName}`;
+    document.getElementById('pi-desc').textContent = i?.desc || '';
+    document.getElementById('pi-watcher').innerHTML = `<b>${pi.initiatorIcon} ${pi.initiatorName}</b> proposed <b>${i?.name}</b> with <b>${pi.targetIcon} ${pi.targetName}</b>. Waiting for response...`;
+    document.getElementById('pi-watcher').style.display = 'block';
+    document.getElementById('pi-btns').style.display = 'none';
+    document.getElementById('pi-watch-btns').style.display = 'flex';
+    document.getElementById('pi-ov').classList.add('on');
+    return;
+  }
+  // I'm the target
+  const i = INTERACTIONS.find(x=>x.id===pi.interactionId);
+  document.getElementById('pi-icon').textContent = i?.emj || '🤝';
+  document.getElementById('pi-type').textContent = (i?.name || 'Proposal').toUpperCase();
+  document.getElementById('pi-title').textContent = `${pi.initiatorIcon} ${pi.initiatorName} proposes...`;
+  document.getElementById('pi-desc').innerHTML = `<b>${i?.name}</b><br><span style="font-size:12px">${i?.desc}</span>`;
+  document.getElementById('pi-watcher').style.display = 'none';
+  document.getElementById('pi-btns').style.display = 'flex';
+  document.getElementById('pi-watch-btns').style.display = 'none';
+  document.getElementById('pi-ov').classList.add('on');
+  SFX.corner();
+}
+
+function respondInteraction(accept){
+  document.getElementById('pi-ov').classList.remove('on');
+  socket.emit('respond_interaction',{accepted:accept},(res)=>{
+    if(!res?.ok)SFX.error();
+    else SFX.tap();
+  });
+}
+
+// ═══════════════════════════════════════════════════
+//  FREE-FORM INTERACT PICKER
+// ═══════════════════════════════════════════════════
+function openInteractPicker(){
+  if(!gameState||gameState.phase!=='playing'){SFX.error();return}
+  const others = gameState.players.filter(p=>p.id!==myId && p.connected);
+  if(others.length===0){flashAchv('🚫','NO ONE','No other players to interact with');SFX.error();return}
+  document.getElementById('interact-step1').style.display='block';
+  document.getElementById('interact-step2').style.display='none';
+  document.getElementById('interact-players').innerHTML = others.map(p=>
+    `<button class="trivia-opt" onclick="pickInteractTarget('${p.id}','${p.name.replace(/'/g,"\\'")}','${p.icon}')">
+       <span class="trivia-opt-letter">${p.icon}</span>
+       <div style="flex:1;text-align:left">
+         <div style="font-weight:600;color:#ffd755">${p.name}</div>
+         <div style="font-size:11px;color:#a08060">${p.talents.toLocaleString()}T · ${p.ministries} ministries</div>
+       </div>
+     </button>`).join('');
+  document.getElementById('interact-ov').classList.add('on');
+  SFX.tap();
+}
+
+function pickInteractTarget(targetId, targetName, targetIcon){
+  document.getElementById('interact-step1').style.display='none';
+  document.getElementById('interact-step2').style.display='block';
+  document.getElementById('interact-target-label').textContent = `→ ${targetIcon} ${targetName}`;
+  document.getElementById('interact-options').innerHTML = INTERACTIONS.map(i=>
+    `<button class="trivia-opt" onclick="proposeInteraction('${targetId}','${i.id}')">
+       <span class="trivia-opt-letter">${i.emj}</span>
+       <div style="flex:1;text-align:left">
+         <div style="font-weight:600;color:#ffd755">${i.name}${i.cost?' · '+i.cost+'T':' · Free'}</div>
+         <div style="font-size:11px;color:#a08060;line-height:1.3">${i.desc}</div>
+       </div>
+     </button>`).join('');
+  SFX.tap();
+}
+function closeInteractPicker(){
+  document.getElementById('interact-ov').classList.remove('on');
+  SFX.tap();
+}
+
 function sendChat(){
   const i=document.getElementById('chat-in');
   const msg=i.value.trim();if(!msg)return;
@@ -1456,7 +1755,11 @@ function renderAll(){
   const endBtn=document.getElementById('end-btn');
   const buyBtn=document.getElementById('buy-btn');
 
-  const hasPendingDecision = !!(gameState.cardOffer || gameState.pendingCard);
+  const hasPendingDecision = !!(
+    gameState.cardOffer || gameState.pendingCard ||
+    gameState.apostleEncounter || gameState.coLocation ||
+    (gameState.pendingInteraction && gameState.pendingInteraction.isCoLocation)
+  );
   rollBtn.disabled=!canRoll;
   endBtn.disabled=!myTurn||!playing||hasPendingDecision;
   const me2=gameState.players.find(p=>p.id===myId);
@@ -1492,6 +1795,32 @@ function renderAll(){
   // Only auto-close for the active player. Watchers see the resolution via card_resolved.
   if(!gameState.pendingCard && document.getElementById('card-ov').classList.contains('on') && myTurn){
     document.getElementById('card-ov').classList.remove('on');
+  }
+
+  // ─── APOSTLE encounter ───
+  if(gameState.apostleEncounter && !document.getElementById('apostle-ov').classList.contains('on')){
+    showApostle(gameState.apostleEncounter, myTurn?'active':'watcher');
+  }
+  if(!gameState.apostleEncounter && document.getElementById('apostle-ov').classList.contains('on')){
+    document.getElementById('apostle-ov').classList.remove('on');
+  }
+
+  // ─── CO-LOCATION (mandatory) ───
+  if(gameState.coLocation && !document.getElementById('colo-ov').classList.contains('on')){
+    const coloc = gameState.coLocation;
+    const involved = coloc.playerAId === myId || coloc.playerBId === myId;
+    showCoLocation(coloc, involved ? 'active' : 'watcher');
+  }
+  if(!gameState.coLocation && document.getElementById('colo-ov').classList.contains('on')){
+    document.getElementById('colo-ov').classList.remove('on');
+  }
+
+  // ─── PENDING INTERACTION (target receives proposal) ───
+  if(gameState.pendingInteraction && !document.getElementById('pi-ov').classList.contains('on')){
+    showPendingInteraction(gameState.pendingInteraction);
+  }
+  if(!gameState.pendingInteraction && document.getElementById('pi-ov').classList.contains('on')){
+    document.getElementById('pi-ov').classList.remove('on');
   }
 
   // Achievements from state

@@ -308,6 +308,85 @@ const PLACE_CARDS = {
   ],
 };
 
+// ═══════════════════════════════════════════════════════════════
+// APOSTLE NPCs — random encounters that appear ~12% of the time
+// when a player rolls. Each apostle offers a task or blessing.
+// ═══════════════════════════════════════════════════════════════
+const APOSTLES = [
+  { id:'paul',  emj:'✉️', name:'Paul of Tarsus',
+    intro:'Paul appears with a mission!',
+    body:'"Support the Antioch church-planting mission. Will you contribute 100T? Those who give freely will receive grace upon grace."',
+    verse:'2 Cor 9:7',
+    task:'donate100', acceptFx:-100, acceptReward:{ wisdomCards:2, xp:30, talents:0 },
+    declineFx:0,
+    quote:'"He who supplies seed to the sower will multiply your seed." — 2 Cor 9:10' },
+  { id:'peter', emj:'🗝️', name:'Simon Peter',
+    intro:'Peter the fisherman calls out to you!',
+    body:'"Cast your nets on the right side! Take a leap of faith — gamble 80T on the catch. 50/50: win 200T, or lose your stake."',
+    verse:'John 21:6',
+    task:'gamble', acceptFx:-80, gamble:true,
+    quote:'"Lord, if it is you, command me to come to you on the water." — Matt 14:28' },
+  { id:'john',  emj:'❤️', name:'John the Beloved',
+    intro:'John the Beloved meets you on the road!',
+    body:'"Love your neighbor — give 60T to the player with the fewest Talents. Love is the fulfillment of the law."',
+    verse:'1 John 4:7',
+    task:'giveToPoorest', acceptFx:-60, acceptReward:{ xp:25, wisdomCards:1, talents:30 },
+    quote:'"Beloved, let us love one another." — 1 John 4:7' },
+  { id:'james', emj:'⚖️', name:'James the Just',
+    intro:'James, brother of the Lord, raises his voice!',
+    body:'"Faith without works is dead! Build a ministry now (if you can afford it) for a +50T blessing AND 1 wisdom card."',
+    verse:'James 2:17',
+    task:'buildMinistry', acceptReward:{ talents:50, wisdomCards:1, xp:25 },
+    quote:'"Pure religion is to care for orphans and widows." — James 1:27' },
+  { id:'mary',  emj:'🌹', name:'Mary of Bethany',
+    intro:'Mary anoints your feet with costly perfume!',
+    body:'"Pour out all you have in worship. Tithe 10% of your Talents to the Tithe Pool — and gain great spiritual reward."',
+    verse:'John 12:3',
+    task:'tithe10pct', acceptReward:{ wisdomCards:2, xp:30 },
+    quote:'"She has done a beautiful thing to me." — Mark 14:6' },
+  { id:'andrew', emj:'🐟', name:'Andrew',
+    intro:'Andrew brings someone to meet you!',
+    body:'"Bring a friend — invite all players to gain 25T each. Generosity multiplied!"',
+    verse:'John 1:42',
+    task:'shareToAll', acceptFx:0, acceptReward:{ xp:20, wisdomCards:1 }, shareToAll:25,
+    quote:'"We have found the Messiah!" — John 1:41' },
+  { id:'barnabas', emj:'💛', name:'Barnabas',
+    intro:'Barnabas the Encourager comes alongside you!',
+    body:'"Sell some land for the kingdom — sacrifice 50T but gain 1 ministry star elsewhere (+50pts of ministry value)."',
+    verse:'Acts 4:36-37',
+    task:'sellForKingdom', acceptFx:-50, acceptReward:{ wisdomCards:1, xp:20, talents:100 },
+    quote:'"He sold a field he owned and brought the money..." — Acts 4:37' },
+  { id:'thomas', emj:'🔍', name:'Thomas the Doubter',
+    intro:'Thomas appears with a question of faith.',
+    body:'"Do you trust without seeing? Risk 50T on faith — flip a coin. Win 150T or lose your offering."',
+    verse:'John 20:29',
+    task:'gambleSmall', acceptFx:-50, gamble:true, gambleWin:150,
+    quote:'"Blessed are those who have not seen and yet have believed." — John 20:29' },
+];
+
+// ═══════════════════════════════════════════════════════════════
+// INTERACTIONS — actions a player can propose to another player.
+// Some are free (encouragement), some cost Talents, some are gambles.
+// All require BOTH players to be connected.
+// ═══════════════════════════════════════════════════════════════
+const INTERACTIONS = [
+  { id:'encourage', emj:'💛', name:'Encourage',
+    desc:'Pay 30T to give a fellow pilgrim a 50T blessing.',
+    cost:30, requiresAccept:false, autoApply:'encourage' },
+  { id:'pray',      emj:'🙏', name:'Pray Together',
+    desc:'Pray together — both players gain 1 Wisdom Card and 20 XP. Free!',
+    cost:0, requiresAccept:true, autoApply:'pray' },
+  { id:'trade',     emj:'🤝', name:'Tithe-Trade',
+    desc:'Pay 80T to swap positions on the board. Useful when stuck or to dodge a hostile space.',
+    cost:80, requiresAccept:true, autoApply:'trade' },
+  { id:'challenge', emj:'⚔️', name:'Wisdom Duel',
+    desc:'Challenge a fellow pilgrim to a Bible trivia duel! Winner takes 100T from loser.',
+    cost:0, requiresAccept:true, autoApply:'duel' },
+  { id:'tax-collector', emj:'🧾', name:'Tax Collector',
+    desc:'Demand 60T from a wealthy player (only works if they have 2x your Talents). Risky — they may refuse.',
+    cost:0, requiresAccept:true, requiresWealthier:true, autoApply:'tax' },
+];
+
 // ─── ROOM MANAGEMENT ─────────────────────────────────────────────────────────
 
 const rooms = new Map(); // roomCode -> gameState
@@ -367,6 +446,9 @@ function getPublicState(state) {
     log: state.log.slice(-20),
     pendingCard: state.pendingCard,
     cardOffer: state.cardOffer,
+    apostleEncounter: state.apostleEncounter,
+    coLocation: state.coLocation,
+    pendingInteraction: state.pendingInteraction,
   };
 }
 
@@ -396,6 +478,9 @@ function processRoll(state, d1, d2) {
   const newPos = (p.pos + total) % 40;
   p.pos = newPos;
   state.rolled = true;
+  // Clear stale events from previous turn
+  state.apostleEncounter = null;
+  state.coLocation = null;
 
   addLog(state, `${p.name} rolled ${d1}+${d2}=${total} → ${SPACES[newPos].n}`);
 
@@ -409,9 +494,30 @@ function processRoll(state, d1, d2) {
     addLog(state, `${p.name} passed Begin — collected 200T, tithed ${tithe}T`);
   }
 
-  // Trigger space
+  // ─── CO-LOCATION DETECTION ───
+  // If another player is on the same space, mandatory interaction!
+  const others = state.players.filter(pl =>
+    pl.id !== p.id && pl.connected && pl.pos === newPos
+  );
+  if (others.length > 0) {
+    // Pick the first other player on this space (could extend to multi-player)
+    const other = others[0];
+    state.coLocation = {
+      playerAId: p.id,
+      playerAName: p.name,
+      playerAIcon: p.icon,
+      playerBId: other.id,
+      playerBName: other.name,
+      playerBIcon: other.icon,
+      placeName: SPACES[newPos].n,
+    };
+    addLog(state, `⚔ ${p.name} encounters ${other.name} at ${SPACES[newPos].n}!`);
+  }
+
+  // ─── APOSTLE NPC ENCOUNTER (~12% chance, but not on corner/tax) ───
   const sp = SPACES[newPos];
   let cardOffer = null;
+  let apostleRolled = false;
 
   if (sp.t === 'tax') {
     const tithe = Math.floor(p.talents * 0.10);
@@ -422,19 +528,33 @@ function processRoll(state, d1, d2) {
   } else if (sp.t === 'corner') {
     handleCorner(state, p, newPos);
   } else if (CARDS[sp.t] || sp.t === 'special') {
-    // Offer a card draw — don't auto-pick. The player chooses to draw or skip.
-    const cardType = sp.t === 'special' ? 'special' : sp.t;
-    state.cardOffer = { cardType, playerId: p.id, placeName: sp.n };
-    cardOffer = { cardType, placeName: sp.n };
-    addLog(state, `${p.name} can draw a ${cardTypeLabel(cardType)} card`);
+    // Card spaces: 20% chance of apostle replacing the card offer
+    if (Math.random() < 0.20) {
+      const apostle = APOSTLES[Math.floor(Math.random() * APOSTLES.length)];
+      state.apostleEncounter = { ...apostle, playerId: p.id, placeName: sp.n };
+      apostleRolled = true;
+      addLog(state, `✨ ${apostle.emj} ${apostle.name} appears before ${p.name}!`);
+    } else {
+      const cardType = sp.t === 'special' ? 'special' : sp.t;
+      state.cardOffer = { cardType, playerId: p.id, placeName: sp.n };
+      cardOffer = { cardType, placeName: sp.n };
+      addLog(state, `${p.name} can draw a ${cardTypeLabel(cardType)} card`);
+    }
   } else if (sp.t === 'property' && PLACE_CARDS[sp.n]) {
-    // Property with themed cards — offer a place-themed draw
-    state.cardOffer = { cardType: 'place', playerId: p.id, placeName: sp.n };
-    cardOffer = { cardType: 'place', placeName: sp.n };
-    addLog(state, `${p.name} can draw a ${sp.n} story card`);
+    // Property: 12% apostle, otherwise place card offer
+    if (Math.random() < 0.12) {
+      const apostle = APOSTLES[Math.floor(Math.random() * APOSTLES.length)];
+      state.apostleEncounter = { ...apostle, playerId: p.id, placeName: sp.n };
+      apostleRolled = true;
+      addLog(state, `✨ ${apostle.emj} ${apostle.name} appears before ${p.name}!`);
+    } else {
+      state.cardOffer = { cardType: 'place', playerId: p.id, placeName: sp.n };
+      cardOffer = { cardType: 'place', placeName: sp.n };
+      addLog(state, `${p.name} can draw a ${sp.n} story card`);
+    }
   }
 
-  return { roll: [d1, d2], cardOffer };
+  return { roll: [d1, d2], cardOffer, apostleRolled };
 }
 
 function cardTypeLabel(t) {
@@ -630,6 +750,58 @@ function buyMinistry(state) {
   return { ok: true };
 }
 
+// Apply an interaction outcome to two players
+function applyInteraction(state, initiator, target, interaction, accepted) {
+  if (!accepted) {
+    addLog(state, `${target.name} declined ${initiator.name}'s "${interaction.name}"`);
+    return;
+  }
+  switch (interaction.id) {
+    case 'encourage':
+      initiator.talents = Math.max(0, initiator.talents - interaction.cost);
+      target.talents += 50;
+      addLog(state, `${initiator.name} encouraged ${target.name} (+50T blessing)`);
+      break;
+    case 'pray':
+      initiator.wisdomCards++;
+      target.wisdomCards++;
+      addLog(state, `${initiator.name} & ${target.name} prayed together — both gained wisdom`);
+      break;
+    case 'trade': {
+      // Swap positions
+      initiator.talents = Math.max(0, initiator.talents - interaction.cost);
+      const tmp = initiator.pos;
+      initiator.pos = target.pos;
+      target.pos = tmp;
+      addLog(state, `${initiator.name} & ${target.name} swapped positions on the map`);
+      break;
+    }
+    case 'duel': {
+      // Wisdom Duel — coin flip for now (could expand to a real trivia later)
+      const initiatorWins = Math.random() < 0.5;
+      if (initiatorWins) {
+        const amt = Math.min(100, target.talents);
+        target.talents -= amt;
+        initiator.talents += amt;
+        addLog(state, `⚔ ${initiator.name} won the Wisdom Duel! Took ${amt}T from ${target.name}`);
+      } else {
+        const amt = Math.min(100, initiator.talents);
+        initiator.talents -= amt;
+        target.talents += amt;
+        addLog(state, `⚔ ${target.name} won the Wisdom Duel! Took ${amt}T from ${initiator.name}`);
+      }
+      break;
+    }
+    case 'tax-collector': {
+      const amt = Math.min(60, target.talents);
+      target.talents -= amt;
+      initiator.talents += amt;
+      addLog(state, `🧾 ${initiator.name} collected ${amt}T from ${target.name}`);
+      break;
+    }
+  }
+}
+
 function endTurn(state) {
   const active = state.players.filter(p => p.connected);
   const cur = state.players[state.currentPlayerIndex];
@@ -648,6 +820,9 @@ function endTurn(state) {
   state.rolled = false;
   state.pendingCard = null;
   state.cardOffer = null;
+  state.apostleEncounter = null;
+  state.coLocation = null;
+  // Don't clear pendingInteraction — interactions can span turns
   addLog(state, `${nextActive.name}'s turn begins ✦`);
 }
 
@@ -818,15 +993,206 @@ io.on('connection', (socket) => {
     if (p.id !== socket.id) return cb?.({ ok: false, err: "Not your turn." });
     const result = buyMinistry(state);
     broadcastState(state.code);
+    if (result.ok) {
+      const sp = SPACES[p.pos];
+      io.to(state.code).emit('ministry_built', {
+        playerName: p.name,
+        playerIcon: p.icon,
+        placeName: sp.n,
+      });
+    }
     cb?.(result);
   });
 
+  // ─── APOSTLE: respond to encounter ───
+  socket.on('respond_apostle', ({ accepted }, cb) => {
+    const state = rooms.get(socket.data.roomCode);
+    if (!state || !state.apostleEncounter) return cb?.({ ok: false });
+    const apostle = state.apostleEncounter;
+    const p = state.players.find(pl => pl.id === apostle.playerId);
+    if (!p || p.id !== socket.id) return cb?.({ ok: false, err: "Not your encounter." });
+
+    let outcome = null;
+    if (accepted) {
+      // Pay the cost first
+      const fx = apostle.acceptFx || 0;
+
+      // Validate ability to accept
+      if (apostle.task === 'tithe10pct') {
+        const tithe = Math.floor(p.talents * 0.10);
+        p.talents -= tithe;
+        state.tithePool += tithe;
+        p.titheTokens++;
+        outcome = { type: 'apostle', apostle, accepted: true, delta: -tithe, message: `${p.name} tithed ${tithe}T at ${apostle.name}'s call` };
+        addLog(state, `${p.name} tithed ${tithe}T to ${apostle.name}`);
+      } else if (apostle.task === 'gamble' || apostle.task === 'gambleSmall') {
+        // Pay stake; flip coin
+        if (p.talents + fx < 0) {
+          return cb?.({ ok: false, err: 'Not enough Talents to take this risk.' });
+        }
+        p.talents = Math.max(0, p.talents + fx);
+        const win = Math.random() < 0.5;
+        const winAmount = apostle.gambleWin || 200;
+        if (win) {
+          p.talents += winAmount;
+          outcome = { type: 'apostle-gamble', apostle, accepted: true, won: true, delta: fx + winAmount, message: `${p.name} won the gamble! +${winAmount}T` };
+          addLog(state, `🎲 ${p.name} took the leap of faith and WON ${winAmount}T!`);
+        } else {
+          outcome = { type: 'apostle-gamble', apostle, accepted: true, won: false, delta: fx, message: `${p.name} lost the gamble. (${fx}T)` };
+          addLog(state, `🎲 ${p.name} took the leap of faith and lost ${Math.abs(fx)}T`);
+        }
+      } else if (apostle.task === 'giveToPoorest') {
+        if (p.talents + fx < 0) return cb?.({ ok: false, err: 'Not enough Talents.' });
+        const poorest = state.players.filter(pl => pl.id !== p.id && pl.connected).sort((a,b)=>a.talents-b.talents)[0];
+        p.talents += fx; // negative
+        if (poorest) poorest.talents += Math.abs(fx);
+        // Plus reward
+        if (apostle.acceptReward?.talents) p.talents += apostle.acceptReward.talents;
+        if (apostle.acceptReward?.wisdomCards) p.wisdomCards += apostle.acceptReward.wisdomCards;
+        outcome = { type: 'apostle', apostle, accepted: true, delta: fx + (apostle.acceptReward?.talents||0), message: `${p.name} gave ${Math.abs(fx)}T to ${poorest?.name||'a poor pilgrim'} (+ blessings)` };
+        addLog(state, `${p.name} gave ${Math.abs(fx)}T to ${poorest?.name||'a pilgrim'}`);
+      } else if (apostle.task === 'shareToAll') {
+        const others = state.players.filter(pl => pl.id !== p.id && pl.connected);
+        const cost = (apostle.shareToAll || 25) * others.length;
+        if (p.talents < cost) return cb?.({ ok: false, err: `Need ${cost}T to share with all.` });
+        p.talents -= cost;
+        others.forEach(pl => pl.talents += apostle.shareToAll);
+        if (apostle.acceptReward?.wisdomCards) p.wisdomCards += apostle.acceptReward.wisdomCards;
+        outcome = { type: 'apostle', apostle, accepted: true, delta: -cost, message: `${p.name} shared ${apostle.shareToAll}T with each pilgrim` };
+        addLog(state, `${p.name} shared ${apostle.shareToAll}T with everyone`);
+      } else if (apostle.task === 'buildMinistry') {
+        const sp = SPACES[p.pos];
+        if (sp.t !== 'property' || p.owned.includes(p.pos) || p.talents < 200) {
+          return cb?.({ ok: false, err: 'Cannot build a ministry here right now.' });
+        }
+        p.talents -= 200;
+        p.ministries++;
+        p.owned.push(p.pos);
+        if (apostle.acceptReward?.talents) p.talents += apostle.acceptReward.talents;
+        if (apostle.acceptReward?.wisdomCards) p.wisdomCards += apostle.acceptReward.wisdomCards;
+        outcome = { type: 'apostle', apostle, accepted: true, delta: -200 + (apostle.acceptReward?.talents||0), message: `${p.name} built a ministry at ${apostle.name}'s urging!` };
+        addLog(state, `${p.name} built a ministry inspired by ${apostle.name}`);
+      } else if (apostle.task === 'sellForKingdom' || apostle.task === 'donate100') {
+        if (p.talents + fx < 0) return cb?.({ ok: false, err: 'Not enough Talents.' });
+        p.talents = Math.max(0, p.talents + fx);
+        if (apostle.acceptReward?.talents) p.talents += apostle.acceptReward.talents;
+        if (apostle.acceptReward?.wisdomCards) p.wisdomCards += apostle.acceptReward.wisdomCards;
+        const net = fx + (apostle.acceptReward?.talents||0);
+        outcome = { type: 'apostle', apostle, accepted: true, delta: net, message: `${p.name} answered ${apostle.name}'s call (${net>=0?'+':''}${net}T net)` };
+        addLog(state, `${p.name} responded to ${apostle.name}: ${fx}T given, blessings received`);
+      } else {
+        // Generic: just apply fx and reward
+        if (fx) p.talents = Math.max(0, p.talents + fx);
+        if (apostle.acceptReward?.talents) p.talents += apostle.acceptReward.talents;
+        if (apostle.acceptReward?.wisdomCards) p.wisdomCards += apostle.acceptReward.wisdomCards;
+        outcome = { type: 'apostle', apostle, accepted: true, delta: (fx||0) + (apostle.acceptReward?.talents||0), message: `${p.name} responded to ${apostle.name}` };
+        addLog(state, `${p.name} responded to ${apostle.name}`);
+      }
+    } else {
+      outcome = { type: 'apostle-declined', apostle, accepted: false, message: `${p.name} respectfully declined ${apostle.name}` };
+      addLog(state, `${p.name} declined ${apostle.name}'s offer`);
+    }
+
+    state.apostleEncounter = null;
+    broadcastState(state.code);
+    io.to(state.code).emit('apostle_resolved', outcome);
+    cb?.({ ok: true });
+  });
+
+  // ─── INTERACTION: propose ───
+  socket.on('propose_interaction', ({ targetId, interactionId }, cb) => {
+    const state = rooms.get(socket.data.roomCode);
+    if (!state) return cb?.({ ok: false });
+    const initiator = state.players.find(pl => pl.id === socket.id);
+    const target = state.players.find(pl => pl.id === targetId);
+    if (!initiator || !target || !target.connected) return cb?.({ ok: false, err: 'Target not available' });
+    if (initiator.id === target.id) return cb?.({ ok: false, err: 'Cannot interact with yourself' });
+    const interaction = INTERACTIONS.find(i => i.id === interactionId);
+    if (!interaction) return cb?.({ ok: false, err: 'Unknown interaction' });
+
+    // Validate cost
+    if (interaction.cost && initiator.talents < interaction.cost) {
+      return cb?.({ ok: false, err: `Need ${interaction.cost}T for this.` });
+    }
+    // Wealth check (Tax Collector requires target to have 2x)
+    if (interaction.requiresWealthier && target.talents < initiator.talents * 2) {
+      return cb?.({ ok: false, err: 'Target must have 2x your Talents.' });
+    }
+
+    // If no acceptance needed, apply immediately
+    if (!interaction.requiresAccept) {
+      applyInteraction(state, initiator, target, interaction, true);
+      broadcastState(state.code);
+      io.to(state.code).emit('interaction_resolved', {
+        initiatorName: initiator.name, initiatorIcon: initiator.icon,
+        targetName: target.name, targetIcon: target.icon,
+        interaction, accepted: true,
+      });
+      return cb?.({ ok: true });
+    }
+
+    // Otherwise, set pendingInteraction so target can respond
+    state.pendingInteraction = {
+      initiatorId: initiator.id, initiatorName: initiator.name, initiatorIcon: initiator.icon,
+      targetId: target.id, targetName: target.name, targetIcon: target.icon,
+      interactionId: interaction.id,
+      isCoLocation: !!state.coLocation,
+    };
+    addLog(state, `${initiator.name} proposed "${interaction.name}" with ${target.name}`);
+    broadcastState(state.code);
+    cb?.({ ok: true });
+  });
+
+  // ─── INTERACTION: respond ───
+  socket.on('respond_interaction', ({ accepted }, cb) => {
+    const state = rooms.get(socket.data.roomCode);
+    if (!state || !state.pendingInteraction) return cb?.({ ok: false });
+    const pi = state.pendingInteraction;
+    if (pi.targetId !== socket.id) return cb?.({ ok: false, err: 'Not for you' });
+    const initiator = state.players.find(pl => pl.id === pi.initiatorId);
+    const target = state.players.find(pl => pl.id === pi.targetId);
+    const interaction = INTERACTIONS.find(i => i.id === pi.interactionId);
+    if (!initiator || !target || !interaction) {
+      state.pendingInteraction = null;
+      broadcastState(state.code);
+      return cb?.({ ok: false });
+    }
+    applyInteraction(state, initiator, target, interaction, accepted);
+    state.pendingInteraction = null;
+    // Clear coLocation since interaction is resolved
+    state.coLocation = null;
+    broadcastState(state.code);
+    io.to(state.code).emit('interaction_resolved', {
+      initiatorName: initiator.name, initiatorIcon: initiator.icon,
+      targetName: target.name, targetIcon: target.icon,
+      interaction, accepted,
+    });
+    cb?.({ ok: true });
+  });
+
+  // ─── INTERACTION: cancel/skip co-location interaction ───
+  socket.on('skip_colocation', (_, cb) => {
+    const state = rooms.get(socket.data.roomCode);
+    if (!state || !state.coLocation) return cb?.({ ok: false });
+    if (state.coLocation.playerAId !== socket.id) return cb?.({ ok: false, err: 'Not your move' });
+    addLog(state, `${state.coLocation.playerAName} passed peacefully by ${state.coLocation.playerBName}`);
+    state.coLocation = null;
+    broadcastState(state.code);
+    cb?.({ ok: true });
+  });
   // End turn
   socket.on('end_turn', (_, cb) => {
     const state = rooms.get(socket.data.roomCode);
     if (!state) return cb?.({ ok: false });
     const p = state.players[state.currentPlayerIndex];
     if (p.id !== socket.id) return cb?.({ ok: false, err: "Not your turn." });
+    if (state.cardOffer) return cb?.({ ok: false, err: 'Resolve the card offer first.' });
+    if (state.pendingCard) return cb?.({ ok: false, err: 'Resolve the card first.' });
+    if (state.apostleEncounter) return cb?.({ ok: false, err: 'Respond to the apostle first.' });
+    if (state.coLocation) return cb?.({ ok: false, err: 'Resolve your encounter first.' });
+    if (state.pendingInteraction && state.pendingInteraction.isCoLocation) {
+      return cb?.({ ok: false, err: 'Wait for the other player to respond.' });
+    }
     endTurn(state);
     broadcastState(state.code);
     cb?.({ ok: true });
