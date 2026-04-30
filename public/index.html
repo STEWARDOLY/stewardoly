@@ -40,6 +40,38 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .coin-delta.neg{color:#ff7a6e}
 
 .hp-bar{flex:1;display:flex;flex-direction:column;gap:2px;max-width:150px}
+
+/* 3-tier Star Level — visual progression Novice → Pilgrim → Steward */
+.tier-box{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;max-width:130px}
+.tier-stars{display:flex;gap:3px;font-size:14px;line-height:1}
+.tier-star{filter:grayscale(1) opacity(.25);transition:.4s}
+.tier-star.on{filter:none;animation:starPop .5s cubic-bezier(.5,1.8,.5,1);text-shadow:0 0 8px #ffd755}
+@keyframes starPop{0%{transform:scale(.3)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
+.tier-name{font-family:'Cinzel',serif;font-size:9px;font-weight:700;color:#ffd755;letter-spacing:.12em;text-shadow:0 1px 2px #000}
+
+/* Room code badge in HUD */
+.room-badge{display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,#3a2410,#1e1208);padding:3px 8px;border-radius:8px;border:1.5px solid #6a4818;cursor:pointer;transition:.1s;min-width:56px}
+.room-badge:active{transform:scale(.94);background:#2a180a}
+.rb-lbl{font-family:'Cinzel',serif;font-size:8px;color:#a08060;letter-spacing:.15em;line-height:1}
+.rb-code{font-family:'Cinzel',serif;font-size:13px;font-weight:700;color:#ffd755;letter-spacing:.1em;line-height:1.1}
+
+/* Live ranking strip — always-visible scoreboard */
+.rank-strip{display:flex;gap:5px;padding:5px 8px;background:#0e0704;overflow-x:auto;flex-shrink:0;scrollbar-width:none;border-bottom:1px solid #1e1208}
+.rank-strip::-webkit-scrollbar{display:none}
+.rs-pl{flex-shrink:0;display:flex;align-items:center;gap:5px;background:linear-gradient(180deg,#2a180a,#1a0d05);padding:3px 8px 3px 4px;border-radius:14px;border:1.5px solid #3d2410;transition:.3s;position:relative}
+.rs-pl.cur{border-color:#ffd755;box-shadow:0 0 10px rgba(255,215,85,.35)}
+.rs-pl.me{background:linear-gradient(180deg,#3a2b10,#2a1d08)}
+.rs-pl.first{border-color:#ffd755;background:linear-gradient(180deg,#3a2b10,#2a1d08)}
+.rs-rank{font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:#ffd755;width:14px;text-align:center}
+.rs-rank.gold{color:#ffd755;font-size:13px}
+.rs-rank.silver{color:#c0c0c0}
+.rs-rank.bronze{color:#cd7f32}
+.rs-icon{width:22px;height:22px;border-radius:50%;background:var(--pc,#5b9bdc);display:flex;align-items:center;justify-content:center;font-size:13px;border:1.5px solid #1e1208;box-shadow:0 0 0 1.2px var(--pc,#5b9bdc);flex-shrink:0}
+.rs-info{display:flex;flex-direction:column;gap:0;line-height:1.1;min-width:0}
+.rs-name{font-family:'Cinzel',serif;font-size:9.5px;color:#f2c96e;font-weight:600;max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rs-score{font-family:'Cinzel',serif;font-size:10px;color:#ffd755;font-weight:700}
+.rs-arrow{position:absolute;top:-3px;left:50%;transform:translateX(-50%);font-size:8px;color:#ffd755;animation:bounceArrow 1s ease-in-out infinite}
+@keyframes bounceArrow{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(2px)}}
 .hp-top{display:flex;justify-content:space-between;align-items:center}
 .hp-lbl{font-family:'Cinzel',serif;font-size:9px;color:#a08060;letter-spacing:.08em}
 .hp-val{font-family:'Cinzel',serif;font-weight:600;color:#ffd755;font-size:11px}
@@ -329,22 +361,29 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     <div class="coin-icon"></div>
     <div class="coin-val" id="coins">1,500</div>
   </div>
-  <div class="hp-bar">
-    <div class="hp-top">
-      <div class="hp-lbl">⭐ XP</div>
-      <div class="hp-val"><span id="xp-cur">0</span>/<span id="xp-max">100</span></div>
+  <!-- 3-tier Star Level (replaces numeric XP bar) -->
+  <div class="tier-box" id="tier-box">
+    <div class="tier-stars" id="tier-stars">
+      <span class="tier-star" id="ts-1">⭐</span>
+      <span class="tier-star" id="ts-2">⭐</span>
+      <span class="tier-star" id="ts-3">⭐</span>
     </div>
-    <div class="hp-track"><div class="hp-fill" id="xp-fill" style="width:0%"></div></div>
+    <div class="tier-name" id="tier-name">NOVICE</div>
+  </div>
+  <!-- Room code badge -->
+  <div class="room-badge" onclick="copyRoomFromGame()" title="Tap to copy">
+    <div class="rb-lbl">ROOM</div>
+    <div class="rb-code" id="hud-room">----</div>
   </div>
   <div class="hud-right">
-    <div class="icon-btn" onclick="openSheet('scores')">🏆</div>
     <div class="icon-btn" id="badges-btn" onclick="openSheet('badges')">🎖</div>
     <div class="icon-btn" id="snd-btn" onclick="toggleSound()">🔊</div>
     <div class="icon-btn" onclick="goLobby()">☰</div>
   </div>
 </div>
 
-<div class="rail" id="rail"></div>
+<!-- Live always-visible ranking strip -->
+<div class="rank-strip" id="rank-strip"></div>
 <div class="waiting-bar" id="waiting-bar">Waiting for <span id="waiting-name"></span>...</div>
 
 <div id="map-wrap">
@@ -352,13 +391,6 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
   <canvas id="fx-c"></canvas>
 
   <div class="combo" id="combo">COMBO x2! 🔥</div>
-
-  <div class="goal-card" id="goal-card">
-    <div class="goal-t">DAILY QUEST</div>
-    <div class="goal-txt" id="goal-txt">Tithe 3 times</div>
-    <div class="goal-prog"><div id="goal-prog" style="width:0%"></div></div>
-    <div class="goal-rwd"><span>🎁</span> <span id="goal-rwd">+200 gold</span></div>
-  </div>
 
   <div class="achv" id="achv">
     <div class="achv-icon" id="achv-i">🏆</div>
@@ -568,6 +600,11 @@ socket.on('dice_rolled',({playerId,d1,d2})=>{
   if(p){const old=p.pos;const nw=(p.pos+d1+d2)%40;animateMove(p,old,nw,()=>{})}
 });
 socket.on('card_drawn',({card})=>{if(card)showCard(card)});
+socket.on('card_resolved',(result)=>{
+  // Show the active player's decision/outcome to watchers
+  if(isMyTurn())return; // active player already saw their own outcome
+  showResolutionToWatcher(result);
+});
 socket.on('chat',({name,icon,msg})=>addChatMsg(name,icon,msg));
 socket.on('disconnect',()=>{});
 
@@ -1183,6 +1220,52 @@ function closeWatcherCard(){
   SFX.tap();
 }
 
+function showResolutionToWatcher(result){
+  // Make sure card overlay is showing the relevant card
+  if(!document.getElementById('card-ov').classList.contains('on') && result.card){
+    showCard(result.card,'watcher');
+  }
+
+  const watcher=document.getElementById('c-watcher');
+  if(!watcher)return;
+
+  let msg='';
+  if(result.type==='trivia'){
+    const c=result.card;
+    // Mark the answer choices on the trivia options
+    document.querySelectorAll('.trivia-opt').forEach((el,i)=>{
+      el.classList.remove('selected');
+      if(i===c.correct)el.classList.add('correct');
+      if(i===result.answerIdx && i!==c.correct)el.classList.add('wrong');
+    });
+    if(result.correct){
+      msg=`<b>${result.playerIcon} ${result.playerName}</b> answered <b style="color:#6ced8d">CORRECTLY!</b><br>Gained <b>+${result.delta}T</b> 🎉`;
+    } else {
+      msg=`<b>${result.playerIcon} ${result.playerName}</b> answered wrong.<br>Lost <b>${result.delta}T</b> 💔 (correct was: <b>${c.options[c.correct]}</b>)`;
+    }
+  } else if(result.type==='trivia-skipped'){
+    msg=`<b>${result.playerIcon} ${result.playerName}</b> skipped the trivia challenge — playing it safe!`;
+  } else if(result.type==='card'){
+    if(result.delta>0){
+      msg=`<b>${result.playerIcon} ${result.playerName}</b> claimed the card!<br>Gained <b style="color:#6ced8d">+${result.delta}T</b> ✦`;
+    } else if(result.delta<0){
+      msg=`<b>${result.playerIcon} ${result.playerName}</b> claimed the card.<br>Paid <b style="color:#ff7a6e">${result.delta}T</b>`;
+    } else {
+      msg=`<b>${result.playerIcon} ${result.playerName}</b> claimed the card!<br>A blessing was given ✨`;
+    }
+  } else if(result.type==='card-skipped'){
+    msg=`<b>${result.playerIcon} ${result.playerName}</b> chose to skip this card — wisdom in restraint! 🛡`;
+  }
+
+  watcher.innerHTML = msg;
+  watcher.style.display='block';
+
+  // Auto-close after 3.5 seconds so play continues smoothly
+  setTimeout(()=>{
+    document.getElementById('card-ov').classList.remove('on');
+  },3500);
+}
+
 // ─── CARD OFFER (Draw/Decline prompt) ───
 // Place-themed icons and short descriptions for offer screen
 const PLACE_INFO = {
@@ -1325,15 +1408,7 @@ function renderAll(){
     }
     prevTalents=me.talents;
     document.getElementById('coins').textContent=me.talents.toLocaleString();
-    // Quest progress
     titheCount=me.titheTokens;
-    document.getElementById('goal-prog').style.width=Math.min(100,titheCount/3*100)+'%';
-    if(titheCount>=3){
-      document.getElementById('goal-txt').textContent='Quest complete!';
-      document.getElementById('goal-rwd').innerHTML='<span>✓</span> <span>+200 gold earned</span>';
-    } else {
-      document.getElementById('goal-txt').textContent=`Tithe ${3-titheCount} more times`;
-    }
     // Badges from server state
     if(titheCount>=1)earnBadge('first_tithe');
     if(titheCount>=5)earnBadge('five_tithes');
@@ -1343,18 +1418,30 @@ function renderAll(){
     if(me.talents>=3000)earnBadge('rich');
   }
 
-  // XP
-  document.getElementById('xp-cur').textContent=xp;
-  document.getElementById('xp-max').textContent=xpMax;
-  document.getElementById('xp-fill').style.width=Math.min(100,(xp/xpMax)*100)+'%';
+  // Room code display
+  const roomEl=document.getElementById('hud-room');
+  if(roomEl && myRoomCode) roomEl.textContent=myRoomCode;
 
-  // Rail
-  document.getElementById('rail').innerHTML=gameState.players.filter(p=>p.connected).map(p=>`
-    <div class="avatar ${gameState.players[gameState.currentPlayerIndex]?.id===p.id?'cur':''} ${p.id===myId?'me':''}" style="--pc:${p.color}">
-      <div class="av-circ">${p.icon}</div>
-      <div class="av-name">${p.name}</div>
-      <div class="av-gold">${p.talents>=1000?Math.floor(p.talents/100)/10+'k':p.talents}g</div>
-    </div>`).join('');
+  // 3-Tier Star Level: 1⭐ Novice (0-99 XP) → 2⭐ Pilgrim (100-249 XP) → 3⭐ Steward (250+ XP)
+  updateTierDisplay();
+
+  // Live ranking strip — sorted by Kingdom Impact Score
+  const sorted=[...gameState.players].filter(p=>p.connected).sort((a,b)=>calcScore(b)-calcScore(a));
+  const curId=gameState.players[gameState.currentPlayerIndex]?.id;
+  document.getElementById('rank-strip').innerHTML=sorted.map((p,i)=>{
+    const medalClass = i===0?'gold':(i===1?'silver':(i===2?'bronze':''));
+    const medal = ['1','2','3','4','5','6'][i] || (i+1);
+    const score = calcScore(p);
+    return `<div class="rs-pl ${p.id===curId?'cur':''} ${p.id===myId?'me':''} ${i===0?'first':''}" style="--pc:${p.color}">
+      ${p.id===curId?'<div class="rs-arrow">▼</div>':''}
+      <div class="rs-rank ${medalClass}">${medal}</div>
+      <div class="rs-icon">${p.icon}</div>
+      <div class="rs-info">
+        <div class="rs-name">${p.name}${p.id===myId?' (you)':''}</div>
+        <div class="rs-score">${score}pts · ${p.talents>=1000?Math.floor(p.talents/100)/10+'k':p.talents}g</div>
+      </div>
+    </div>`;
+  }).join('');
 
   // Waiting bar
   const cur=gameState.players[gameState.currentPlayerIndex];
@@ -1402,7 +1489,8 @@ function renderAll(){
   if(gameState.pendingCard && !document.getElementById('card-ov').classList.contains('on')){
     showCard(gameState.pendingCard, myTurn?'active':'watcher');
   }
-  if(!gameState.pendingCard && document.getElementById('card-ov').classList.contains('on')){
+  // Only auto-close for the active player. Watchers see the resolution via card_resolved.
+  if(!gameState.pendingCard && document.getElementById('card-ov').classList.contains('on') && myTurn){
     document.getElementById('card-ov').classList.remove('on');
   }
 
@@ -1425,21 +1513,58 @@ function coinPop(n){
   setTimeout(()=>el.remove(),1300);
 }
 
+// 3-Tier system: 0-99 XP = Novice (1⭐), 100-249 = Pilgrim (2⭐), 250+ = Steward (3⭐)
+let totalXP=0; // accumulates forever, used for tier
+const TIERS = [
+  {min:0,    max:100, name:'NOVICE',  stars:1},
+  {min:100,  max:250, name:'PILGRIM', stars:2},
+  {min:250,  max:Infinity, name:'STEWARD', stars:3},
+];
+function getTier(){
+  for(let i=TIERS.length-1;i>=0;i--){if(totalXP>=TIERS[i].min)return {idx:i, ...TIERS[i]}}
+  return {idx:0, ...TIERS[0]};
+}
+function updateTierDisplay(){
+  const t=getTier();
+  for(let i=1;i<=3;i++){
+    document.getElementById('ts-'+i)?.classList.toggle('on', i<=t.stars);
+  }
+  const nameEl=document.getElementById('tier-name');
+  if(nameEl) nameEl.textContent = t.name;
+}
+function copyRoomFromGame(){
+  if(!myRoomCode)return;
+  try{navigator.clipboard.writeText(myRoomCode)}catch(e){}
+  const el=document.getElementById('hud-room');
+  const orig=el.textContent;
+  el.textContent='✓';
+  SFX.coin();
+  setTimeout(()=>el.textContent=orig,1000);
+}
+
+let prevTier=-1;
 function addXP(amt){
-  xp+=amt;
-  while(xp>=xpMax){
-    xp-=xpMax;level++;xpMax=Math.floor(xpMax*1.4);
-    levelUpFX();
+  const before=getTier().idx;
+  totalXP+=amt;
+  // Backward-compat with old vars
+  xp=totalXP;xpMax=999999;level=getTier().stars;
+  const after=getTier().idx;
+  updateTierDisplay();
+  if(after>before){
+    tierUpFX();
   }
 }
-function levelUpFX(){
+function tierUpFX(){
+  const t=getTier();
   const el=document.getElementById('lvl-up');
-  el.textContent=`⭐ LEVEL ${level}! ⭐`;
+  el.textContent=`⭐ ${t.name}! ⭐`;
   el.classList.remove('show');void el.offsetWidth;el.classList.add('show');
   SFX.levelUp();
-  if(level>=5)earnBadge('level_5');
-  burstParticles(mW/2,mH/3,'#ffd755',40);
+  if(t.idx>=2)earnBadge('level_5');
+  if(MC) burstParticles(mW/2,mH/3,'#ffd755',40);
 }
+// Keep old levelUpFX name for compat
+function levelUpFX(){tierUpFX()}
 function showCombo(n){
   const el=document.getElementById('combo');
   el.textContent=`COMBO x${n}! 🔥`;

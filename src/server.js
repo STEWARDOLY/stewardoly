@@ -486,7 +486,7 @@ function handleCorner(state, p, pos) {
 
 function applyCard(state, accepted, triviaAnswerIdx) {
   const card = state.pendingCard;
-  if (!card) return;
+  if (!card) return null;
   const p = state.players[state.currentPlayerIndex];
 
   // ─── TRIVIA CARDS (have options + correct answer) ───
@@ -494,12 +494,12 @@ function applyCard(state, accepted, triviaAnswerIdx) {
     if (!accepted) {
       addLog(state, `${p.name} skipped the trivia challenge`);
       state.pendingCard = null;
-      return;
+      return { type: 'trivia-skipped', playerName: p.name, playerIcon: p.icon, card };
     }
     if (typeof triviaAnswerIdx !== 'number') {
       addLog(state, `${p.name} attempted trivia without an answer`);
       state.pendingCard = null;
-      return;
+      return { type: 'trivia-noanswer', playerName: p.name, playerIcon: p.icon, card };
     }
     const isCorrect = triviaAnswerIdx === card.correct;
     if (isCorrect) {
@@ -511,10 +511,19 @@ function applyCard(state, accepted, triviaAnswerIdx) {
       addLog(state, `✗ ${p.name} answered wrong (correct was: "${card.options[card.correct]}"). Lost ${Math.abs(card.penalty)}T`);
     }
     state.pendingCard = null;
-    return;
+    return {
+      type: 'trivia',
+      playerName: p.name,
+      playerIcon: p.icon,
+      card,
+      answerIdx: triviaAnswerIdx,
+      correct: isCorrect,
+      delta: isCorrect ? card.fx : card.penalty
+    };
   }
 
   // ─── REGULAR CARDS ───
+  let totalGained = 0;
   if (accepted) {
     let gained = card.fx || 0;
 
@@ -551,6 +560,7 @@ function applyCard(state, accepted, triviaAnswerIdx) {
       p.talents = Math.max(0, p.talents + gained);
       addLog(state, `${p.name} paid ${Math.abs(gained)}T`);
     }
+    totalGained = gained;
 
     // Free ministry
     if (card.freeMinistry && !p.owned.includes(p.pos) && SPACES[p.pos].t === 'property') {
@@ -598,6 +608,13 @@ function applyCard(state, accepted, triviaAnswerIdx) {
     addLog(state, `${p.name} skipped the card`);
   }
   state.pendingCard = null;
+  return {
+    type: accepted ? 'card' : 'card-skipped',
+    playerName: p.name,
+    playerIcon: p.icon,
+    card,
+    delta: totalGained
+  };
 }
 
 function buyMinistry(state) {
@@ -785,8 +802,11 @@ io.on('connection', (socket) => {
     if (!state) return cb?.({ ok: false });
     const p = state.players[state.currentPlayerIndex];
     if (p.id !== socket.id) return cb?.({ ok: false, err: "Not your turn." });
-    applyCard(state, accepted, triviaAnswer);
+    const result = applyCard(state, accepted, triviaAnswer);
     broadcastState(state.code);
+    if (result) {
+      io.to(state.code).emit('card_resolved', result);
+    }
     cb?.({ ok: true });
   });
 
