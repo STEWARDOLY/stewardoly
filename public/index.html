@@ -1417,221 +1417,26 @@ function appendChat(name, msg) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// TUTORIAL — 5 visual cards (redesigned)
+// TUTORIAL — 6 interactive cards (redesigned)
 // ═══════════════════════════════════════════════════════════════
+let tutorialIdx = 0;
+let tutState = {};  // per-card transient state (dice rolled, trivia answered, etc.)
+
 const TUTORIAL_STEPS = [
-  // Card 1 — Welcome & the Journey
-  {
-    title: 'A KINGDOM JOURNEY',
-    sub: 'Race · Build · Grow in Virtue',
-    visual: `
-      <svg viewBox="0 0 220 220" class="tut-svg" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="boardGrad" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stop-color="#3a2410"/>
-            <stop offset="100%" stop-color="#1a0d05"/>
-          </linearGradient>
-          <radialGradient id="centerGlow" cx="0.5" cy="0.5" r="0.5">
-            <stop offset="0%" stop-color="rgba(255,215,85,0.25)"/>
-            <stop offset="100%" stop-color="rgba(255,215,85,0)"/>
-          </radialGradient>
-        </defs>
-        <!-- outer board frame -->
-        <rect x="20" y="20" width="180" height="180" rx="6" fill="url(#boardGrad)" stroke="#ffd755" stroke-width="1.5"/>
-        <!-- inner field with glow -->
-        <rect x="48" y="48" width="124" height="124" rx="4" fill="url(#centerGlow)" stroke="#6a4818" stroke-width="0.8" stroke-dasharray="3 4"/>
-        <!-- corner spaces (Eden, Wilderness, Temple, Mt Carmel) -->
-        <g>
-          <rect x="20" y="20" width="28" height="28" fill="#5a3b1a" stroke="#ffd755"/>
-          <text x="34" y="38" text-anchor="middle" font-size="14" fill="#ffd755">⛰</text>
-          <rect x="172" y="20" width="28" height="28" fill="#5a3b1a" stroke="#ffd755"/>
-          <text x="186" y="38" text-anchor="middle" font-size="14" fill="#ffd755">⛰</text>
-          <rect x="20" y="172" width="28" height="28" fill="#5a3b1a" stroke="#ffd755"/>
-          <text x="34" y="190" text-anchor="middle" font-size="14" fill="#ffd755">⛰</text>
-          <rect x="172" y="172" width="28" height="28" fill="#3a2b10" stroke="#ffd755" stroke-width="2"/>
-          <text x="186" y="190" text-anchor="middle" font-size="13" fill="#ffd755">👑</text>
-        </g>
-        <!-- a few intermediate spaces (dots) -->
-        <g fill="#6a4818">
-          <rect x="56" y="24" width="14" height="20" rx="1"/>
-          <rect x="78" y="24" width="14" height="20" rx="1"/>
-          <rect x="100" y="24" width="14" height="20" rx="1"/>
-          <rect x="122" y="24" width="14" height="20" rx="1"/>
-          <rect x="144" y="24" width="14" height="20" rx="1"/>
-          <rect x="56" y="176" width="14" height="20" rx="1"/>
-          <rect x="78" y="176" width="14" height="20" rx="1"/>
-          <rect x="100" y="176" width="14" height="20" rx="1"/>
-          <rect x="122" y="176" width="14" height="20" rx="1"/>
-          <rect x="144" y="176" width="14" height="20" rx="1"/>
-          <rect x="24" y="56" width="20" height="14" rx="1"/>
-          <rect x="24" y="78" width="20" height="14" rx="1"/>
-          <rect x="24" y="100" width="20" height="14" rx="1"/>
-          <rect x="24" y="122" width="20" height="14" rx="1"/>
-          <rect x="24" y="144" width="20" height="14" rx="1"/>
-          <rect x="176" y="56" width="20" height="14" rx="1"/>
-          <rect x="176" y="78" width="20" height="14" rx="1"/>
-          <rect x="176" y="100" width="20" height="14" rx="1"/>
-          <rect x="176" y="122" width="20" height="14" rx="1"/>
-          <rect x="176" y="144" width="20" height="14" rx="1"/>
-        </g>
-        <!-- pilgrimage arrow loop (clockwise from Eden bottom-right) -->
-        <path d="M 175 186 Q 110 200 45 186 Q 28 110 45 34 Q 110 18 175 34 Q 192 110 178 184" fill="none" stroke="#ffd755" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.55"/>
-        <polygon points="178,184 184,180 184,188" fill="#ffd755" opacity="0.8"/>
-        <!-- player tokens scattered -->
-        <circle cx="75" cy="34" r="6" fill="#5b9bdc" stroke="#ffd755" stroke-width="1"/>
-        <text x="75" y="37" text-anchor="middle" font-size="7">🕊</text>
-        <circle cx="34" cy="120" r="6" fill="#e0a035" stroke="#ffd755" stroke-width="1"/>
-        <text x="34" y="123" text-anchor="middle" font-size="7">🦁</text>
-        <circle cx="155" cy="186" r="6" fill="#4aad70" stroke="#ffd755" stroke-width="1"/>
-        <text x="155" y="189" text-anchor="middle" font-size="7">🌿</text>
-        <!-- center label -->
-        <text x="110" y="105" text-anchor="middle" font-family="Cinzel,serif" font-size="11" fill="#ffd755" font-weight="700" letter-spacing="2">40 SPACES</text>
-        <text x="110" y="122" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="#a08060">12 ROUNDS · 2-5 PILGRIMS</text>
-      </svg>
-    `,
-    body: 'Travel the holy lands. Each lap earns a salary at Eden Gate.'
-  },
-
-  // Card 2 — Four Currencies
-  {
-    title: 'FOUR CURRENCIES',
-    sub: 'Each one builds your final score',
-    visual: `
-      <div class="tut-currency-grid">
-        <div class="cur-chip" style="--c:#ffd755">
-          <div class="cur-emj">💰</div>
-          <div class="cur-name">TALENTS</div>
-          <div class="cur-eg">÷100 = pts</div>
-        </div>
-        <div class="cur-chip" style="--c:#c5a05d">
-          <div class="cur-emj">⚜</div>
-          <div class="cur-name">VIRTUE</div>
-          <div class="cur-eg">×5 pts each</div>
-        </div>
-        <div class="cur-chip" style="--c:#5b9bdc">
-          <div class="cur-emj">📜</div>
-          <div class="cur-name">WISDOM</div>
-          <div class="cur-eg">×4 pts each</div>
-        </div>
-        <div class="cur-chip" style="--c:#9871d6">
-          <div class="cur-emj">⚖</div>
-          <div class="cur-name">TITHES</div>
-          <div class="cur-eg">×3 pts each</div>
-        </div>
-      </div>
-    `,
-    body: 'Virtue is the most valuable. Tithe often, resist temptation.'
-  },
-
-  // Card 3 — Build & Earn
-  {
-    title: 'BUILD MINISTRIES',
-    sub: 'Buy property → earn yield',
-    visual: `
-      <svg viewBox="0 0 220 160" class="tut-svg" xmlns="http://www.w3.org/2000/svg">
-        <defs>
-          <linearGradient id="propGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#3a2410"/>
-            <stop offset="100%" stop-color="#1a0d05"/>
-          </linearGradient>
-          <linearGradient id="builtGrad" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="#5a3b1a"/>
-            <stop offset="100%" stop-color="#2a180a"/>
-          </linearGradient>
-        </defs>
-        <!-- empty property -->
-        <rect x="14" y="42" width="62" height="76" rx="6" fill="url(#propGrad)" stroke="#6a4818" stroke-width="1.5"/>
-        <text x="45" y="78" text-anchor="middle" font-size="22" fill="#a08060">🏞</text>
-        <text x="45" y="100" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#a08060">EMPTY</text>
-        <text x="45" y="112" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#a08060">100T</text>
-        <!-- arrow -->
-        <g stroke="#ffd755" stroke-width="2" fill="#ffd755">
-          <line x1="86" y1="80" x2="124" y2="80"/>
-          <polygon points="124,80 118,76 118,84"/>
-        </g>
-        <text x="105" y="68" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="#ffd755" font-weight="700">BUILD</text>
-        <!-- built ministry -->
-        <rect x="134" y="42" width="62" height="76" rx="6" fill="url(#builtGrad)" stroke="#ffd755" stroke-width="2"/>
-        <rect x="134" y="42" width="62" height="3" fill="#5b9bdc"/>
-        <text x="165" y="78" text-anchor="middle" font-size="22">🏛</text>
-        <text x="165" y="100" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#ffd755" font-weight="700">YOURS</text>
-        <text x="165" y="112" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#ffd755">+8T/visit</text>
-        <!-- coin shower -->
-        <circle cx="155" cy="30" r="4" fill="#ffd755" stroke="#c9922a"/>
-        <text x="155" y="33" text-anchor="middle" font-size="6" fill="#5a3b1a">$</text>
-        <circle cx="170" cy="22" r="3.5" fill="#ffd755" stroke="#c9922a"/>
-        <circle cx="180" cy="32" r="3" fill="#ffd755" stroke="#c9922a"/>
-        <circle cx="145" cy="22" r="3" fill="#ffd755" stroke="#c9922a"/>
-        <!-- score earned -->
-        <text x="110" y="142" text-anchor="middle" font-family="Cinzel,serif" font-size="10" fill="#ffd755" font-weight="700">+8 score per ministry</text>
-      </svg>
-    `,
-    body: 'Other pilgrims pay rent when they land on your ministry.'
-  },
-
-  // Card 4 — Choices Define You
-  {
-    title: 'CHOICES MATTER',
-    sub: 'The heart of the journey',
-    visual: `
-      <svg viewBox="0 0 220 170" class="tut-svg" xmlns="http://www.w3.org/2000/svg">
-        <!-- temptation card center -->
-        <rect x="74" y="14" width="72" height="50" rx="5" fill="#5a2a4d" stroke="#ffd755" stroke-width="1.5"/>
-        <text x="110" y="34" text-anchor="middle" font-size="16">🔥</text>
-        <text x="110" y="50" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#ffd755" font-weight="700">TEMPTATION</text>
-        <text x="110" y="60" text-anchor="middle" font-size="7" fill="#f2c96e">Love of Money</text>
-        <!-- fork branches -->
-        <g stroke="#6a4818" stroke-width="1.5" fill="none">
-          <path d="M 90 64 Q 60 84 38 100"/>
-          <path d="M 130 64 Q 160 84 182 100"/>
-        </g>
-        <!-- left option (accept) -->
-        <rect x="6" y="100" width="74" height="58" rx="5" fill="rgba(220,107,91,0.15)" stroke="#dc6b5b" stroke-width="1.5"/>
-        <text x="43" y="118" text-anchor="middle" font-size="14">💸</text>
-        <text x="43" y="132" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#dc6b5b" font-weight="700">ACCEPT</text>
-        <text x="43" y="144" text-anchor="middle" font-size="9" fill="#ffd755" font-weight="700">+120T</text>
-        <text x="43" y="154" text-anchor="middle" font-size="6" fill="#a08060">quick gain</text>
-        <!-- right option (decline) -->
-        <rect x="140" y="100" width="74" height="58" rx="5" fill="rgba(108,237,141,0.1)" stroke="#6ced8d" stroke-width="1.5"/>
-        <text x="177" y="118" text-anchor="middle" font-size="14">⚜</text>
-        <text x="177" y="132" text-anchor="middle" font-family="Cinzel,serif" font-size="8" fill="#6ced8d" font-weight="700">DECLINE</text>
-        <text x="177" y="144" text-anchor="middle" font-size="9" fill="#c5a05d" font-weight="700">+2 Virtue</text>
-        <text x="177" y="154" text-anchor="middle" font-size="6" fill="#a08060">+10pts each</text>
-      </svg>
-    `,
-    body: 'Resist temptation, give to the poor, tithe — virtue scores highest.'
-  },
-
-  // Card 5 — Race to the Crown (Final Lap & Awards)
-  {
-    title: 'WIN THE CROWN',
-    sub: 'Final Lap · Five Awards',
-    visual: `
-      <div class="tut-final-wrap">
-        <div class="tut-finalbar">
-          <span>🏁</span>
-          <span class="tut-fin-txt">FINAL LAP</span>
-          <span>🏁</span>
-        </div>
-        <div class="tut-fin-sub">when 1st pilgrim reaches Steward + 4 ministries — or after 12 rounds</div>
-        <div class="tut-awards">
-          <div class="aw"><div class="aw-emj">👑</div><div class="aw-n">HEIR</div></div>
-          <div class="aw"><div class="aw-emj">🤲</div><div class="aw-n">GIVER</div></div>
-          <div class="aw"><div class="aw-emj">📜</div><div class="aw-n">SAGE</div></div>
-          <div class="aw"><div class="aw-emj">⚜</div><div class="aw-n">VIRTUE</div></div>
-          <div class="aw"><div class="aw-emj">🏛</div><div class="aw-n">BUILDER</div></div>
-        </div>
-      </div>
-    `,
-    body: 'Highest score wins the Kingdom Heir crown — but each award is its own honor.'
-  },
+  { id: 'meet',     title: 'MEET YOUR PILGRIM',    sub: 'Begin the journey',     interactive: false },
+  { id: 'dice',     title: 'ROLL THE DICE',        sub: 'Move across the land',  interactive: true  },
+  { id: 'trivia',   title: 'WISDOM TRIVIA',        sub: 'Test your knowledge',   interactive: true  },
+  { id: 'tempt',    title: 'A TEMPTATION',         sub: 'The heart of the game', interactive: true  },
+  { id: 'pray',     title: 'PRAY TOGETHER',        sub: 'Walk with friends',     interactive: true  },
+  { id: 'crown',    title: 'RACE FOR THE CROWN',   sub: 'Win the kingdom',       interactive: false },
 ];
 
-let tutorialIdx = 0;
 function startTutorial() {
   tutorialIdx = 0;
+  tutState = {};
   showCoach();
 }
+
 function showCoach() {
   const dim = document.getElementById('tut-dim');
   const c = document.getElementById('coach');
@@ -1643,21 +1448,24 @@ function showCoach() {
   const step = TUTORIAL_STEPS[tutorialIdx];
   const isLast = tutorialIdx === TUTORIAL_STEPS.length - 1;
   const dots = TUTORIAL_STEPS.map((_, i) =>
-    `<span class="tut-dot ${i === tutorialIdx ? 'on' : ''}"></span>`
+    `<span class="tut-dot ${i === tutorialIdx ? 'on' : ''} ${i < tutorialIdx ? 'done' : ''}"></span>`
   ).join('');
+
+  // Build card body via per-step renderer
+  const body = renderTutBody(step.id);
+
   c.innerHTML = `
     <div class="tut-card">
       <div class="tut-head">
         <div class="tut-title">${step.title}</div>
         <div class="tut-sub">${step.sub}</div>
       </div>
-      <div class="tut-visual">${step.visual}</div>
-      <div class="tut-body">${step.body}</div>
+      <div class="tut-stage" id="tut-stage">${body}</div>
       <div class="tut-foot">
         <div class="tut-dots">${dots}</div>
         <div class="tut-buttons">
           ${tutorialIdx > 0 ? '<button class="tut-btn-back" onclick="prevCoach()">← Back</button>' : '<span></span>'}
-          <button class="tut-btn-next" onclick="nextCoach()">${isLast ? "Let's Play! ✦" : 'Next →'}</button>
+          <button class="tut-btn-next" id="tut-next-btn" onclick="nextCoach()">${isLast ? "Let's Play! ✦" : 'Next →'}</button>
         </div>
       </div>
     </div>
@@ -1665,13 +1473,402 @@ function showCoach() {
   dim.classList.add('on');
   c.classList.add('on');
   SFX.tap();
+
+  // Per-step setup (animations, click handlers)
+  setTimeout(() => setupTutStep(step.id), 50);
 }
-function nextCoach() {
-  tutorialIdx++;
-  showCoach();
+
+function nextCoach() { tutorialIdx++; showCoach(); }
+function prevCoach() { if (tutorialIdx > 0) { tutorialIdx--; showCoach(); } }
+
+// ═══════════════════════════════════════════════════════════════
+// PER-CARD BODIES
+// ═══════════════════════════════════════════════════════════════
+function renderTutBody(id) {
+  switch (id) {
+    case 'meet':   return renderMeetCard();
+    case 'dice':   return renderDiceCard();
+    case 'trivia': return renderTriviaCard();
+    case 'tempt':  return renderTemptCard();
+    case 'pray':   return renderPrayCard();
+    case 'crown':  return renderCrownCard();
+    default: return '';
+  }
 }
-function prevCoach() {
-  if (tutorialIdx > 0) { tutorialIdx--; showCoach(); }
+
+// ─── Card 1: MEET ──────────────────────────────────────────────
+function renderMeetCard() {
+  return `
+    <div class="meet-stage">
+      <div class="meet-board">
+        <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+          <rect x="10" y="10" width="180" height="110" rx="6" fill="#1a0d05" stroke="#6a4818" stroke-width="1"/>
+          <rect x="30" y="30" width="140" height="70" rx="3" fill="none" stroke="#3a2410" stroke-dasharray="2 3"/>
+          <text x="100" y="70" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="#6a4818" letter-spacing="2">EDEN → JERUSALEM</text>
+          <circle cx="180" cy="110" r="3" fill="#ffd755"/>
+          <text x="180" y="113" text-anchor="middle" font-size="3.5" fill="#1a0d05">⛰</text>
+        </svg>
+      </div>
+      <div class="meet-hero" id="meet-hero">
+        <div class="meet-hero-emj">🕊</div>
+      </div>
+      <div class="meet-bubble" id="meet-bubble">
+        <div class="bubble-text">"I'm the Dove. I start with <b>1,200 Talents</b> and a dream of becoming a Steward. Walk with me!"</div>
+        <div class="bubble-tail"></div>
+      </div>
+      <div class="meet-stats" id="meet-stats">
+        <div class="meet-stat"><span class="ms-emj">💰</span><span class="ms-val">1,200</span></div>
+        <div class="meet-stat"><span class="ms-emj">⭐</span><span class="ms-val">Novice</span></div>
+        <div class="meet-stat"><span class="ms-emj">🎯</span><span class="ms-val">12 rounds</span></div>
+      </div>
+    </div>
+  `;
+}
+
+// ─── Card 2: DICE ──────────────────────────────────────────────
+function renderDiceCard() {
+  return `
+    <div class="dice-stage">
+      <div class="dice-track">
+        <div class="dt-space" data-i="0"><span>0</span></div>
+        <div class="dt-space" data-i="1"><span>1</span></div>
+        <div class="dt-space" data-i="2"><span>2</span></div>
+        <div class="dt-space" data-i="3"><span>3</span></div>
+        <div class="dt-space" data-i="4"><span>4</span></div>
+        <div class="dt-space" data-i="5"><span>5</span></div>
+        <div class="dt-space property" data-i="6">🏞</div>
+        <div class="dt-space" data-i="7">END</div>
+        <div class="dt-token" id="dt-token">🕊</div>
+      </div>
+      <div class="dice-display">
+        <div class="d-face" id="d1-face">⚀</div>
+        <div class="d-plus">+</div>
+        <div class="d-face" id="d2-face">⚀</div>
+        <div class="d-eq">=</div>
+        <div class="d-total" id="d-total">?</div>
+      </div>
+      <button class="tut-action-btn" id="dice-roll-btn" onclick="tutDoRoll()">🎲 ROLL THE DICE</button>
+      <div class="dice-result" id="dice-result"></div>
+    </div>
+  `;
+}
+
+// ─── Card 3: TRIVIA ────────────────────────────────────────────
+function renderTriviaCard() {
+  // pick a fixed question for tutorial
+  const q = { question: 'Who built the ark?', options: ['Moses', 'Noah', 'Abraham'], correct: 1 };
+  tutState.triviaQ = q;
+  return `
+    <div class="trivia-stage">
+      <div class="trivia-scroll">
+        <div class="trivia-emj">📜</div>
+        <div class="trivia-q-text">${q.question}</div>
+      </div>
+      <div class="trivia-opts-list" id="trivia-opts-list">
+        ${q.options.map((opt, i) => `
+          <button class="trivia-opt-btn" data-i="${i}" onclick="tutPickTrivia(${i})">
+            <span class="opt-letter">${String.fromCharCode(65+i)}</span>
+            <span class="opt-text">${opt}</span>
+          </button>
+        `).join('')}
+      </div>
+      <div class="trivia-result" id="trivia-result"></div>
+    </div>
+  `;
+}
+
+// ─── Card 4: TEMPTATION ────────────────────────────────────────
+function renderTemptCard() {
+  return `
+    <div class="tempt-stage">
+      <div class="tempt-card-3d" id="tempt-card-3d">
+        <div class="tcc-flame">🔥</div>
+        <div class="tcc-label">TEMPTATION</div>
+        <div class="tcc-name">Love of Money</div>
+        <div class="tcc-body">A shady deal offers quick gain. Will you take it?</div>
+      </div>
+      <div class="tempt-fork">
+        <button class="tempt-opt accept" id="tempt-accept" onclick="tutPickTempt('accept')">
+          <div class="to-emj">💸</div>
+          <div class="to-label">ACCEPT</div>
+          <div class="to-reward">+120 Talents</div>
+        </button>
+        <button class="tempt-opt decline" id="tempt-decline" onclick="tutPickTempt('decline')">
+          <div class="to-emj">⚜</div>
+          <div class="to-label">DECLINE</div>
+          <div class="to-reward">+2 Virtue</div>
+        </button>
+      </div>
+      <div class="tempt-result" id="tempt-result"></div>
+    </div>
+  `;
+}
+
+// ─── Card 5: PRAY ──────────────────────────────────────────────
+function renderPrayCard() {
+  return `
+    <div class="pray-stage">
+      <div class="pray-prompt" id="pray-prompt">Tap a friend to pray with them</div>
+      <div class="pray-circle">
+        <div class="pray-me" id="pray-me">
+          <div class="pm-emj">🕊</div>
+          <div class="pm-name">YOU</div>
+        </div>
+        <div class="pray-friends">
+          <button class="pray-friend" data-h="lion" onclick="tutPickPray('lion')">
+            <div class="pf-emj">🦁</div>
+            <div class="pf-name">Lion</div>
+          </button>
+          <button class="pray-friend" data-h="vine" onclick="tutPickPray('vine')">
+            <div class="pf-emj">🌿</div>
+            <div class="pf-name">Vine</div>
+          </button>
+          <button class="pray-friend" data-h="rose" onclick="tutPickPray('rose')">
+            <div class="pf-emj">🌸</div>
+            <div class="pf-name">Rose</div>
+          </button>
+        </div>
+      </div>
+      <div class="pray-result" id="pray-result"></div>
+    </div>
+  `;
+}
+
+// ─── Card 6: CROWN ─────────────────────────────────────────────
+function renderCrownCard() {
+  return `
+    <div class="crown-stage">
+      <div class="crown-finalbar" id="crown-finalbar">
+        <span>🏁</span><span class="cf-txt">FINAL LAP</span><span>🏁</span>
+      </div>
+      <div class="crown-king" id="crown-king">
+        <div class="ck-crown">👑</div>
+        <div class="ck-hero">🕊</div>
+        <div class="ck-glow"></div>
+      </div>
+      <div class="crown-awards" id="crown-awards">
+        <div class="caw" style="--d:0s">
+          <div class="caw-emj">👑</div><div class="caw-n">HEIR</div>
+        </div>
+        <div class="caw" style="--d:0.15s">
+          <div class="caw-emj">🤲</div><div class="caw-n">GIVER</div>
+        </div>
+        <div class="caw" style="--d:0.3s">
+          <div class="caw-emj">📜</div><div class="caw-n">SAGE</div>
+        </div>
+        <div class="caw" style="--d:0.45s">
+          <div class="caw-emj">⚜</div><div class="caw-n">VIRTUE</div>
+        </div>
+        <div class="caw" style="--d:0.6s">
+          <div class="caw-emj">🏛</div><div class="caw-n">BUILDER</div>
+        </div>
+      </div>
+      <div class="crown-tagline">A journey of faith & fortune</div>
+    </div>
+  `;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// PER-STEP SETUP (animations + interactions)
+// ═══════════════════════════════════════════════════════════════
+function setupTutStep(id) {
+  switch (id) {
+    case 'meet':   return setupMeet();
+    case 'dice':   return setupDice();
+    case 'trivia': return setupTrivia();
+    case 'tempt':  return setupTempt();
+    case 'pray':   return setupPray();
+    case 'crown':  return setupCrown();
+  }
+}
+
+function setupMeet() {
+  // Animate hero in, then bubble, then stats — purely cosmetic
+  const hero = document.getElementById('meet-hero');
+  const bubble = document.getElementById('meet-bubble');
+  const stats = document.getElementById('meet-stats');
+  if (hero) hero.classList.add('show');
+  setTimeout(() => bubble && bubble.classList.add('show'), 400);
+  setTimeout(() => stats && stats.classList.add('show'), 1100);
+  SFX.reward();
+}
+
+function setupDice() {
+  const btn = document.getElementById('dice-roll-btn');
+  const nextBtn = document.getElementById('tut-next-btn');
+  if (nextBtn) nextBtn.disabled = true;
+  if (btn) btn.disabled = false;
+}
+
+function tutDoRoll() {
+  const btn = document.getElementById('dice-roll-btn');
+  if (!btn || btn.disabled) return;
+  btn.disabled = true;
+  SFX.dice();
+  const faces = ['⚀','⚁','⚂','⚃','⚄','⚅'];
+  const f1 = document.getElementById('d1-face');
+  const f2 = document.getElementById('d2-face');
+  const total = document.getElementById('d-total');
+
+  // Tumble animation
+  let ticks = 0;
+  const tumbleI = setInterval(() => {
+    if (f1) f1.textContent = faces[Math.floor(Math.random()*6)];
+    if (f2) f2.textContent = faces[Math.floor(Math.random()*6)];
+    ticks++;
+    if (ticks > 10) {
+      clearInterval(tumbleI);
+      const d1 = 4, d2 = 3;
+      if (f1) f1.textContent = faces[d1-1];
+      if (f2) f2.textContent = faces[d2-1];
+      if (total) { total.textContent = String(d1+d2); total.classList.add('lit'); }
+      // Move token
+      moveTokenSteps(d1+d2);
+    }
+  }, 60);
+}
+
+function moveTokenSteps(steps) {
+  const token = document.getElementById('dt-token');
+  if (!token) return;
+  let i = 0;
+  const stepI = setInterval(() => {
+    i++;
+    SFX.step();
+    const target = document.querySelector(`.dt-space[data-i="${i}"]`);
+    if (target) {
+      const rect = target.getBoundingClientRect();
+      const parent = token.parentElement.getBoundingClientRect();
+      token.style.transform = `translate(${rect.left - parent.left + (rect.width-32)/2}px, 0)`;
+    }
+    if (i >= steps) {
+      clearInterval(stepI);
+      // Landed
+      const propSp = document.querySelector('.dt-space.property');
+      if (propSp) propSp.classList.add('landed');
+      SFX.reward();
+      const result = document.getElementById('dice-result');
+      if (result) {
+        result.innerHTML = '<span class="dr-icon">🏛</span> Landed on a ministry! <b>+8T yield</b>';
+        result.classList.add('show');
+      }
+      const nextBtn = document.getElementById('tut-next-btn');
+      if (nextBtn) nextBtn.disabled = false;
+    }
+  }, 280);
+}
+
+function setupTrivia() {
+  const nextBtn = document.getElementById('tut-next-btn');
+  if (nextBtn) nextBtn.disabled = true;
+}
+
+function tutPickTrivia(idx) {
+  if (tutState.triviaAnswered) return;
+  tutState.triviaAnswered = true;
+  const correct = tutState.triviaQ.correct;
+  const buttons = document.querySelectorAll('.trivia-opt-btn');
+  buttons.forEach((b, i) => {
+    b.disabled = true;
+    if (i === correct) b.classList.add('correct');
+    else if (i === idx) b.classList.add('wrong');
+  });
+  const result = document.getElementById('trivia-result');
+  if (idx === correct) {
+    if (result) {
+      result.innerHTML = '<span class="tr-ok">✓ Correct!</span> <span class="tr-reward">+1 Virtue ⚜ · +30T · +20 XP</span>';
+      result.classList.add('show', 'good');
+    }
+    SFX.reward();
+  } else {
+    if (result) {
+      result.innerHTML = '<span class="tr-no">✗ Not quite — it was Noah!</span> <span class="tr-reward">No reward this time</span>';
+      result.classList.add('show', 'bad');
+    }
+    SFX.penalty();
+  }
+  setTimeout(() => {
+    const nextBtn = document.getElementById('tut-next-btn');
+    if (nextBtn) nextBtn.disabled = false;
+  }, 700);
+}
+
+function setupTempt() {
+  const nextBtn = document.getElementById('tut-next-btn');
+  if (nextBtn) nextBtn.disabled = true;
+  // Card flip-in animation
+  const card = document.getElementById('tempt-card-3d');
+  if (card) setTimeout(() => card.classList.add('flipped-in'), 100);
+}
+
+function tutPickTempt(choice) {
+  if (tutState.temptChose) return;
+  tutState.temptChose = choice;
+  const aBtn = document.getElementById('tempt-accept');
+  const dBtn = document.getElementById('tempt-decline');
+  if (aBtn) aBtn.disabled = true;
+  if (dBtn) dBtn.disabled = true;
+  const result = document.getElementById('tempt-result');
+  if (choice === 'accept') {
+    if (aBtn) aBtn.classList.add('chosen');
+    if (result) {
+      result.innerHTML = '<div class="goldrain">💸💸💸</div><div class="t-msg">+120 Talents — but no Virtue gained</div>';
+      result.classList.add('show', 'accept');
+    }
+    SFX.coin();
+  } else {
+    if (dBtn) dBtn.classList.add('chosen');
+    if (result) {
+      result.innerHTML = '<div class="halo">✦</div><div class="t-msg">+2 Virtue — your character grows stronger</div>';
+      result.classList.add('show', 'decline');
+    }
+    SFX.levelUp();
+  }
+  setTimeout(() => {
+    const nextBtn = document.getElementById('tut-next-btn');
+    if (nextBtn) nextBtn.disabled = false;
+  }, 700);
+}
+
+function setupPray() {
+  const nextBtn = document.getElementById('tut-next-btn');
+  if (nextBtn) nextBtn.disabled = true;
+}
+
+function tutPickPray(hero) {
+  if (tutState.prayed) return;
+  tutState.prayed = hero;
+  const me = document.getElementById('pray-me');
+  const friend = document.querySelector(`.pray-friend[data-h="${hero}"]`);
+  document.querySelectorAll('.pray-friend').forEach(b => { b.disabled = true; if (b !== friend) b.classList.add('dim'); });
+  if (me) me.classList.add('praying');
+  if (friend) friend.classList.add('praying');
+  SFX.reward();
+  const prompt = document.getElementById('pray-prompt');
+  if (prompt) prompt.textContent = '🙏 Praying together...';
+
+  setTimeout(() => {
+    const result = document.getElementById('pray-result');
+    if (result) {
+      const names = { lion:'Lion', vine:'Vine', rose:'Rose' };
+      result.innerHTML = `<span class="pr-emj">📜</span> You and <b>${names[hero]}</b> each gain <b>+1 Wisdom Card</b>`;
+      result.classList.add('show');
+    }
+    const nextBtn = document.getElementById('tut-next-btn');
+    if (nextBtn) nextBtn.disabled = false;
+  }, 1100);
+}
+
+function setupCrown() {
+  // Cascade animations driven by CSS delay
+  const bar = document.getElementById('crown-finalbar');
+  const king = document.getElementById('crown-king');
+  const awards = document.getElementById('crown-awards');
+  if (bar) setTimeout(() => bar.classList.add('show'), 200);
+  if (king) setTimeout(() => king.classList.add('show'), 700);
+  if (awards) setTimeout(() => awards.classList.add('show'), 1200);
+  setTimeout(() => SFX.levelUp(), 700);
+  setTimeout(() => SFX.achievement(), 1200);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1943,41 +2140,158 @@ document.addEventListener('DOMContentLoaded', init);
 .tut-dim.on{display:block}
 .waiting-bar.on{display:block !important}
 
-/* ═══ Visual Tutorial ═══ */
+/* ═══ Interactive Tutorial — 6 cards ═══ */
 .coach{padding:0 !important;max-width:340px !important;border-radius:18px !important;overflow:hidden !important}
 .tut-card{display:flex;flex-direction:column;background:linear-gradient(180deg,#2a180a,#0f0a04)}
 .tut-head{padding:14px 16px 8px;text-align:center;border-bottom:1px solid rgba(201,146,42,0.2)}
 .tut-title{font-family:'Cinzel',serif;font-size:18px;color:#ffd755;font-weight:700;letter-spacing:.12em;text-shadow:0 0 12px rgba(255,215,85,0.4)}
 .tut-sub{font-family:'Cinzel',serif;font-size:10px;color:#a08060;letter-spacing:.1em;margin-top:3px;font-style:italic}
-.tut-visual{padding:10px 12px;display:flex;align-items:center;justify-content:center;min-height:160px;background:radial-gradient(ellipse at center,rgba(255,215,85,0.06) 0%,transparent 70%)}
-.tut-svg{width:100%;max-width:240px;height:auto;display:block}
-.tut-body{padding:8px 18px 4px;text-align:center;font-size:12px;color:#f2c96e;line-height:1.5;font-style:italic}
+.tut-stage{padding:14px 14px 8px;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;min-height:240px;background:radial-gradient(ellipse at center,rgba(255,215,85,0.06) 0%,transparent 70%);position:relative}
 .tut-foot{display:flex;justify-content:space-between;align-items:center;padding:10px 14px 14px;border-top:1px solid rgba(201,146,42,0.15);margin-top:4px;gap:8px;flex-wrap:wrap}
 .tut-dots{display:flex;gap:5px;align-items:center}
-.tut-dot{width:7px;height:7px;border-radius:50%;background:#3a2410;border:1px solid #6a4818;transition:.2s}
-.tut-dot.on{background:#ffd755;border-color:#ffd755;box-shadow:0 0 6px rgba(255,215,85,0.6);transform:scale(1.2)}
+.tut-dot{width:7px;height:7px;border-radius:50%;background:#3a2410;border:1px solid #6a4818;transition:.25s}
+.tut-dot.done{background:#6ced8d;border-color:#6ced8d}
+.tut-dot.on{background:#ffd755;border-color:#ffd755;box-shadow:0 0 6px rgba(255,215,85,0.6);transform:scale(1.25)}
 .tut-buttons{display:flex;gap:6px;align-items:center}
 .tut-btn-back{background:transparent;border:1px solid #6a4818;color:#a08060;padding:7px 12px;border-radius:8px;font-family:'Cinzel',serif;font-size:11px;font-weight:600;cursor:pointer;letter-spacing:.05em}
 .tut-btn-back:hover{border-color:#c9922a;color:#f2c96e}
-.tut-btn-next{background:linear-gradient(180deg,#ffd755,#c9922a);border:none;color:#1a0d05;padding:8px 16px;border-radius:8px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 0 #6a4818;letter-spacing:.06em}
+.tut-btn-next{background:linear-gradient(180deg,#ffd755,#c9922a);border:none;color:#1a0d05;padding:8px 16px;border-radius:8px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;cursor:pointer;box-shadow:0 2px 0 #6a4818;letter-spacing:.06em;transition:.2s}
 .tut-btn-next:active{transform:translateY(1px);box-shadow:0 1px 0 #6a4818}
+.tut-btn-next:disabled{background:#3a2410;color:#6a4818;cursor:not-allowed;box-shadow:none;opacity:0.5}
+.tut-action-btn{background:linear-gradient(180deg,#ffd755,#c9922a);border:none;color:#1a0d05;padding:12px 24px;border-radius:10px;font-family:'Cinzel',serif;font-size:13px;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #6a4818;letter-spacing:.08em;margin:8px 0}
+.tut-action-btn:active{transform:translateY(2px);box-shadow:0 1px 0 #6a4818}
+.tut-action-btn:disabled{opacity:0.4;cursor:not-allowed}
 
-/* Card 2: currency grid */
-.tut-currency-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%;max-width:280px;padding:6px 0}
-.cur-chip{display:flex;flex-direction:column;align-items:center;padding:12px 8px;background:linear-gradient(180deg,rgba(255,215,85,0.05),rgba(0,0,0,0.3));border:1.5px solid var(--c,#6a4818);border-radius:10px;box-shadow:0 0 8px rgba(0,0,0,0.4) inset}
-.cur-emj{font-size:28px;line-height:1;margin-bottom:4px;filter:drop-shadow(0 0 6px var(--c))}
-.cur-name{font-family:'Cinzel',serif;font-size:10px;color:var(--c,#ffd755);font-weight:700;letter-spacing:.12em}
-.cur-eg{font-size:9px;color:#a08060;margin-top:3px;font-style:italic}
+/* ─── Card 1: MEET ─── */
+.meet-stage{position:relative;width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:230px}
+.meet-board{width:100%;max-width:240px;opacity:0.4}
+.meet-hero{position:absolute;top:30%;left:50%;transform:translateX(-50%) scale(0);transition:transform 0.5s cubic-bezier(.5,1.6,.5,1);filter:drop-shadow(0 0 14px #ffd755)}
+.meet-hero.show{transform:translateX(-50%) scale(1)}
+.meet-hero-emj{font-size:48px;animation:bobbing 2s ease-in-out infinite}
+@keyframes bobbing{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+.meet-bubble{position:relative;background:linear-gradient(180deg,#3a2b10,#1a0d05);border:1.5px solid #ffd755;border-radius:14px;padding:10px 14px;max-width:260px;font-size:12px;color:#f2c96e;line-height:1.5;text-align:center;opacity:0;transform:translateY(8px);transition:.4s;margin-top:60px;font-style:italic}
+.meet-bubble.show{opacity:1;transform:translateY(0)}
+.bubble-text b{color:#ffd755;font-style:normal}
+.bubble-tail{position:absolute;top:-10px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-bottom:10px solid #ffd755}
+.bubble-tail::after{content:'';position:absolute;top:2px;left:-7px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:9px solid #1a0d05}
+.meet-stats{display:flex;gap:8px;margin-top:4px;opacity:0;transform:translateY(6px);transition:.4s}
+.meet-stats.show{opacity:1;transform:translateY(0)}
+.meet-stat{display:flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(255,215,85,0.08);border:1px solid #6a4818;border-radius:14px;font-size:10px}
+.ms-emj{font-size:11px}
+.ms-val{font-family:'Cinzel',serif;color:#ffd755;font-weight:700;letter-spacing:.04em}
 
-/* Card 5: final-lap & awards */
-.tut-final-wrap{display:flex;flex-direction:column;align-items:center;gap:10px;width:100%;padding:4px 0}
-.tut-finalbar{display:flex;align-items:center;justify-content:center;gap:10px;padding:8px 16px;background:linear-gradient(90deg,#5a3b1a,#ffd755 50%,#5a3b1a);border-radius:6px;font-family:'Cinzel',serif;font-size:14px;font-weight:700;color:#1a0d05;letter-spacing:.15em;width:90%;box-shadow:0 0 14px rgba(255,215,85,0.4)}
-.tut-fin-txt{flex:1;text-align:center}
-.tut-fin-sub{font-size:9px;color:#a08060;text-align:center;font-style:italic;line-height:1.4;padding:0 8px}
-.tut-awards{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%;margin-top:4px}
-.aw{display:flex;flex-direction:column;align-items:center;padding:8px 2px;background:linear-gradient(180deg,rgba(255,215,85,0.08),rgba(0,0,0,0.3));border:1px solid #6a4818;border-radius:8px}
-.aw-emj{font-size:20px;line-height:1;filter:drop-shadow(0 0 4px rgba(255,215,85,0.5))}
-.aw-n{font-family:'Cinzel',serif;font-size:7.5px;color:#ffd755;font-weight:700;letter-spacing:.05em;margin-top:3px}
+/* ─── Card 2: DICE ─── */
+.dice-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.dice-track{position:relative;display:flex;justify-content:space-between;width:100%;background:linear-gradient(180deg,#1a0d05,#0a0603);border:1px solid #3a2410;border-radius:8px;padding:6px;height:46px;align-items:center}
+.dt-space{flex:1;display:flex;align-items:center;justify-content:center;height:36px;border:1px solid #3a2410;border-radius:4px;font-family:'Cinzel',serif;font-size:9px;color:#6a4818;background:#1a0d05;margin:0 1px;font-weight:700}
+.dt-space.property{background:#2a1f0f;border-color:#6a4818;color:#ffd755;font-size:18px}
+.dt-space.landed{background:#3a2b10;border-color:#ffd755;box-shadow:0 0 12px rgba(255,215,85,0.6);animation:flash 0.5s ease}
+@keyframes flash{0%,100%{transform:scale(1)}50%{transform:scale(1.15)}}
+.dt-token{position:absolute;top:50%;left:6px;transform:translate(0,-50%);font-size:24px;transition:transform 0.25s ease;filter:drop-shadow(0 0 6px #ffd755);z-index:5;pointer-events:none}
+.dice-display{display:flex;align-items:center;gap:6px;font-family:'Cinzel',serif;color:#ffd755}
+.d-face{font-size:36px;color:#fff;text-shadow:0 0 4px rgba(0,0,0,0.6),0 0 8px rgba(255,215,85,0.3);min-width:36px;text-align:center}
+.d-plus,.d-eq{font-size:18px;color:#a08060}
+.d-total{font-size:24px;font-weight:700;min-width:30px;text-align:center;color:#6a4818;border-bottom:2px solid #3a2410;padding-bottom:2px}
+.d-total.lit{color:#ffd755;border-color:#ffd755;text-shadow:0 0 8px rgba(255,215,85,0.6);animation:popIn 0.4s ease}
+@keyframes popIn{0%{transform:scale(0.5)}50%{transform:scale(1.3)}100%{transform:scale(1)}}
+.dice-result{opacity:0;font-size:11px;color:#f2c96e;text-align:center;transition:.4s;padding:0 8px}
+.dice-result.show{opacity:1}
+.dice-result b{color:#ffd755}
+.dr-icon{font-size:14px;margin-right:4px}
+
+/* ─── Card 3: TRIVIA ─── */
+.trivia-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.trivia-scroll{display:flex;align-items:center;gap:8px;background:linear-gradient(180deg,#3a2b10,#2a1f0f);border:1.5px solid #ffd755;border-radius:8px;padding:10px 14px;width:100%;box-shadow:0 0 14px rgba(255,215,85,0.2)}
+.trivia-emj{font-size:22px}
+.trivia-q-text{font-family:'Cinzel',serif;color:#ffd755;font-size:13px;font-weight:600;flex:1;line-height:1.3}
+.trivia-opts-list{display:flex;flex-direction:column;gap:5px;width:100%}
+.trivia-opt-btn{display:flex;align-items:center;gap:8px;padding:8px 10px;background:rgba(255,215,85,0.05);border:1px solid #6a4818;border-radius:6px;color:#f2c96e;font-family:inherit;cursor:pointer;text-align:left;font-size:13px;transition:.15s}
+.trivia-opt-btn:hover:not(:disabled){background:rgba(255,215,85,0.12);border-color:#c9922a}
+.trivia-opt-btn:disabled{cursor:default}
+.trivia-opt-btn.correct{background:rgba(108,237,141,0.18);border-color:#6ced8d;color:#6ced8d;font-weight:700}
+.trivia-opt-btn.wrong{background:rgba(220,107,91,0.15);border-color:#dc6b5b;color:#dc6b5b;text-decoration:line-through}
+.opt-letter{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;background:rgba(255,215,85,0.1);border:1px solid #6a4818;border-radius:4px;font-family:'Cinzel',serif;font-size:11px;font-weight:700;color:#ffd755}
+.trivia-opt-btn.correct .opt-letter{background:#6ced8d;color:#0f0a04;border-color:#6ced8d}
+.trivia-opt-btn.wrong .opt-letter{background:#dc6b5b;color:#0f0a04;border-color:#dc6b5b}
+.trivia-result{opacity:0;font-size:11px;text-align:center;transition:.4s;padding:6px 8px;border-radius:6px;width:100%}
+.trivia-result.show{opacity:1}
+.trivia-result.good{background:rgba(108,237,141,0.1);border:1px solid #6ced8d}
+.trivia-result.bad{background:rgba(220,107,91,0.1);border:1px solid #dc6b5b}
+.tr-ok{color:#6ced8d;font-weight:700}
+.tr-no{color:#dc6b5b;font-weight:700}
+.tr-reward{color:#ffd755;display:block;margin-top:3px;font-style:italic}
+
+/* ─── Card 4: TEMPTATION ─── */
+.tempt-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px}
+.tempt-card-3d{background:linear-gradient(180deg,#5a2a4d,#2a0d22);border:2px solid #ffd755;border-radius:10px;padding:10px 14px;width:100%;text-align:center;transform:rotateY(90deg) scale(0.8);transition:transform 0.6s cubic-bezier(.5,1.4,.5,1);box-shadow:0 0 18px rgba(220,107,91,0.4)}
+.tempt-card-3d.flipped-in{transform:rotateY(0) scale(1)}
+.tcc-flame{font-size:28px;line-height:1;animation:flicker 1.4s ease-in-out infinite}
+@keyframes flicker{0%,100%{filter:drop-shadow(0 0 4px #dc6b5b)}50%{filter:drop-shadow(0 0 14px #ffd755)}}
+.tcc-label{font-family:'Cinzel',serif;font-size:9px;color:#dc6b5b;letter-spacing:.18em;font-weight:700;margin-top:2px}
+.tcc-name{font-family:'Cinzel',serif;font-size:14px;color:#ffd755;font-weight:700;margin-top:3px;letter-spacing:.05em}
+.tcc-body{font-size:11px;color:#f2c96e;font-style:italic;margin-top:6px;line-height:1.4}
+.tempt-fork{display:grid;grid-template-columns:1fr 1fr;gap:8px;width:100%}
+.tempt-opt{display:flex;flex-direction:column;align-items:center;gap:3px;padding:10px 6px;background:rgba(255,215,85,0.05);border:1.5px solid #6a4818;border-radius:8px;color:#f2c96e;cursor:pointer;font-family:inherit;transition:.2s}
+.tempt-opt:hover:not(:disabled){transform:translateY(-2px)}
+.tempt-opt.accept:hover:not(:disabled){border-color:#dc6b5b;background:rgba(220,107,91,0.1)}
+.tempt-opt.decline:hover:not(:disabled){border-color:#6ced8d;background:rgba(108,237,141,0.1)}
+.tempt-opt:disabled{cursor:default;opacity:0.4}
+.tempt-opt.chosen{opacity:1 !important;transform:scale(1.04)}
+.tempt-opt.accept.chosen{border-color:#dc6b5b;background:rgba(220,107,91,0.18);box-shadow:0 0 12px rgba(220,107,91,0.5)}
+.tempt-opt.decline.chosen{border-color:#6ced8d;background:rgba(108,237,141,0.18);box-shadow:0 0 12px rgba(108,237,141,0.5)}
+.to-emj{font-size:24px;line-height:1}
+.to-label{font-family:'Cinzel',serif;font-size:11px;font-weight:700;letter-spacing:.08em}
+.tempt-opt.accept .to-label{color:#dc6b5b}
+.tempt-opt.decline .to-label{color:#6ced8d}
+.to-reward{font-size:10px;color:#ffd755;font-weight:600}
+.tempt-result{opacity:0;text-align:center;transition:.4s;width:100%;padding-top:4px}
+.tempt-result.show{opacity:1}
+.goldrain{font-size:20px;letter-spacing:6px;animation:goldfall 0.8s ease}
+@keyframes goldfall{from{transform:translateY(-12px);opacity:0}to{transform:translateY(0);opacity:1}}
+.halo{font-size:28px;color:#ffd755;text-shadow:0 0 14px #ffd755;animation:haloGrow 0.6s ease}
+@keyframes haloGrow{from{transform:scale(0.4);opacity:0}to{transform:scale(1);opacity:1}}
+.t-msg{font-size:11px;color:#f2c96e;margin-top:4px;font-style:italic}
+
+/* ─── Card 5: PRAY ─── */
+.pray-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:12px}
+.pray-prompt{font-family:'Cinzel',serif;font-size:11px;color:#ffd755;letter-spacing:.08em;text-align:center;font-weight:700}
+.pray-circle{display:flex;flex-direction:column;align-items:center;gap:14px;width:100%;position:relative}
+.pray-me{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 12px;background:rgba(91,155,220,0.1);border:1.5px solid #5b9bdc;border-radius:10px;transition:.4s;position:relative}
+.pray-me.praying{box-shadow:0 0 14px rgba(255,215,85,0.6);background:rgba(255,215,85,0.15)}
+.pray-me.praying::after{content:'🙏';position:absolute;top:-12px;right:-12px;font-size:18px;animation:popIn 0.4s ease}
+.pm-emj,.pf-emj{font-size:26px;line-height:1}
+.pm-name,.pf-name{font-family:'Cinzel',serif;font-size:10px;color:#ffd755;letter-spacing:.06em;font-weight:700}
+.pray-friends{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;width:100%}
+.pray-friend{display:flex;flex-direction:column;align-items:center;gap:2px;padding:8px 4px;background:rgba(255,215,85,0.05);border:1.5px solid #6a4818;border-radius:10px;cursor:pointer;font-family:inherit;transition:.2s;position:relative}
+.pray-friend:hover:not(:disabled){border-color:#ffd755;background:rgba(255,215,85,0.1);transform:translateY(-2px)}
+.pray-friend:disabled{cursor:default}
+.pray-friend.dim{opacity:0.3}
+.pray-friend.praying{box-shadow:0 0 14px rgba(255,215,85,0.6);background:rgba(255,215,85,0.18);border-color:#ffd755}
+.pray-friend.praying::after{content:'🙏';position:absolute;top:-12px;right:-8px;font-size:18px;animation:popIn 0.4s ease}
+.pray-result{opacity:0;font-size:11px;color:#f2c96e;text-align:center;transition:.4s;padding:4px 8px}
+.pray-result.show{opacity:1}
+.pray-result b{color:#ffd755}
+.pr-emj{font-size:14px;margin-right:4px}
+
+/* ─── Card 6: CROWN ─── */
+.crown-stage{width:100%;display:flex;flex-direction:column;align-items:center;gap:10px;min-height:240px;justify-content:center}
+.crown-finalbar{display:flex;align-items:center;justify-content:center;gap:8px;padding:6px 14px;background:linear-gradient(90deg,#5a3b1a,#ffd755 50%,#5a3b1a);border-radius:6px;font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:#1a0d05;letter-spacing:.15em;width:90%;opacity:0;transform:translateY(-8px);transition:.5s ease}
+.crown-finalbar.show{opacity:1;transform:translateY(0);box-shadow:0 0 16px rgba(255,215,85,0.5)}
+.cf-txt{flex:1;text-align:center}
+.crown-king{position:relative;display:flex;flex-direction:column;align-items:center;opacity:0;transform:scale(0.5);transition:transform 0.6s cubic-bezier(.5,1.6,.5,1),opacity 0.5s}
+.crown-king.show{opacity:1;transform:scale(1)}
+.ck-crown{font-size:36px;line-height:1;animation:bobbing 2s ease-in-out infinite;filter:drop-shadow(0 0 12px #ffd755)}
+.ck-hero{font-size:42px;margin-top:-4px;filter:drop-shadow(0 0 14px #ffd755)}
+.ck-glow{position:absolute;inset:-15px;background:radial-gradient(circle,rgba(255,215,85,0.3),transparent 70%);z-index:-1;animation:pulseGlow 2s ease-in-out infinite}
+@keyframes pulseGlow{0%,100%{transform:scale(1);opacity:0.5}50%{transform:scale(1.15);opacity:0.9}}
+.crown-awards{display:grid;grid-template-columns:repeat(5,1fr);gap:4px;width:100%;opacity:0;transition:.4s}
+.crown-awards.show{opacity:1}
+.crown-awards.show .caw{animation:cawIn 0.5s cubic-bezier(.5,1.5,.5,1) backwards;animation-delay:var(--d)}
+@keyframes cawIn{from{opacity:0;transform:translateY(12px) scale(0.6)}to{opacity:1;transform:translateY(0) scale(1)}}
+.caw{display:flex;flex-direction:column;align-items:center;padding:6px 2px;background:linear-gradient(180deg,rgba(255,215,85,0.12),rgba(0,0,0,0.3));border:1px solid #ffd755;border-radius:6px}
+.caw-emj{font-size:18px;line-height:1;filter:drop-shadow(0 0 4px rgba(255,215,85,0.5))}
+.caw-n{font-family:'Cinzel',serif;font-size:7px;color:#ffd755;font-weight:700;letter-spacing:.04em;margin-top:2px}
+.crown-tagline{font-family:'Cinzel',serif;font-size:11px;color:#a08060;letter-spacing:.1em;font-style:italic;text-align:center;margin-top:4px}
 
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 </style>
