@@ -293,64 +293,65 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 <div id="lobby-scr" class="screen active">
 <div id="lobby">
   <div class="lobby-inner">
+    <button class="lang-btn" id="lang-btn" onclick="toggleLang()" title="Language / 語言">中</button>
     <div class="banner">
       <div class="banner-crown">👑</div>
-      <div class="banner-ttl">KINGDOM STEWARD</div>
-      <div class="banner-sub">A quest of faith &amp; fortune</div>
+      <div class="banner-ttl" data-i18n="lobby.title">KINGDOM STEWARD</div>
+      <div class="banner-sub" data-i18n="lobby.subtitle">A quest of faith &amp; fortune</div>
     </div>
 
     <div class="lobby-card">
-      <div class="lc-title">CHOOSE YOUR HERO</div>
+      <div class="lc-title" data-i18n="lobby.chooseHero">CHOOSE YOUR HERO</div>
       <div class="token-grid" id="tok-grid"></div>
-      <input type="text" class="inp" id="hero-name" placeholder="Your name" maxlength="14">
+      <input type="text" class="inp" id="hero-name" data-i18n-placeholder="lobby.namePlaceholder" placeholder="Your name" maxlength="14">
     </div>
 
     <div class="lobby-card" id="mode-section">
-      <div class="lc-title">GAME MODE</div>
+      <div class="lc-title" data-i18n="lobby.gameMode">GAME MODE</div>
       <div class="mode-grid">
         <div class="mode-opt on" id="mode-quick" onclick="selectMode('quick')">
-          <div class="mode-opt-name">QUICK</div>
-          <div class="mode-opt-info">12 rounds<br>~30 min</div>
+          <div class="mode-opt-name" data-i18n="lobby.modeQuick">QUICK</div>
+          <div class="mode-opt-info" data-i18n-html="lobby.modeQuickDesc">12 rounds<br>~30 min</div>
         </div>
         <div class="mode-opt locked" id="mode-full" onclick="selectMode('full')" title="Paid feature">
-          <div class="mode-opt-name">FULL 🔒</div>
-          <div class="mode-opt-info">20 rounds<br>~60 min<br><i style="font-size:9px">Paid</i></div>
+          <div class="mode-opt-name"><span data-i18n="lobby.modeFull">FULL</span> 🔒</div>
+          <div class="mode-opt-info" data-i18n-html="lobby.modeFullDesc">20 rounds<br>~60 min<br><i style="font-size:9px">Paid</i></div>
         </div>
       </div>
     </div>
 
     <div class="lobby-card" id="create-section">
-      <div class="lc-title">CREATE A ROOM</div>
+      <div class="lc-title" data-i18n="lobby.createRoom">CREATE A ROOM</div>
       <button class="mega-play" onclick="doCreate()">
-        <span>⚔️</span><span>CREATE ROOM</span><span>→</span>
+        <span>⚔️</span><span data-i18n="lobby.createBtn">CREATE ROOM</span><span>→</span>
       </button>
     </div>
 
     <div class="lobby-card" id="room-section" style="display:none">
-      <div class="lc-title">YOUR ROOM CODE</div>
+      <div class="lc-title" data-i18n="lobby.yourCode">YOUR ROOM CODE</div>
       <div class="room-display">
         <div class="room-code" id="room-code" onclick="copyCode()">----</div>
-        <div class="room-hint">Tap to copy · share to play together</div>
+        <div class="room-hint" data-i18n="lobby.shareCode">Tap to copy · share to play together</div>
       </div>
       <div id="lobby-players"></div>
       <div class="err-msg" id="lobby-err"></div>
       <button class="mega-play" id="start-btn" onclick="doStartGame()">
-        <span>⚔️</span><span>START QUEST</span><span>→</span>
+        <span>⚔️</span><span data-i18n="lobby.startQuest">START QUEST</span><span>→</span>
       </button>
     </div>
 
     <div class="lobby-card" id="join-section">
-      <div class="lc-title">JOIN OR REJOIN A ROOM</div>
+      <div class="lc-title" data-i18n="lobby.joinRoom">JOIN OR REJOIN A ROOM</div>
       <div style="display:flex;gap:6px">
-        <input type="text" class="inp" id="join-code" placeholder="Enter code" maxlength="4" style="flex:1;text-transform:uppercase;letter-spacing:.15em;text-align:center;margin-bottom:0" onkeyup="this.value=this.value.toUpperCase()">
-        <button class="sec-btn" style="width:70px;height:44px" onclick="doJoin()">Join</button>
+        <input type="text" class="inp" id="join-code" data-i18n-placeholder="lobby.joinPlaceholder" placeholder="Enter code" maxlength="4" style="flex:1;text-transform:uppercase;letter-spacing:.15em;text-align:center;margin-bottom:0" onkeyup="this.value=this.value.toUpperCase()">
+        <button class="sec-btn" style="width:70px;height:44px" onclick="doJoin()" data-i18n="lobby.joinBtn">Join</button>
       </div>
-      <div style="font-size:10px;color:#a08060;font-style:italic;text-align:center;padding:4px 0">💡 Disconnected? Use original name &amp; code</div>
+      <div style="font-size:10px;color:#a08060;font-style:italic;text-align:center;padding:4px 0" data-i18n="lobby.joinHint">💡 Disconnected? Use original name &amp; code</div>
       <div class="err-msg" id="join-err"></div>
     </div>
 
     <button class="mega-play gold" onclick="startTutorial()">
-      <span>🎓</span><span>HOW TO PLAY</span>
+      <span>🎓</span><span data-i18n="lobby.howToPlay">HOW TO PLAY</span>
     </button>
   </div>
 </div>
@@ -385,6 +386,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
   </div>
   <div class="hud-right">
     <div class="icon-btn" id="snd-btn" onclick="toggleSound()">🔊</div>
+    <div class="icon-btn" id="lang-btn-game" onclick="toggleLang()" title="Language / 語言" style="font-family:'Cinzel',serif;font-size:13px">中</div>
     <div class="icon-btn" onclick="goLobby()">☰</div>
   </div>
 </div>
@@ -413,7 +415,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     </div>
     <div class="chat-msgs" id="chat-msgs"></div>
     <div class="chat-row">
-      <input id="chat-in" placeholder="Message..." maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
+      <input id="chat-in" data-i18n-placeholder="chat.placeholder" placeholder="Message..." maxlength="100" onkeydown="if(event.key==='Enter')sendChat()">
       <button onclick="sendChat()">Send</button>
     </div>
   </div>
@@ -425,12 +427,12 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
       <div class="mega-d" id="d1">⚀</div>
       <div class="mega-d" id="d2">⚀</div>
     </div>
-    <span id="roll-label">ROLL TO MOVE</span>
+    <span id="roll-label" data-i18n="action.roll">ROLL TO MOVE</span>
   </button>
   <div class="sec-actions">
-    <button class="sec-btn" id="buy-btn" onclick="doBuyMinistry()" disabled><span class="emj">🏛</span><span>BUILD</span></button>
-    <button class="sec-btn" id="interact-btn" onclick="openInteractPicker()"><span class="emj">🤝</span><span>INTERACT</span></button>
-    <button class="sec-btn" id="end-btn" onclick="doEndTurn()" disabled><span class="emj">➡️</span><span>END</span></button>
+    <button class="sec-btn" id="buy-btn" onclick="doBuyMinistry()" disabled><span class="emj">🏛</span><span data-i18n="action.build">BUILD</span></button>
+    <button class="sec-btn" id="interact-btn" onclick="openInteractPicker()"><span class="emj">🤝</span><span data-i18n="action.interact">INTERACT</span></button>
+    <button class="sec-btn" id="end-btn" onclick="doEndTurn()" disabled><span class="emj">➡️</span><span data-i18n="action.endTurn">END</span></button>
   </div>
 </div>
 </div>
@@ -589,14 +591,14 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 <!-- GAMEOVER awards -->
 <div class="gameover-bg" id="gameover">
   <div class="go-crown">👑</div>
-  <div class="go-title">GAME COMPLETE</div>
+  <div class="go-title" data-i18n="go.gameComplete">GAME COMPLETE</div>
   <div class="go-sub" id="go-mode-info">Quick mode · 12 rounds</div>
   <div class="go-winner" id="go-winner-block"></div>
   <div class="go-rankings" id="go-rankings"></div>
   <div class="go-awards" id="go-awards"></div>
   <div class="go-buttons">
-    <button class="go-btn primary" onclick="location.reload()">🎮 New Game</button>
-    <button class="go-btn secondary" onclick="document.getElementById('gameover').classList.remove('on')">View Board</button>
+    <button class="go-btn primary" onclick="location.reload()" data-i18n="go.newGame">🎮 New Game</button>
+    <button class="go-btn secondary" onclick="document.getElementById('gameover').classList.remove('on')" data-i18n="go.viewBoard">View Board</button>
   </div>
 </div>
 
@@ -608,13 +610,282 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 // ═══════════════════════════════════════════════════════════════
 
 const HEROES = [
-  { n:'Dove',    emj:'🕊',  color:'#5b9bdc' },
-  { n:'Lion',    emj:'🦁',  color:'#e0a035' },
-  { n:'Vine',    emj:'🌿',  color:'#4aad70' },
-  { n:'Sword',   emj:'⚔️', color:'#c5503d' },
-  { n:'Rose',    emj:'🌸',  color:'#d76b9c' },
-  { n:'Scholar', emj:'📖',  color:'#9871d6' },
+  { n:'Dove',    key:'hero.dove',    emj:'🕊',  color:'#5b9bdc' },
+  { n:'Lion',    key:'hero.lion',    emj:'🦁',  color:'#e0a035' },
+  { n:'Vine',    key:'hero.vine',    emj:'🌿',  color:'#4aad70' },
+  { n:'Sword',   key:'hero.sword',   emj:'⚔️', color:'#c5503d' },
+  { n:'Rose',    key:'hero.rose',    emj:'🌸',  color:'#d76b9c' },
+  { n:'Scholar', key:'hero.scholar', emj:'📖',  color:'#9871d6' },
 ];
+
+// ═══════════════════════════════════════════════════════════════
+// i18n — Traditional Chinese translations
+// ═══════════════════════════════════════════════════════════════
+const TRANSLATIONS = {
+  // Lobby & header
+  'KINGDOM STEWARD': '大管家',
+  "A pilgrim's journey": '客旅的旅程',
+  'CREATE A NEW ROOM': '建立新房間',
+  'JOIN OR REJOIN A ROOM': '加入或重新加入房間',
+  'YOUR NAME': '你的名字',
+  'Enter your pilgrim name': '輸入你的客旅名字',
+  'Enter code': '輸入房間代碼',
+  'CHOOSE YOUR HERO': '選擇你的角色',
+  'CHOOSE GAME MODE': '選擇遊戲模式',
+  'QUICK': '快速',
+  'FULL': '完整',
+  '12 rounds · 30 min': '12 回合 · 30 分鐘',
+  '20 rounds · 60 min': '20 回合 · 60 分鐘',
+  'Free': '免費',
+  'Pro $12/mo': '專業版 每月 $12',
+  'CREATE ROOM': '建立房間',
+  'Join': '加入',
+  'HOW TO PLAY': '怎麼玩',
+  'START GAME': '開始遊戲',
+  'Waiting for host to start...': '等待房主開始...',
+  'ROOM CODE': '房間代碼',
+  'Tap to copy': '點擊複製',
+  'COPIED ✓': '已複製 ✓',
+  '💡 Disconnected? Use original name & code': '💡 斷線了？使用原本的名字和代碼',
+  // Heroes
+  'Dove': '鴿子', 'Lion': '獅子', 'Vine': '葡萄藤', 'Sword': '寶劍', 'Rose': '玫瑰', 'Scholar': '智者',
+  // Tiers
+  'NOVICE': '初信者', 'PILGRIM': '客旅', 'STEWARD': '管家',
+  'Novice': '初信', 'Pilgrim': '客旅', 'Steward': '管家',
+  // HUD
+  'ROLL': '擲骰', 'BUILD': '建造', 'INTERACT': '互動', 'END': '結束',
+  'TURN': '回合', 'Round': '回合',
+  'Final Lap!': '最後衝刺！', 'FINAL LAP': '最後衝刺',
+  'TALENTS': '金幣', 'VIRTUE': '品格', 'WISDOM': '智慧', 'TITHES': '十一奉獻', 'MINISTRIES': '事工',
+  'Talents': '金幣', 'Virtue': '品格', 'Wisdom': '智慧', 'Tithes': '十一奉獻', 'Ministry': '事工', 'Ministries': '事工',
+  // Wisdom Cards
+  'Scroll of Wisdom': '智慧卷軸',
+  'The Generous Lender': '慷慨的借貸者',
+  'You lent to many and borrowed from none. Walk forward 3 spaces and collect 150T.': '你借給許多人卻不向人借貸。前進 3 格並獲得 150 金幣。',
+  'King Solomon Visits': '所羅門王來訪',
+  'Solomon shares his wisdom! Gain 180 Talents.': '所羅門分享他的智慧！獲得 180 金幣。',
+  'Year of Abundance': '豐收之年',
+  'Bumper harvest! Gain 50T per ministry you own.': '大豐收！每個事工獲得 50 金幣。',
+  "Soar on Eagles' Wings": '如鷹展翅上騰',
+  'Strength renewed! Advance to nearest Wisdom space.': '力量得新！前進到最近的智慧格。',
+  'Well of Provision': '供應之井',
+  'Living water provides! Gain 120 Talents.': '活水湧流！獲得 120 金幣。',
+  'Daily Bread': '日用飲食',
+  'Daily needs met. Collect 90 Talents.': '日用所需供應。獲得 90 金幣。',
+  'Peace Be With You': '願你們平安',
+  'All players give you 20T.': '所有玩家給你 20 金幣。',
+  'Star of Bethlehem': '伯利恆之星',
+  'Advance to the Temple corner.': '前進到聖殿角落。',
+  'Tree by Living Water': '溪水旁的樹',
+  'Deeply rooted! Gain 100T and Wisdom Card.': '根深蒂固！獲得 100 金幣和智慧卡。',
+  "David's Song": '大衛之歌',
+  'Joy! Gain 70 Talents.': '喜樂！獲得 70 金幣。',
+  // Acts Cards
+  'Acts of Apostles': '使徒行傳',
+  'All Things in Common': '凡物公用',
+  'Give 60T to the poorest player. Generous love.': '給最貧窮的玩家 60 金幣。慷慨的愛。',
+  'Barnabas Encourages': '巴拿巴的勸勉',
+  'Life-giving words! Gain 70T.': '生命的話語！獲得 70 金幣。',
+  "Lydia's Hospitality": '呂底亞的款待',
+  'All players gain 40T from the Tithe Pool.': '所有玩家從十一奉獻池獲得 40 金幣。',
+  'Paul Plants a Church': '保羅建立教會',
+  'Free Ministry at your space (if eligible)!': '在你的位置建立免費事工（若符合條件）！',
+  'Vineyard Workers': '葡萄園的工人',
+  'Each player receives 30T.': '每位玩家獲得 30 金幣。',
+  'Loaves & Fishes': '五餅二魚',
+  'Multiplication miracle! Gain up to 200T.': '倍增的神蹟！獲得最多 200 金幣。',
+  'The Good Samaritan': '好撒瑪利亞人',
+  'Pay 50T to the poorest player.': '付 50 金幣給最貧窮的玩家。',
+  "Widow's Oil Multiplied": '寡婦的油倍增',
+  'Faith pays! Gain 80T.': '信心得獎賞！獲得 80 金幣。',
+  'Mission Offering': '宣教奉獻',
+  'Pay 40T to Tithe Pool. Gain Wisdom.': '付 40 金幣到十一奉獻池。獲得智慧。',
+  'Wash Their Feet': '為他們洗腳',
+  'Each player gives you 25T.': '每位玩家給你 25 金幣。',
+  // Trivia
+  'Trivia · Easy': '聖經問答 · 簡單',
+  'Trivia · Medium': '聖經問答 · 中等',
+  'Trivia · Hard': '聖經問答 · 困難',
+  'Easy Trivia': '簡單問答', 'Medium Trivia': '中等問答', 'Hard Trivia': '困難問答',
+  'How many disciples did Jesus call?': '耶穌呼召了多少門徒？',
+  'Who built the ark?': '誰建造了方舟？',
+  'What did David use to defeat Goliath?': '大衛用什麼擊敗歌利亞？',
+  'In what city was Jesus born?': '耶穌生在哪座城？',
+  'Who led Israel out of Egypt?': '誰帶領以色列人出埃及？',
+  'How many days did God create in?': '神在幾天內創造了世界？',
+  'In Parable of the Talents, what happened to the lazy servant?': '在按才幹受託的比喻中，懶惰的僕人遭遇了什麼？',
+  'Zacchaeus promised to give the poor what?': '撒該應許將什麼給窮人？',
+  'How long was Jonah in the great fish?': '約拿在大魚腹中多久？',
+  'In Parable of the Sower, which soil produced fruit?': '在撒種比喻中，哪種土壤結出果實？',
+  'The widow with 2 coins gave more because?': '投兩個小錢的寡婦為何奉獻更多？',
+  'Which book has the Beatitudes?': '哪卷書記載了八福？',
+  'Whom did Jacob meet at the well in Haran?': '雅各在哈蘭的井旁遇見誰？',
+  'Unmerciful Servant owed his master?': '不饒恕的僕人欠主人多少？',
+  'Which prophet anointed Saul AND David?': '哪位先知膏立掃羅又膏立大衛？',
+  "In Joseph's dream, what bowed first?": '約瑟的夢中，什麼先俯伏？',
+  'How many silver pieces did Judas receive?': '猶大收了多少塊銀子？',
+  'King of Salem who blessed Abraham?': '哪位撒冷王祝福了亞伯拉罕？',
+  "Hannah's son who became prophet?": '哈拿的兒子成為了哪位先知？',
+  'Moses': '摩西', 'Noah': '挪亞', 'Abraham': '亞伯拉罕',
+  'Jerusalem': '耶路撒冷', 'Nazareth': '拿撒勒', 'Bethlehem': '伯利恆',
+  'Joshua': '約書亞', 'Aaron': '亞倫',
+  'Sling and stone': '機弦甩石', 'Spear': '長矛',
+  'Praised': '受稱讚', 'Cast out': '被丟棄', 'Gained more': '得到更多',
+  'A tenth': '十分之一', 'Half': '一半', 'All': '全部',
+  '1 day': '1 天', '3 days': '3 天', '7 days': '7 天',
+  'Rocky': '石頭地', 'Thorny': '荊棘地', 'Good': '好土',
+  'Pretty gift': '禮物精美', 'All she had': '全部所有的', 'Public': '公開捐獻',
+  'Matthew': '馬太福音', 'Romans': '羅馬書', 'Genesis': '創世記',
+  'Leah': '利亞', 'Rachel': '拉結', 'Rebekah': '利百加',
+  '100 denarii': '100 銀錢', '10,000 talents': '10,000 他連得', '1 mina': '1 米拿',
+  'Nathan': '拿單', 'Samuel': '撒母耳', 'Elijah': '以利亞',
+  'Sun & moon': '日和月', 'Sheaves': '禾捆', 'Stars': '星辰',
+  'Melchizedek': '麥基洗德', 'Pharaoh': '法老', 'Abimelech': '亞比米勒',
+  'Elisha': '以利沙', 'Daniel': '但以理',
+  // Temptation
+  'Temptation': '試探',
+  'Love of Money': '貪愛錢財',
+  'Hoard 120T from a shady deal. Or refuse — let go of greed.': '從可疑交易中囤積 120 金幣。或拒絕——放下貪心。',
+  'Take gold (+120T)': '拿金幣 (+120 金幣)',
+  'Refuse (+2 Virtue)': '拒絕 (+2 品格)',
+  'Tower of Babel': '巴別塔',
+  'Build self-glory! Skip next turn for 150T.': '築自己的高樓！跳過下回合得 150 金幣。',
+  'Skip turn (+150T)': '跳過回合 (+150 金幣)',
+  'Stay humble (+3 Virtue)': '保持謙卑 (+3 品格)',
+  'Excess Wine': '醉酒放縱',
+  'Indulge tonight, lose 1 Wisdom card. Or sober up.': '今夜放縱，失去 1 張智慧卡。或保持清醒。',
+  'Indulge (+80T)': '放縱 (+80 金幣)',
+  'Stay sober (+2 Virtue)': '保持清醒 (+2 品格)',
+  'Golden Calf': '金牛犢',
+  'Worship the idol! Take 200T or refuse and grow strong.': '敬拜偶像！拿 200 金幣或拒絕並變剛強。',
+  'Bow to idol (+200T)': '向偶像下拜 (+200 金幣)',
+  'Stand firm (+4 Virtue)': '堅定不移 (+4 品格)',
+  'Wandering 40 Years': '飄流四十年',
+  'Doubt and wander. Skip next turn for 150T.': '懷疑和飄流。跳過下回合得 150 金幣。',
+  'Doubt (+150T)': '懷疑 (+150 金幣)',
+  'Trust God (+2 Virtue)': '信靠神 (+2 品格)',
+  "Lot's Wife": '羅得的妻子',
+  'Look back longingly. Take 100T or press on.': '依戀回望。拿 100 金幣或繼續前行。',
+  'Look back (+100T)': '回望 (+100 金幣)',
+  'Press on (+2 Virtue)': '繼續前行 (+2 品格)',
+  // Apostles
+  'Apostle': '使徒',
+  '"Run the race set before you." Tithe 50T to receive +1 Wisdom & +1 Virtue.': '「奔那擺在我們前頭的路程。」十一奉獻 50 金幣換 +1 智慧 & +1 品格。',
+  '"Cast your nets on the right side." Roll an extra 1d6 next turn.': '「把網撒在船右邊。」下回合多擲一顆骰子。',
+  '"God is love." Gain +2 Virtue.': '「神就是愛。」獲得 +2 品格。',
+  '"Faith without works is dead." Pay 40T to a poor player; +2 Virtue.': '「信心若沒有行為就是死的。」付 40 金幣給貧窮玩家；+2 品格。',
+  '"My soul magnifies the Lord." +30 Talents & +1 Virtue.': '「我心尊主為大。」+30 金幣 & +1 品格。',
+  '"We have found the Messiah." Bring another player; both +1 Wisdom.': '「我們遇見彌賽亞了。」帶另一位玩家；雙方 +1 智慧。',
+  '"Son of encouragement." +50T to chosen player; +1 Virtue self.': '「勸慰之子。」+50 金幣給選定玩家；自己 +1 品格。',
+  '"My Lord and my God!" +1 Wisdom card if you correctly answer trivia.': '「我的主，我的神！」答對問答即得 +1 智慧卡。',
+  'Paul': '保羅', 'Peter': '彼得', 'John': '約翰', 'James': '雅各',
+  'Mary': '馬利亞', 'Andrew': '安得烈', 'Barnabas': '巴拿巴', 'Thomas': '多馬',
+  // Interactions
+  'You meet a fellow pilgrim!': '你遇見了一位同行的客旅！',
+  'meets': '遇見',
+  'at': '於',
+  'Waiting for': '等待',
+  'Encourage': '鼓勵', 'Pray': '禱告', 'Pray Together': '一起禱告', 'Trade': '交易',
+  'Tithe-Trade': '十一交易', 'Wisdom Duel': '智慧較量', 'Tax Collector': '稅吏',
+  'Encourage (+1V both)': '鼓勵 (+1 品格 雙方)',
+  'Pray Together (+1 Wisdom each)': '一起禱告 (+1 智慧 各)',
+  'Tithe-Trade (swap positions, 80T)': '十一交易 (交換位置, 80 金幣)',
+  'Tax Collector (-1V, +60T)': '稅吏 (-1 品格, +60 金幣)',
+  'Pass peacefully': '和平通過',
+  // Pending interaction descs
+  'pi.encourageDesc': '想要鼓勵你。雙方都得到品格。',
+  'pi.prayDesc': '邀請你一同禱告。雙方都得到智慧卡。',
+  'pi.tradeDesc': '提議十一交易——交換棋盤位置，80 金幣。',
+  'pi.duelDesc': '向你發出智慧較量挑戰——勝者得 100 金幣。',
+  'pi.taxDesc': '作為稅吏向你索取 60 金幣！',
+  'PROPOSAL': '提議',
+  'A proposal awaits.': '有一個提議等候。',
+  // Card offer overlay
+  'Draw a card?': '抽一張卡？',
+  'stops at': '來到',
+  'You landed on': '你來到',
+  'Draw the card?': '抽卡？',
+  'Watching...': '觀戰中...',
+  'Scroll of Wisdom': '智慧卷軸',
+  'Acts of the Apostles': '使徒行傳',
+  'Parable': '比喻',
+  'Place Card': '地點卡',
+  '💛 Encourage (+1V both)': '💛 鼓勵 (+1 品格 雙方)',
+  '🙏 Pray Together (+1 Wisdom each)': '🙏 一起禱告 (+1 智慧 各)',
+  '🤝 Tithe-Trade (swap positions, 80T)': '🤝 十一交易 (交換位置, 80 金幣)',
+  '⚔️ Wisdom Duel': '⚔️ 智慧較量',
+  '🧾 Tax Collector (-1V, +60T)': '🧾 稅吏 (-1 品格, +60 金幣)',
+  '➡ Pass peacefully': '➡ 和平通過',
+  // Card buttons
+  '✦ CLAIM': '✦ 領取', '✦ ANSWER': '✦ 回答',
+  'Skip': '略過', 'Skip (-1V)': '略過 (-1 品格)',
+  '✗ ACCEPT': '✗ 接受', '✦ DECLINE': '✦ 拒絕',
+  '⚠ A test of your character. Choose carefully.': '⚠ 一場品格的試煉。慎重抉擇。',
+  // Card type labels
+  'TRIVIA': '聖經問答',
+  'BLESSING': '祝福',
+  'ACTS OF MERCY': '憐憫之舉',
+  'TEMPTATION': '試探',
+  'Card': '卡片',
+  'WATCHING': '觀戰中', 'Close': '關閉',
+  // Awards
+  '👑 KINGDOM HEIR': '👑 國度後嗣',
+  'KINGDOM HEIR': '國度後嗣',
+  'Most Generous': '最慷慨者',
+  'Wisdom Keeper': '智慧守護者',
+  'Pillar of Virtue': '品格的柱石',
+  'Master Builder': '建造大師',
+  'GAME COMPLETE': '遊戲結束',
+  'Quick mode · 12 rounds complete': '快速模式 · 12 回合完成',
+  'Full mode · 20 rounds complete': '完整模式 · 20 回合完成',
+  'Final Standings': '最終排名',
+  'Special Awards': '特別獎',
+  '🎮 New Game': '🎮 新遊戲',
+  'View Board': '查看棋盤',
+  // Tutorial
+  'MEET YOUR PILGRIM': '認識你的客旅',
+  'Begin the journey': '開始旅程',
+  'ROLL THE DICE': '擲骰子',
+  'Move across the land': '橫跨土地',
+  'WISDOM TRIVIA': '智慧問答',
+  'Test your knowledge': '考驗你的知識',
+  'A TEMPTATION': '試探',
+  'The heart of the game': '遊戲的核心',
+  'PRAY TOGETHER': '一起禱告',
+  'Walk with friends': '與友同行',
+  'RACE FOR THE CROWN': '為冠冕奔跑',
+  'Win the kingdom': '贏得國度',
+  '🎲 ROLL THE DICE': '🎲 擲骰子',
+  'A shady deal offers quick gain. Will you take it?': '一個可疑的交易提供快速利潤。你會接受嗎？',
+  'ACCEPT': '接受', 'DECLINE': '拒絕',
+  '+120 Talents': '+120 金幣', '+2 Virtue': '+2 品格',
+  '+120 Talents — but no Virtue gained': '+120 金幣——但沒有品格成長',
+  '+2 Virtue — your character grows stronger': '+2 品格——你的品格更剛強',
+  'Tap a friend to pray with them': '點擊朋友與他禱告',
+  '🙏 Praying together...': '🙏 一起禱告中...',
+  'YOU': '你',
+  '🏁 FINAL LAP 🏁': '🏁 最後衝刺 🏁',
+  'A journey of faith & fortune': '信仰與財富的旅程',
+  'HEIR': '後嗣', 'GIVER': '施予者', 'SAGE': '智者', 'BUILDER': '建造者',
+  '← Back': '← 返回', 'Next →': '下一步 →',
+  "Let's Play! ✦": '開始遊戲! ✦',
+  // Action bar
+  '🎲 ROLL': '🎲 擲骰',
+  '🏛 BUILD': '🏛 建造',
+  '🤝 INTERACT': '🤝 互動',
+  '➡ END': '➡ 結束',
+  // Place names
+  'Begin': '起點', 'Capernaum': '迦百農', 'Bethsaida': '伯賽大', 'Tithe': '十一',
+  'Antioch': '安提阿', 'Babylon Gt': '巴比倫(西)', 'Babylon Ct': '巴比倫(中)',
+  'Wilderness': '曠野', 'Jordan': '約旦河', 'Parable': '比喻', 'Decapolis': '低加坡里',
+  'Peraea': '比利亞', 'Machaerus': '馬該魯斯', 'Dead Sea N': '死海(北)', 'Dead Sea S': '死海(南)',
+  'Temple': '聖殿', 'Negev': '尼革', 'Nile': '尼羅河', 'Sinai': '西乃',
+  'Hebron': '希伯崙', 'Judea': '猶大地', 'Mt Carmel': '迦密山', 'Zion': '錫安',
+  'Samaria': '撒瑪利亞', 'Sychar': '敘加', 'Mt Gerizim': '基利心山', 'Tiberias': '提比哩亞',
+  'Acts': '使徒行傳',
+};
+
+// (Legacy applyTranslations / toggleLang / initLang / t() removed — superseded by applyI18n / setLang / detectLang / unified t() below)
 
 let state = {
   socket: null,
@@ -631,7 +902,397 @@ let state = {
   achievements: new Set(),
   triviaIdx: null,
   interactTargetId: null,
+  lang: 'en',
 };
+
+// ═══════════════════════════════════════════════════════════════
+// I18N — English + Traditional Chinese
+// ═══════════════════════════════════════════════════════════════
+const LANG = {
+  en: {
+    // Lobby
+    'lobby.title': 'KINGDOM STEWARD',
+    'lobby.subtitle': 'A journey of faith & fortune',
+    'lobby.chooseHero': 'CHOOSE YOUR HERO',
+    'lobby.gameMode': 'GAME MODE',
+    'lobby.modeQuick': 'QUICK',
+    'lobby.modeQuickDesc': '12 rounds · ~30 min',
+    'lobby.modeFull': 'FULL',
+    'lobby.modeFullDesc': '20 rounds · ~60 min · paid',
+    'lobby.namePlaceholder': 'Your name',
+    'lobby.createRoom': 'CREATE A ROOM',
+    'lobby.createBtn': 'CREATE ROOM',
+    'lobby.joinRoom': 'JOIN OR REJOIN A ROOM',
+    'lobby.joinPlaceholder': 'Enter code',
+    'lobby.joinBtn': 'Join',
+    'lobby.joinHint': '💡 Disconnected? Use original name & code',
+    'lobby.howToPlay': 'HOW TO PLAY',
+    'lobby.yourCode': 'YOUR ROOM CODE',
+    'lobby.startQuest': 'START QUEST',
+    'lobby.shareCode': 'Share this code with friends',
+    'lobby.players': 'Players',
+    // HUD
+    'hud.round': 'ROUND',
+    'hud.room': 'ROOM',
+    'hud.novice': 'NOVICE',
+    'hud.pilgrim': 'PILGRIM',
+    'hud.steward': 'STEWARD',
+    // Action bar
+    'action.roll': 'ROLL TO MOVE',
+    'action.build': 'BUILD',
+    'action.interact': 'INTERACT',
+    'action.endTurn': 'END',
+    'action.waiting': "Waiting for ",
+    // Card overlay
+    'card.draw': 'Draw a card?',
+    'card.cardAvailable': 'CARD AVAILABLE',
+    'card.scrollOfWisdom': 'SCROLL OF WISDOM',
+    'card.temptation': 'TEMPTATION',
+    'card.encounter': 'ENCOUNTER',
+    'card.divineEncounter': 'DIVINE ENCOUNTER',
+    'card.proposal': 'PROPOSAL',
+    'card.accept': 'ACCEPT',
+    'card.decline': 'DECLINE',
+    'card.skip': 'Skip',
+    'card.gotIt': 'Got it',
+    'card.cancel': 'Cancel',
+    'card.send': 'Send',
+    'card.youLanded': 'You landed on a card space.',
+    'card.meetPilgrim': 'You meet a fellow pilgrim!',
+    'card.choosePilgrim': 'Choose a fellow pilgrim',
+    'card.whoInteract': 'Who do you want to interact with?',
+    // Game over
+    'go.gameComplete': 'GAME COMPLETE',
+    'go.kingdomHeir': 'KINGDOM HEIR',
+    'go.finalStandings': 'Final Standings',
+    'go.specialAwards': 'Special Awards',
+    'go.heir': 'HEIR',
+    'go.giver': 'GIVER',
+    'go.sage': 'SAGE',
+    'go.virtue': 'VIRTUE',
+    'go.builder': 'BUILDER',
+    'go.points': 'points',
+    'go.mostGenerous': 'Most Generous',
+    'go.wisdomKeeper': 'Wisdom Keeper',
+    'go.pillarOfVirtue': 'Pillar of Virtue',
+    'go.masterBuilder': 'Master Builder',
+    'go.tithesUnit': 'tithes (+20pt bonus)',
+    'go.cardsUnit': 'cards',
+    'go.virtueUnit': 'virtue',
+    'go.ministriesUnit': 'ministries',
+    'go.newGame': '🎮 New Game',
+    'go.viewBoard': 'View Board',
+    'go.modeQuickInfo': 'Quick mode · 12 rounds',
+    'go.modeFullInfo': 'Full mode · 20 rounds',
+    'go.complete': 'complete',
+    // Chat
+    'chat.placeholder': 'Type a message...',
+    // Achievements
+    'achievement.firstTithe': 'First Tithe!',
+    'achievement.title': 'ACHIEVEMENT',
+    // Final lap
+    'finalLap.banner': '🏁 FINAL LAP',
+    // Tutorial
+    'tut.skip': 'Skip Tutorial',
+    'tut.next': 'Next →',
+    'tut.back': '← Back',
+    'tut.lets': "Let's Play! ✦",
+    // Card 1 — meet
+    'tut1.title': 'MEET YOUR PILGRIM',
+    'tut1.sub': 'Begin the journey',
+    'tut1.bubble': '"I\'m the Dove. I start with <b>1,200 Talents</b> and a dream of becoming a Steward. Walk with me!"',
+    'tut1.statRounds': '12 rounds',
+    'tut1.statNovice': 'Novice',
+    'tut1.boardLabel': 'EDEN → JERUSALEM',
+    // Card 2 — dice
+    'tut2.title': 'ROLL THE DICE',
+    'tut2.sub': 'Move across the land',
+    'tut2.rollBtn': '🎲 ROLL THE DICE',
+    'tut2.result': '<span class="dr-icon">🏛</span> Landed on a ministry! <b>+8T yield</b>',
+    // Card 3 — trivia
+    'tut3.title': 'WISDOM TRIVIA',
+    'tut3.sub': 'Test your knowledge',
+    'tut3.q': 'Who built the ark?',
+    'tut3.opts': ['Moses', 'Noah', 'Abraham'],
+    'tut3.correct': '<span class="tr-ok">✓ Correct!</span> <span class="tr-reward">+1 Virtue ⚜ · +30T · +20 XP</span>',
+    'tut3.wrong': '<span class="tr-no">✗ Not quite — it was Noah!</span> <span class="tr-reward">No reward this time</span>',
+    // Card 4 — temptation
+    'tut4.title': 'A TEMPTATION',
+    'tut4.sub': 'The heart of the game',
+    'tut4.cardLabel': 'TEMPTATION',
+    'tut4.cardName': 'Love of Money',
+    'tut4.cardBody': 'A shady deal offers quick gain. Will you take it?',
+    'tut4.accept': 'ACCEPT',
+    'tut4.acceptReward': '+120 Talents',
+    'tut4.decline': 'DECLINE',
+    'tut4.declineReward': '+2 Virtue',
+    'tut4.acceptResult': '+120 Talents — but no Virtue gained',
+    'tut4.declineResult': '+2 Virtue — your character grows stronger',
+    // Card 5 — pray
+    'tut5.title': 'PRAY TOGETHER',
+    'tut5.sub': 'Walk with friends',
+    'tut5.prompt': 'Tap a friend to pray with them',
+    'tut5.prompt2': '🙏 Praying together...',
+    'tut5.you': 'YOU',
+    'tut5.result': 'You and <b>{name}</b> each gain <b>+1 Wisdom Card</b>',
+    // Card 6 — crown
+    'tut6.title': 'RACE FOR THE CROWN',
+    'tut6.sub': 'Win the kingdom',
+    'tut6.finalLap': 'FINAL LAP',
+    'tut6.tagline': 'A journey of faith & fortune',
+    // Hero names
+    'hero.dove': 'Dove',
+    'hero.lion': 'Lion',
+    'hero.vine': 'Vine',
+    'hero.sword': 'Sword',
+    'hero.rose': 'Rose',
+    'hero.scholar': 'Scholar',
+    // Currencies
+    'cur.talents': 'Talents',
+    'cur.virtue': 'Virtue',
+    'cur.wisdom': 'Wisdom',
+    'cur.tithe': 'Tithe',
+  },
+  zh: {
+    // Lobby
+    'lobby.title': '大管家',
+    'lobby.subtitle': '信心與財富的旅程',
+    'lobby.chooseHero': '選擇你的角色',
+    'lobby.gameMode': '遊戲模式',
+    'lobby.modeQuick': '快速',
+    'lobby.modeQuickDesc': '12 回合 · 約 30 分鐘',
+    'lobby.modeFull': '完整',
+    'lobby.modeFullDesc': '20 回合 · 約 60 分鐘 · 付費',
+    'lobby.namePlaceholder': '你的名字',
+    'lobby.createRoom': '建立房間',
+    'lobby.createBtn': '建立房間',
+    'lobby.joinRoom': '加入或重新加入房間',
+    'lobby.joinPlaceholder': '輸入代碼',
+    'lobby.joinBtn': '加入',
+    'lobby.joinHint': '💡 斷線了嗎?使用原本的名字和代碼',
+    'lobby.howToPlay': '遊戲教學',
+    'lobby.yourCode': '你的房間代碼',
+    'lobby.startQuest': '開始旅程',
+    'lobby.shareCode': '分享代碼給朋友',
+    'lobby.players': '玩家',
+    // HUD
+    'hud.round': '回合',
+    'hud.room': '房間',
+    'hud.novice': '新手',
+    'hud.pilgrim': '客旅',
+    'hud.steward': '管家',
+    // Action bar
+    'action.roll': '擲骰前進',
+    'action.build': '建造',
+    'action.interact': '互動',
+    'action.endTurn': '結束',
+    'action.waiting': '等待 ',
+    // Card overlay
+    'card.draw': '抽一張卡?',
+    'card.cardAvailable': '可抽卡',
+    'card.scrollOfWisdom': '智慧卷軸',
+    'card.temptation': '試探',
+    'card.encounter': '相遇',
+    'card.divineEncounter': '神聖相遇',
+    'card.proposal': '提議',
+    'card.accept': '接受',
+    'card.decline': '拒絕',
+    'card.skip': '略過',
+    'card.gotIt': '知道了',
+    'card.cancel': '取消',
+    'card.send': '送出',
+    'card.youLanded': '你來到一個卡片格。',
+    'card.meetPilgrim': '你遇到一位同行的客旅!',
+    'card.choosePilgrim': '選擇一位同行的客旅',
+    'card.whoInteract': '你想與誰互動?',
+    // Game over
+    'go.gameComplete': '遊戲結束',
+    'go.kingdomHeir': '國度後嗣',
+    'go.finalStandings': '最終排名',
+    'go.specialAwards': '特別獎項',
+    'go.heir': '後嗣',
+    'go.giver': '施與者',
+    'go.sage': '智者',
+    'go.virtue': '品格',
+    'go.builder': '建造者',
+    'go.points': '分',
+    'go.mostGenerous': '最慷慨者',
+    'go.wisdomKeeper': '智慧守護者',
+    'go.pillarOfVirtue': '品格之柱',
+    'go.masterBuilder': '建造大師',
+    'go.tithesUnit': '次十一奉獻 (+20分加成)',
+    'go.cardsUnit': '張卡',
+    'go.virtueUnit': '品格點',
+    'go.ministriesUnit': '個事工',
+    'go.newGame': '🎮 新遊戲',
+    'go.viewBoard': '查看棋盤',
+    'go.modeQuickInfo': '快速模式 · 12 回合',
+    'go.modeFullInfo': '完整模式 · 20 回合',
+    'go.complete': '已完成',
+    // Chat
+    'chat.placeholder': '輸入訊息...',
+    // Achievements
+    'achievement.firstTithe': '首次十一奉獻!',
+    'achievement.title': '成就',
+    // Final lap
+    'finalLap.banner': '🏁 最後衝刺',
+    // Tutorial
+    'tut.skip': '略過教學',
+    'tut.next': '下一步 →',
+    'tut.back': '← 返回',
+    'tut.lets': '開始遊戲! ✦',
+    // Card 1 — meet
+    'tut1.title': '認識你的客旅',
+    'tut1.sub': '開啟旅程',
+    'tut1.bubble': '「我是鴿子。我以 <b>1,200 金幣</b> 起步，夢想成為國度後嗣。與我同行吧!」',
+    'tut1.statRounds': '12 回合',
+    'tut1.statNovice': '新手',
+    'tut1.boardLabel': '伊甸 → 耶路撒冷',
+    // Card 2 — dice
+    'tut2.title': '擲骰子',
+    'tut2.sub': '在地上前行',
+    'tut2.rollBtn': '🎲 擲骰子',
+    'tut2.result': '<span class="dr-icon">🏛</span> 來到一個事工! <b>+8 金幣收益</b>',
+    // Card 3 — trivia
+    'tut3.title': '智慧問答',
+    'tut3.sub': '考考你的聖經知識',
+    'tut3.q': '誰建造了方舟?',
+    'tut3.opts': ['摩西', '挪亞', '亞伯拉罕'],
+    'tut3.correct': '<span class="tr-ok">✓ 答對了!</span> <span class="tr-reward">+1 品格 ⚜ · +30 金幣 · +20 經驗</span>',
+    'tut3.wrong': '<span class="tr-no">✗ 不對 — 是挪亞!</span> <span class="tr-reward">這次沒有獎勵</span>',
+    // Card 4 — temptation
+    'tut4.title': '試探來臨',
+    'tut4.sub': '遊戲的核心',
+    'tut4.cardLabel': '試探',
+    'tut4.cardName': '愛財迷心',
+    'tut4.cardBody': '一筆可疑的交易能換來快錢。你會接受嗎?',
+    'tut4.accept': '接受',
+    'tut4.acceptReward': '+120 金幣',
+    'tut4.decline': '拒絕',
+    'tut4.declineReward': '+2 品格點',
+    'tut4.acceptResult': '+120 金幣 — 但沒有得到品格',
+    'tut4.declineResult': '+2 品格點 — 你的品格更加堅強',
+    // Card 5 — pray
+    'tut5.title': '同心禱告',
+    'tut5.sub': '與朋友同行',
+    'tut5.prompt': '點選一位朋友一同禱告',
+    'tut5.prompt2': '🙏 同心禱告中...',
+    'tut5.you': '你',
+    'tut5.result': '你與 <b>{name}</b> 各得 <b>+1 智慧卡</b>',
+    // Card 6 — crown
+    'tut6.title': '奪取冠冕',
+    'tut6.sub': '贏得國度',
+    'tut6.finalLap': '最後衝刺',
+    'tut6.tagline': '信心與財富的旅程',
+    // Hero names
+    'hero.dove': '鴿子',
+    'hero.lion': '獅子',
+    'hero.vine': '葡萄藤',
+    'hero.sword': '寶劍',
+    'hero.rose': '玫瑰',
+    'hero.scholar': '智者',
+    // Currencies
+    'cur.talents': '金幣',
+    'cur.virtue': '品格',
+    'cur.wisdom': '智慧',
+    'cur.tithe': '十一奉獻',
+  }
+};
+
+function t(key, vars) {
+  if (!key) return key;
+  const dict = LANG[state.lang] || LANG.en;
+  let str = dict[key];
+  // For Chinese: try LANG.zh first, then TRANSLATIONS (English-text-as-key dictionary), then fallback to original
+  if (!str && state.lang === 'zh' && typeof TRANSLATIONS !== 'undefined' && TRANSLATIONS[key]) {
+    str = TRANSLATIONS[key];
+  }
+  // Final fallback chain
+  if (!str) {
+    str = LANG.en[key] || key;
+  }
+  if (vars && typeof str === 'string') {
+    Object.keys(vars).forEach(k => { str = str.split('{'+k+'}').join(vars[k]); });
+  }
+  return str;
+}
+
+function detectLang() {
+  try {
+    const saved = localStorage.getItem('ks_lang');
+    if (saved === 'en' || saved === 'zh') return saved;
+  } catch(e) {}
+  const nav = (navigator.language || 'en').toLowerCase();
+  if (nav.startsWith('zh')) return 'zh';
+  return 'en';
+}
+
+function setLang(lang) {
+  state.lang = lang;
+  try { localStorage.setItem('ks_lang', lang); } catch(e){}
+  // tell server so it can localize card content
+  if (state.socket && state.socket.connected) {
+    state.socket.emit('set_lang', { lang });
+  }
+  applyI18n();
+  // Re-render dynamic content
+  renderHeroPicker();
+  if (state.game) {
+    updateHUD();
+    // Re-render any open card overlays
+    if (state.game.pendingCard) showCard(state.game.pendingCard);
+    if (state.game.cardOffer)   showCardOffer(state.game.cardOffer);
+    if (state.game.apostleEncounter) showApostleEncounter(state.game.apostleEncounter);
+    if (state.game.pendingInteraction) showPendingInteraction(state.game.pendingInteraction);
+  }
+  // Re-render tutorial card if open
+  if (typeof tutorialIdx !== 'undefined' && document.getElementById('coach')?.classList.contains('on')) {
+    if (typeof showCoach === 'function') showCoach();
+  }
+}
+
+function toggleLang() {
+  setLang(state.lang === 'en' ? 'zh' : 'en');
+  SFX.tap();
+}
+
+// Apply translations to elements with data-i18n or data-t attribute
+function applyI18n() {
+  // System B keys: data-i18n="lobby.title"
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const key = el.getAttribute('data-i18n');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const key = el.getAttribute('data-i18n-html');
+    el.innerHTML = t(key);
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.getAttribute('data-i18n-placeholder');
+    el.placeholder = t(key);
+  });
+  // System A keys: data-t="CHOOSE YOUR HERO" (uses English text as key)
+  document.querySelectorAll('[data-t]').forEach(el => {
+    const key = el.getAttribute('data-t');
+    el.textContent = t(key);
+  });
+  document.querySelectorAll('[data-t-html]').forEach(el => {
+    const key = el.getAttribute('data-t-html');
+    el.innerHTML = t(key);
+  });
+  document.querySelectorAll('[data-t-ph]').forEach(el => {
+    const key = el.getAttribute('data-t-ph');
+    el.placeholder = t(key);
+  });
+  // Update lang buttons (lobby + in-game)
+  const lblNext = state.lang === 'en' ? '中' : 'EN';
+  const langBtn = document.getElementById('lang-btn');
+  if (langBtn) langBtn.textContent = lblNext;
+  const langBtnGame = document.getElementById('lang-btn-game');
+  if (langBtnGame) langBtnGame.textContent = lblNext;
+  // HTML lang attribute
+  document.documentElement.lang = state.lang === 'zh' ? 'zh-Hant' : 'en';
+}
 
 // ═══════════════════════════════════════════════════════════════
 // VIEWPORT FIX — iOS Safari
@@ -721,7 +1382,7 @@ function renderHeroPicker() {
   grid.innerHTML = HEROES.map((h,i) => `
     <div class="tok ${i===state.selectedHeroIdx?'on':''}" data-idx="${i}" style="--c:${h.color}">
       <div class="tok-emj">${h.emj}</div>
-      <div class="tok-nm">${h.n}</div>
+      <div class="tok-nm">${t(h.key)}</div>
     </div>
   `).join('');
   grid.querySelectorAll('.tok').forEach(el => {
@@ -1060,7 +1721,7 @@ function updateHUD() {
   for (let i = 1; i <= 3; i++) {
     document.getElementById('ts-' + i).style.opacity = (i <= tier) ? '1' : '0.2';
   }
-  document.getElementById('tier-name').textContent = tier === 3 ? 'STEWARD' : tier === 2 ? 'PILGRIM' : 'NOVICE';
+  document.getElementById('tier-name').textContent = tier === 3 ? t('STEWARD') : tier === 2 ? t('PILGRIM') : t('NOVICE');
 
   // round
   const maxR = g.config?.rounds || 12;
@@ -1192,9 +1853,11 @@ function showCardOffer(offer) {
   const labels = { 'card-w':'Scroll of Wisdom', 'card-a':'Acts of the Apostles', 'card-p':'Parable', 'special':'Temptation', 'place':'Place Card' };
   const icons  = { 'card-w':'📜', 'card-a':'✉️', 'card-p':'📖', 'special':'🔥', 'place':'🏛' };
   document.getElementById('o-icon').textContent = icons[offer.cardType] || '📜';
-  document.getElementById('o-type').textContent = (labels[offer.cardType] || 'Card').toUpperCase();
-  document.getElementById('o-name').textContent = isMe ? 'Draw a card?' : `${state.game.players[state.game.currentPlayerIndex].name} stops at ${offer.placeName}`;
-  document.getElementById('o-desc').textContent = isMe ? `You landed on ${offer.placeName}. Draw the card?` : 'Watching...';
+  document.getElementById('o-type').textContent = t(labels[offer.cardType] || 'Card').toUpperCase();
+  const curName = state.game.players[state.game.currentPlayerIndex].name;
+  const place = t(offer.placeName);
+  document.getElementById('o-name').textContent = isMe ? t('Draw a card?') : `${curName} ${t('stops at')} ${place}`;
+  document.getElementById('o-desc').textContent = isMe ? `${t('You landed on')} ${place}. ${t('Draw the card?')}` : t('Watching...');
   document.getElementById('o-btns').style.display = isMe ? 'flex' : 'none';
   document.getElementById('o-watch-btns').style.display = isMe ? 'none' : 'flex';
   ov.classList.add('on');
@@ -1216,10 +1879,10 @@ function showCard(card) {
   else { typeLbl = 'WISDOM'; icon = '📜'; }
 
   document.getElementById('c-icon').textContent = icon;
-  document.getElementById('c-type').textContent = typeLbl;
-  document.getElementById('c-name').textContent = card.title || 'Card';
-  document.getElementById('c-desc').textContent = card.body || card.description || '';
-  document.getElementById('c-verse').textContent = card.verse ? `"${card.verse}"` : '';
+  document.getElementById('c-type').textContent = t(typeLbl);
+  document.getElementById('c-name').textContent = t(card.title || 'Card');
+  document.getElementById('c-desc').textContent = t(card.body || card.description || '');
+  document.getElementById('c-verse').textContent = card.verse ? `"${t(card.verse)}"` : '';
 
   // trivia mode
   const cTriv = document.getElementById('c-trivia');
@@ -1232,31 +1895,31 @@ function showCard(card) {
   if (card.options && typeof card.correct === 'number' && isMe) {
     if (cTriv) {
       cTriv.style.display = 'block';
-      cTriv.innerHTML = '<div class="trivia-q" id="c-question">' + escapeHtml(card.q || card.question || '') + '</div>'
+      cTriv.innerHTML = '<div class="trivia-q" id="c-question">' + escapeHtml(t(card.q || card.question || '')) + '</div>'
         + '<div class="trivia-opts" id="c-options"></div>';
       const opts = document.getElementById('c-options');
       opts.innerHTML = '';
       (card.options||[]).forEach((opt, i) => {
         const b = document.createElement('button');
         b.className = 'trivia-opt';
-        b.textContent = String.fromCharCode(65+i) + ': ' + opt;
+        b.textContent = String.fromCharCode(65+i) + ': ' + t(opt);
         b.onclick = () => { state.triviaIdx = i; opts.querySelectorAll('.trivia-opt').forEach(x=>x.classList.remove('selected')); b.classList.add('selected'); SFX.tap(); };
         opts.appendChild(b);
       });
     }
     if (cReward) cReward.style.display = 'none';
-    document.getElementById('c-claim-btn').textContent = '✦ ANSWER';
-    document.getElementById('c-skip-btn').textContent = 'Skip (-1V)';
+    document.getElementById('c-claim-btn').textContent = t('✦ ANSWER');
+    document.getElementById('c-skip-btn').textContent = t('Skip (-1V)');
   } else if (card.acceptFx !== undefined && isMe) {
     if (cTempt) {
       cTempt.style.display = 'block';
-      cTempt.innerHTML = '<div class="warn">⚠ A test of your character. Choose carefully.</div>';
+      cTempt.innerHTML = '<div class="warn">' + t('⚠ A test of your character. Choose carefully.') + '</div>';
     }
-    document.getElementById('c-claim-btn').textContent = `✗ ACCEPT (+${card.acceptFx}T)`;
-    document.getElementById('c-skip-btn').textContent  = `✦ DECLINE (+${card.declineVp}V)`;
+    document.getElementById('c-claim-btn').textContent = t('✗ ACCEPT') + ` (+${card.acceptFx}T)`;
+    document.getElementById('c-skip-btn').textContent  = t('✦ DECLINE') + ` (+${card.declineVp}V)`;
   } else {
-    document.getElementById('c-claim-btn').textContent = '✦ CLAIM';
-    document.getElementById('c-skip-btn').textContent  = 'Skip';
+    document.getElementById('c-claim-btn').textContent = t('✦ CLAIM');
+    document.getElementById('c-skip-btn').textContent  = t('Skip');
     document.getElementById('c-reward').textContent = card.fx ? (card.fx>=0?`+${card.fx}T`:`${card.fx}T`) : '';
     document.getElementById('c-vp').textContent = card.vp ? `+${card.vp}` : '';
     document.getElementById('c-vp-chip').style.display = card.vp ? '' : 'none';
@@ -1271,12 +1934,12 @@ function showApostleEncounter(ap) {
   const ov = document.getElementById('apostle-ov');
   const isMe = ap.playerId === state.myId;
   document.getElementById('ap-icon').textContent = ap.emj || '✉️';
-  document.getElementById('ap-name').textContent = ap.name || 'Apostle';
-  document.getElementById('ap-quote').textContent = ap.quote || (ap.verse?`"${ap.verse}"`:'');
+  document.getElementById('ap-name').textContent = t(ap.name || 'Apostle');
+  document.getElementById('ap-quote').textContent = ap.quote ? t(ap.quote) : (ap.verse ? `"${t(ap.verse)}"` : '');
   const body = document.getElementById('ap-body');
-  if (body) body.textContent = ap.body || ap.intro || '';
+  if (body) body.textContent = t(ap.body || ap.intro || '');
   const intro = document.getElementById('ap-intro');
-  if (intro) intro.textContent = ap.intro || '';
+  if (intro) intro.textContent = t(ap.intro || '');
   document.getElementById('ap-btns').style.display = isMe ? 'flex' : 'none';
   document.getElementById('ap-watch-btns').style.display = isMe ? 'none' : 'flex';
   ov.classList.add('on');
@@ -1286,19 +1949,19 @@ function showCoLocation(co) {
   const ov = document.getElementById('colo-ov');
   const amA = co.playerAId === state.myId;
   const amB = co.playerBId === state.myId;
-  document.getElementById('colo-title').textContent = `${co.playerAName} ${co.playerAIcon} meets ${co.playerBName} ${co.playerBIcon}!`;
-  document.getElementById('colo-desc').textContent = `at ${co.placeName}`;
+  document.getElementById('colo-title').textContent = `${co.playerAName} ${co.playerAIcon} ${t('meets')} ${co.playerBName} ${co.playerBIcon}!`;
+  document.getElementById('colo-desc').textContent = `${t('at')} ${t(co.placeName)}`;
   const actions = document.getElementById('colo-actions');
   actions.innerHTML = '';
   if (amA) {
     // The player who just landed picks an interaction
     const opts = [
-      { id:'encourage', emj:'💛', label:'Encourage (+1V both)' },
-      { id:'pray',      emj:'🙏', label:'Pray Together (+1 Wisdom each)' },
-      { id:'trade',     emj:'🤝', label:'Tithe-Trade (swap positions, 80T)' },
-      { id:'duel',      emj:'⚔️', label:'Wisdom Duel' },
-      { id:'tax-collector', emj:'🧾', label:'Tax Collector (-1V, +60T)' },
-      { id:'skip',      emj:'➡',  label:'Pass peacefully' },
+      { id:'encourage', emj:'💛', label: t('Encourage (+1V both)') },
+      { id:'pray',      emj:'🙏', label: t('Pray Together (+1 Wisdom each)') },
+      { id:'trade',     emj:'🤝', label: t('Tithe-Trade (swap positions, 80T)') },
+      { id:'duel',      emj:'⚔️', label: t('Wisdom Duel') },
+      { id:'tax-collector', emj:'🧾', label: t('Tax Collector (-1V, +60T)') },
+      { id:'skip',      emj:'➡',  label: t('Pass peacefully') },
     ];
     opts.forEach(o => {
       const b = document.createElement('button');
@@ -1316,7 +1979,7 @@ function showCoLocation(co) {
       actions.appendChild(b);
     });
   } else {
-    actions.innerHTML = `<div style="text-align:center;padding:8px;color:#a08060;font-style:italic">Waiting for ${co.playerAName}...</div>`;
+    actions.innerHTML = `<div style="text-align:center;padding:8px;color:#a08060;font-style:italic">${t('Waiting for')} ${co.playerAName}...</div>`;
   }
   ov.classList.add('on');
 }
@@ -1325,19 +1988,19 @@ function showPendingInteraction(pi) {
   const ov = document.getElementById('pi-ov');
   const isMe = pi.targetId === state.myId;
   const labels = {
-    encourage:'Encourage', pray:'Pray Together', trade:'Tithe-Trade',
-    duel:'Wisdom Duel', 'tax-collector':'Tax Collector'
+    encourage: t('Encourage'), pray: t('Pray Together'), trade: t('Tithe-Trade'),
+    duel: t('Wisdom Duel'), 'tax-collector': t('Tax Collector')
   };
   const descs = {
-    encourage: `${pi.initiatorName} wants to encourage you. Both gain Virtue.`,
-    pray:      `${pi.initiatorName} invites you to pray. Both gain a Wisdom Card.`,
-    trade:     `${pi.initiatorName} offers a tithe-trade — swap board positions for 80T.`,
-    duel:      `${pi.initiatorName} challenges you to a Wisdom Duel — winner takes 100T.`,
-    'tax-collector': `${pi.initiatorName} demands 60T as a tax collector!`,
+    encourage: `${pi.initiatorName} ${t('pi.encourageDesc')}`,
+    pray:      `${pi.initiatorName} ${t('pi.prayDesc')}`,
+    trade:     `${pi.initiatorName} ${t('pi.tradeDesc')}`,
+    duel:      `${pi.initiatorName} ${t('pi.duelDesc')}`,
+    'tax-collector': `${pi.initiatorName} ${t('pi.taxDesc')}`,
   };
   document.getElementById('pi-title').textContent = `${pi.initiatorName} → ${pi.targetName}`;
-  document.getElementById('pi-type').textContent = (labels[pi.interactionId] || 'PROPOSAL').toUpperCase();
-  document.getElementById('pi-desc').textContent = descs[pi.interactionId] || 'A proposal awaits.';
+  document.getElementById('pi-type').textContent = (labels[pi.interactionId] || t('PROPOSAL')).toUpperCase();
+  document.getElementById('pi-desc').textContent = descs[pi.interactionId] || t('A proposal awaits.');
   document.getElementById('pi-btns').style.display = isMe ? 'flex' : 'none';
   document.getElementById('pi-watch-btns').style.display = isMe ? 'none' : 'flex';
   ov.classList.add('on');
@@ -1423,12 +2086,12 @@ let tutorialIdx = 0;
 let tutState = {};  // per-card transient state (dice rolled, trivia answered, etc.)
 
 const TUTORIAL_STEPS = [
-  { id: 'meet',     title: 'MEET YOUR PILGRIM',    sub: 'Begin the journey',     interactive: false },
-  { id: 'dice',     title: 'ROLL THE DICE',        sub: 'Move across the land',  interactive: true  },
-  { id: 'trivia',   title: 'WISDOM TRIVIA',        sub: 'Test your knowledge',   interactive: true  },
-  { id: 'tempt',    title: 'A TEMPTATION',         sub: 'The heart of the game', interactive: true  },
-  { id: 'pray',     title: 'PRAY TOGETHER',        sub: 'Walk with friends',     interactive: true  },
-  { id: 'crown',    title: 'RACE FOR THE CROWN',   sub: 'Win the kingdom',       interactive: false },
+  { id: 'meet',     titleKey: 'tut1.title', subKey: 'tut1.sub', interactive: false },
+  { id: 'dice',     titleKey: 'tut2.title', subKey: 'tut2.sub', interactive: true  },
+  { id: 'trivia',   titleKey: 'tut3.title', subKey: 'tut3.sub', interactive: true  },
+  { id: 'tempt',    titleKey: 'tut4.title', subKey: 'tut4.sub', interactive: true  },
+  { id: 'pray',     titleKey: 'tut5.title', subKey: 'tut5.sub', interactive: true  },
+  { id: 'crown',    titleKey: 'tut6.title', subKey: 'tut6.sub', interactive: false },
 ];
 
 function startTutorial() {
@@ -1457,15 +2120,15 @@ function showCoach() {
   c.innerHTML = `
     <div class="tut-card">
       <div class="tut-head">
-        <div class="tut-title">${step.title}</div>
-        <div class="tut-sub">${step.sub}</div>
+        <div class="tut-title">${t(step.titleKey)}</div>
+        <div class="tut-sub">${t(step.subKey)}</div>
       </div>
       <div class="tut-stage" id="tut-stage">${body}</div>
       <div class="tut-foot">
         <div class="tut-dots">${dots}</div>
         <div class="tut-buttons">
-          ${tutorialIdx > 0 ? '<button class="tut-btn-back" onclick="prevCoach()">← Back</button>' : '<span></span>'}
-          <button class="tut-btn-next" id="tut-next-btn" onclick="nextCoach()">${isLast ? "Let's Play! ✦" : 'Next →'}</button>
+          ${tutorialIdx > 0 ? `<button class="tut-btn-back" onclick="prevCoach()">${t('tut.back')}</button>` : '<span></span>'}
+          <button class="tut-btn-next" id="tut-next-btn" onclick="nextCoach()">${isLast ? t('tut.lets') : t('tut.next')}</button>
         </div>
       </div>
     </div>
@@ -1504,7 +2167,7 @@ function renderMeetCard() {
         <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
           <rect x="10" y="10" width="180" height="110" rx="6" fill="#1a0d05" stroke="#6a4818" stroke-width="1"/>
           <rect x="30" y="30" width="140" height="70" rx="3" fill="none" stroke="#3a2410" stroke-dasharray="2 3"/>
-          <text x="100" y="70" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="#6a4818" letter-spacing="2">EDEN → JERUSALEM</text>
+          <text x="100" y="70" text-anchor="middle" font-family="Cinzel,serif" font-size="9" fill="#6a4818" letter-spacing="2">${t('tut1.boardLabel')}</text>
           <circle cx="180" cy="110" r="3" fill="#ffd755"/>
           <text x="180" y="113" text-anchor="middle" font-size="3.5" fill="#1a0d05">⛰</text>
         </svg>
@@ -1513,13 +2176,13 @@ function renderMeetCard() {
         <div class="meet-hero-emj">🕊</div>
       </div>
       <div class="meet-bubble" id="meet-bubble">
-        <div class="bubble-text">"I'm the Dove. I start with <b>1,200 Talents</b> and a dream of becoming a Steward. Walk with me!"</div>
+        <div class="bubble-text">${t('tut1.bubble')}</div>
         <div class="bubble-tail"></div>
       </div>
       <div class="meet-stats" id="meet-stats">
         <div class="meet-stat"><span class="ms-emj">💰</span><span class="ms-val">1,200</span></div>
-        <div class="meet-stat"><span class="ms-emj">⭐</span><span class="ms-val">Novice</span></div>
-        <div class="meet-stat"><span class="ms-emj">🎯</span><span class="ms-val">12 rounds</span></div>
+        <div class="meet-stat"><span class="ms-emj">⭐</span><span class="ms-val">${t('tut1.statNovice')}</span></div>
+        <div class="meet-stat"><span class="ms-emj">🎯</span><span class="ms-val">${t('tut1.statRounds')}</span></div>
       </div>
     </div>
   `;
@@ -1547,7 +2210,7 @@ function renderDiceCard() {
         <div class="d-eq">=</div>
         <div class="d-total" id="d-total">?</div>
       </div>
-      <button class="tut-action-btn" id="dice-roll-btn" onclick="tutDoRoll()">🎲 ROLL THE DICE</button>
+      <button class="tut-action-btn" id="dice-roll-btn" onclick="tutDoRoll()">${t('tut2.rollBtn')}</button>
       <div class="dice-result" id="dice-result"></div>
     </div>
   `;
@@ -1555,8 +2218,8 @@ function renderDiceCard() {
 
 // ─── Card 3: TRIVIA ────────────────────────────────────────────
 function renderTriviaCard() {
-  // pick a fixed question for tutorial
-  const q = { question: 'Who built the ark?', options: ['Moses', 'Noah', 'Abraham'], correct: 1 };
+  // pick a fixed question for tutorial — localized
+  const q = { question: t('tut3.q'), options: t('tut3.opts'), correct: 1 };
   tutState.triviaQ = q;
   return `
     <div class="trivia-stage">
@@ -1583,20 +2246,20 @@ function renderTemptCard() {
     <div class="tempt-stage">
       <div class="tempt-card-3d" id="tempt-card-3d">
         <div class="tcc-flame">🔥</div>
-        <div class="tcc-label">TEMPTATION</div>
-        <div class="tcc-name">Love of Money</div>
-        <div class="tcc-body">A shady deal offers quick gain. Will you take it?</div>
+        <div class="tcc-label">${t('tut4.cardLabel')}</div>
+        <div class="tcc-name">${t('tut4.cardName')}</div>
+        <div class="tcc-body">${t('tut4.cardBody')}</div>
       </div>
       <div class="tempt-fork">
         <button class="tempt-opt accept" id="tempt-accept" onclick="tutPickTempt('accept')">
           <div class="to-emj">💸</div>
-          <div class="to-label">ACCEPT</div>
-          <div class="to-reward">+120 Talents</div>
+          <div class="to-label">${t('tut4.accept')}</div>
+          <div class="to-reward">${t('tut4.acceptReward')}</div>
         </button>
         <button class="tempt-opt decline" id="tempt-decline" onclick="tutPickTempt('decline')">
           <div class="to-emj">⚜</div>
-          <div class="to-label">DECLINE</div>
-          <div class="to-reward">+2 Virtue</div>
+          <div class="to-label">${t('tut4.decline')}</div>
+          <div class="to-reward">${t('tut4.declineReward')}</div>
         </button>
       </div>
       <div class="tempt-result" id="tempt-result"></div>
@@ -1608,24 +2271,24 @@ function renderTemptCard() {
 function renderPrayCard() {
   return `
     <div class="pray-stage">
-      <div class="pray-prompt" id="pray-prompt">Tap a friend to pray with them</div>
+      <div class="pray-prompt" id="pray-prompt">${t('tut5.prompt')}</div>
       <div class="pray-circle">
         <div class="pray-me" id="pray-me">
           <div class="pm-emj">🕊</div>
-          <div class="pm-name">YOU</div>
+          <div class="pm-name">${t('tut5.you')}</div>
         </div>
         <div class="pray-friends">
           <button class="pray-friend" data-h="lion" onclick="tutPickPray('lion')">
             <div class="pf-emj">🦁</div>
-            <div class="pf-name">Lion</div>
+            <div class="pf-name">${t('Lion')}</div>
           </button>
           <button class="pray-friend" data-h="vine" onclick="tutPickPray('vine')">
             <div class="pf-emj">🌿</div>
-            <div class="pf-name">Vine</div>
+            <div class="pf-name">${t('Vine')}</div>
           </button>
           <button class="pray-friend" data-h="rose" onclick="tutPickPray('rose')">
             <div class="pf-emj">🌸</div>
-            <div class="pf-name">Rose</div>
+            <div class="pf-name">${t('Rose')}</div>
           </button>
         </div>
       </div>
@@ -1639,7 +2302,7 @@ function renderCrownCard() {
   return `
     <div class="crown-stage">
       <div class="crown-finalbar" id="crown-finalbar">
-        <span>🏁</span><span class="cf-txt">FINAL LAP</span><span>🏁</span>
+        <span>🏁</span><span class="cf-txt">${t('tut6.finalLap')}</span><span>🏁</span>
       </div>
       <div class="crown-king" id="crown-king">
         <div class="ck-crown">👑</div>
@@ -1648,22 +2311,22 @@ function renderCrownCard() {
       </div>
       <div class="crown-awards" id="crown-awards">
         <div class="caw" style="--d:0s">
-          <div class="caw-emj">👑</div><div class="caw-n">HEIR</div>
+          <div class="caw-emj">👑</div><div class="caw-n">${t('HEIR')}</div>
         </div>
         <div class="caw" style="--d:0.15s">
-          <div class="caw-emj">🤲</div><div class="caw-n">GIVER</div>
+          <div class="caw-emj">🤲</div><div class="caw-n">${t('GIVER')}</div>
         </div>
         <div class="caw" style="--d:0.3s">
-          <div class="caw-emj">📜</div><div class="caw-n">SAGE</div>
+          <div class="caw-emj">📜</div><div class="caw-n">${t('SAGE')}</div>
         </div>
         <div class="caw" style="--d:0.45s">
-          <div class="caw-emj">⚜</div><div class="caw-n">VIRTUE</div>
+          <div class="caw-emj">⚜</div><div class="caw-n">${t('VIRTUE')}</div>
         </div>
         <div class="caw" style="--d:0.6s">
-          <div class="caw-emj">🏛</div><div class="caw-n">BUILDER</div>
+          <div class="caw-emj">🏛</div><div class="caw-n">${t('BUILDER')}</div>
         </div>
       </div>
-      <div class="crown-tagline">A journey of faith & fortune</div>
+      <div class="crown-tagline">${t('tut6.tagline')}</div>
     </div>
   `;
 }
@@ -1749,7 +2412,7 @@ function moveTokenSteps(steps) {
       SFX.reward();
       const result = document.getElementById('dice-result');
       if (result) {
-        result.innerHTML = '<span class="dr-icon">🏛</span> Landed on a ministry! <b>+8T yield</b>';
+        result.innerHTML = t('tut2.result');
         result.classList.add('show');
       }
       const nextBtn = document.getElementById('tut-next-btn');
@@ -1776,13 +2439,13 @@ function tutPickTrivia(idx) {
   const result = document.getElementById('trivia-result');
   if (idx === correct) {
     if (result) {
-      result.innerHTML = '<span class="tr-ok">✓ Correct!</span> <span class="tr-reward">+1 Virtue ⚜ · +30T · +20 XP</span>';
+      result.innerHTML = t('tut3.correct');
       result.classList.add('show', 'good');
     }
     SFX.reward();
   } else {
     if (result) {
-      result.innerHTML = '<span class="tr-no">✗ Not quite — it was Noah!</span> <span class="tr-reward">No reward this time</span>';
+      result.innerHTML = t('tut3.wrong');
       result.classList.add('show', 'bad');
     }
     SFX.penalty();
@@ -1812,14 +2475,14 @@ function tutPickTempt(choice) {
   if (choice === 'accept') {
     if (aBtn) aBtn.classList.add('chosen');
     if (result) {
-      result.innerHTML = '<div class="goldrain">💸💸💸</div><div class="t-msg">+120 Talents — but no Virtue gained</div>';
+      result.innerHTML = '<div class="goldrain">💸💸💸</div><div class="t-msg">' + t('tut4.acceptResult') + '</div>';
       result.classList.add('show', 'accept');
     }
     SFX.coin();
   } else {
     if (dBtn) dBtn.classList.add('chosen');
     if (result) {
-      result.innerHTML = '<div class="halo">✦</div><div class="t-msg">+2 Virtue — your character grows stronger</div>';
+      result.innerHTML = '<div class="halo">✦</div><div class="t-msg">' + t('tut4.declineResult') + '</div>';
       result.classList.add('show', 'decline');
     }
     SFX.levelUp();
@@ -1845,13 +2508,13 @@ function tutPickPray(hero) {
   if (friend) friend.classList.add('praying');
   SFX.reward();
   const prompt = document.getElementById('pray-prompt');
-  if (prompt) prompt.textContent = '🙏 Praying together...';
+  if (prompt) prompt.textContent = t('tut5.prompt2');
 
   setTimeout(() => {
     const result = document.getElementById('pray-result');
     if (result) {
-      const names = { lion:'Lion', vine:'Vine', rose:'Rose' };
-      result.innerHTML = `<span class="pr-emj">📜</span> You and <b>${names[hero]}</b> each gain <b>+1 Wisdom Card</b>`;
+      const names = { lion: t('hero.lion'), vine: t('hero.vine'), rose: t('hero.rose') };
+      result.innerHTML = `<span class="pr-emj">📜</span> ` + t('tut5.result', { name: names[hero] });
       result.classList.add('show');
     }
     const nextBtn = document.getElementById('tut-next-btn');
@@ -1890,15 +2553,15 @@ function showGameOver(g) {
   const virtuePillar = [...g.players].sort((a,b)=>(b.virtuePoints||0)-(a.virtuePoints||0))[0];
   const builder = [...g.players].sort((a,b)=>(b.ministries||0)-(a.ministries||0))[0];
 
-  document.getElementById('go-mode-info').textContent = (g.mode==='full'?'Full mode · 20 rounds':'Quick mode · 12 rounds') + ' complete';
+  document.getElementById('go-mode-info').textContent = (g.mode==='full'?t('go.modeFullInfo'):t('go.modeQuickInfo')) + ' ' + t('go.complete');
 
   document.getElementById('go-winner-block').innerHTML = heir ? `
-    <div class="go-winner-label">👑 KINGDOM HEIR</div>
+    <div class="go-winner-label">👑 ${t('go.kingdomHeir')}</div>
     <div class="go-winner-name" style="color:${heir.color}">${heir.icon} ${escapeHtml(heir.name)}</div>
-    <div class="go-winner-score">${heir.score} points</div>
+    <div class="go-winner-score">${heir.score} ${t('go.points')}</div>
   ` : '';
 
-  document.getElementById('go-rankings').innerHTML = '<div class="go-rank-title">Final Standings</div>' + ranked.map((p,i) => `
+  document.getElementById('go-rankings').innerHTML = '<div class="go-rank-title">' + t('go.finalStandings') + '</div>' + ranked.map((p,i) => `
     <div class="go-rank ${p.id===state.myId?'me':''} ${i===0?'first':''}" style="--pc:${p.color}">
       <span class="go-rank-medal">${i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)}</span>
       <span class="go-rank-av">${p.icon}</span>
@@ -1912,11 +2575,11 @@ function showGameOver(g) {
     </div>
   `).join('');
 
-  document.getElementById('go-awards').innerHTML = '<div class="go-rank-title" style="margin-top:12px">Special Awards</div>' + [
-    { emj:'🤲', t:'Most Generous',     p:generous,     m: generous ? `${generous.titheTokens||0} tithes (+20pt bonus)` : '—' },
-    { emj:'📜', t:'Wisdom Keeper',     p:wisdomKeeper, m: wisdomKeeper ? `${wisdomKeeper.wisdomCards||0} cards` : '—' },
-    { emj:'⚜',  t:'Pillar of Virtue', p:virtuePillar, m: virtuePillar ? `${virtuePillar.virtuePoints||0} virtue` : '—' },
-    { emj:'🏛', t:'Master Builder',    p:builder,      m: builder ? `${builder.ministries||0} ministries` : '—' },
+  document.getElementById('go-awards').innerHTML = '<div class="go-rank-title" style="margin-top:12px">' + t('go.specialAwards') + '</div>' + [
+    { emj:'🤲', t:t('go.mostGenerous'),     p:generous,     m: generous ? `${generous.titheTokens||0} ${t('go.tithesUnit')}` : '—' },
+    { emj:'📜', t:t('go.wisdomKeeper'),     p:wisdomKeeper, m: wisdomKeeper ? `${wisdomKeeper.wisdomCards||0} ${t('go.cardsUnit')}` : '—' },
+    { emj:'⚜',  t:t('go.pillarOfVirtue'),   p:virtuePillar, m: virtuePillar ? `${virtuePillar.virtuePoints||0} ${t('go.virtueUnit')}` : '—' },
+    { emj:'🏛', t:t('go.masterBuilder'),    p:builder,      m: builder ? `${builder.ministries||0} ${t('go.ministriesUnit')}` : '—' },
   ].map(a => `
     <div class="go-award-row">
       <span class="go-award-emj">${a.emj}</span>
@@ -2077,6 +2740,10 @@ function connectSocket() {
 // BOOT
 // ═══════════════════════════════════════════════════════════════
 function init() {
+  // Detect language first
+  state.lang = detectLang();
+  applyI18n();
+
   renderHeroPicker();
   initCanvas();
   pulseRender();
@@ -2293,6 +2960,12 @@ document.addEventListener('DOMContentLoaded', init);
 .caw-emj{font-size:18px;line-height:1;filter:drop-shadow(0 0 4px rgba(255,215,85,0.5))}
 .caw-n{font-family:'Cinzel',serif;font-size:7px;color:#ffd755;font-weight:700;letter-spacing:.04em;margin-top:2px}
 .crown-tagline{font-family:'Cinzel',serif;font-size:11px;color:#a08060;letter-spacing:.1em;font-style:italic;text-align:center;margin-top:4px}
+
+/* Language toggle button */
+.lang-btn{position:absolute;top:12px;right:12px;width:36px;height:36px;border-radius:50%;background:linear-gradient(180deg,#3a2410,#1a0d05);border:1.5px solid #ffd755;color:#ffd755;font-family:'Cinzel',serif;font-size:14px;font-weight:700;cursor:pointer;z-index:50;box-shadow:0 0 8px rgba(255,215,85,0.3);display:flex;align-items:center;justify-content:center;padding:0}
+.lang-btn:hover{background:linear-gradient(180deg,#5a3b1a,#2a1f0f);box-shadow:0 0 14px rgba(255,215,85,0.5)}
+.lang-btn:active{transform:scale(0.95)}
+.lobby-inner{position:relative}
 
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 </style>
