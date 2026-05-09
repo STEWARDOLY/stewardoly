@@ -2310,7 +2310,7 @@ function renderCrownCard() {
         <div class="ck-glow"></div>
       </div>
       <div class="crown-awards" id="crown-awards">
-        <div class="caw" style="--d:0s">
+        <div class="caw winner" style="--d:0s">
           <div class="caw-emj">👑</div><div class="caw-n">${t('HEIR')}</div>
         </div>
         <div class="caw" style="--d:0.15s">
@@ -2581,13 +2581,14 @@ function showGameOver(g) {
     { emj:'⚜',  t:t('go.pillarOfVirtue'),   p:virtuePillar, m: virtuePillar ? `${virtuePillar.virtuePoints||0} ${t('go.virtueUnit')}` : '—' },
     { emj:'🏛', t:t('go.masterBuilder'),    p:builder,      m: builder ? `${builder.ministries||0} ${t('go.ministriesUnit')}` : '—' },
   ].map(a => `
-    <div class="go-award-row">
+    <div class="go-award-row${a.p ? ' has-winner' : ''}${a.p && a.p.id === state.myId ? ' you-won' : ''}" ${a.p ? `style="--pc:${a.p.color}"` : ''}>
       <span class="go-award-emj">${a.emj}</span>
       <div class="go-award-info">
         <div class="go-award-title">${a.t}</div>
         <div class="go-award-name">${a.p ? a.p.icon + ' ' + escapeHtml(a.p.name) : '—'}</div>
         <div class="go-award-meta">${a.m}</div>
       </div>
+      ${a.p && a.p.id === state.myId ? '<span class="go-award-badge">🏆</span>' : ''}
     </div>
   `).join('');
 
@@ -2793,7 +2794,13 @@ document.addEventListener('DOMContentLoaded', init);
 .go-rank-icon{font-size:18px}
 .go-rank-name{flex:1}
 .go-rank-score{font-family:'Cinzel',serif;color:#ffd755}
-.go-award-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,215,85,0.05);border:1px solid #2a1f0f;border-radius:4px;margin-bottom:4px}
+.go-award-row{display:flex;align-items:center;gap:10px;padding:8px 10px;background:rgba(255,215,85,0.05);border:1px solid #2a1f0f;border-radius:4px;margin-bottom:4px;position:relative;transition:.3s}
+.go-award-row.has-winner{background:linear-gradient(90deg,rgba(255,215,85,0.12),rgba(255,215,85,0.04));border-left:3px solid var(--pc,#ffd755)}
+.go-award-row.you-won{background:linear-gradient(90deg,rgba(255,215,85,0.25),rgba(255,215,85,0.08));border:2px solid #ffd755;box-shadow:0 0 14px rgba(255,215,85,0.5);animation:youWonPulse 2s ease-in-out infinite}
+.go-award-row.you-won .go-award-name{color:#ffd755;font-weight:700;text-shadow:0 0 6px rgba(255,215,85,0.5)}
+.go-award-badge{font-size:22px;flex-shrink:0;animation:badgeBounce 1.4s ease-in-out infinite}
+@keyframes youWonPulse{0%,100%{box-shadow:0 0 14px rgba(255,215,85,0.5)}50%{box-shadow:0 0 22px rgba(255,215,85,0.8)}}
+@keyframes badgeBounce{0%,100%{transform:translateY(0) rotate(0deg)}50%{transform:translateY(-3px) rotate(8deg)}}
 .go-award-emj{font-size:24px}
 .go-award-info{flex:1}
 .go-award-title{font-family:'Cinzel',serif;color:#ffd755;font-size:11px;letter-spacing:.1em}
@@ -2956,9 +2963,18 @@ document.addEventListener('DOMContentLoaded', init);
 .crown-awards.show{opacity:1}
 .crown-awards.show .caw{animation:cawIn 0.5s cubic-bezier(.5,1.5,.5,1) backwards;animation-delay:var(--d)}
 @keyframes cawIn{from{opacity:0;transform:translateY(12px) scale(0.6)}to{opacity:1;transform:translateY(0) scale(1)}}
-.caw{display:flex;flex-direction:column;align-items:center;padding:6px 2px;background:linear-gradient(180deg,rgba(255,215,85,0.12),rgba(0,0,0,0.3));border:1px solid #ffd755;border-radius:6px}
+.caw{display:flex;flex-direction:column;align-items:center;padding:6px 2px;background:linear-gradient(180deg,rgba(255,215,85,0.12),rgba(0,0,0,0.3));border:1px solid #ffd755;border-radius:6px;position:relative;transition:.3s}
+.caw.winner{background:linear-gradient(180deg,rgba(255,215,85,0.35),rgba(201,146,42,0.2));border:2px solid #ffd755;box-shadow:0 0 16px rgba(255,215,85,0.7),0 0 4px rgba(255,215,85,0.9) inset;transform:scale(1.08);z-index:2}
+.crown-awards.show .caw.winner{animation:cawIn 0.5s cubic-bezier(.5,1.5,.5,1) backwards,winnerPulse 1.6s ease-in-out 0.6s infinite;animation-delay:var(--d),0.6s}
+.caw.winner::before{content:'';position:absolute;inset:-4px;border:2px solid #ffd755;border-radius:9px;opacity:0;animation:winnerRing 1.6s ease-in-out 0.6s infinite}
+.caw.winner::after{content:'WON!';position:absolute;top:-8px;right:-6px;background:linear-gradient(135deg,#ffd755,#c9922a);color:#1a0d05;font-family:'Cinzel',serif;font-size:7px;font-weight:700;padding:2px 5px;border-radius:4px;letter-spacing:.05em;box-shadow:0 1px 3px rgba(0,0,0,0.5);animation:wonPop 0.5s cubic-bezier(.5,1.6,.5,1) 0.9s backwards}
+@keyframes winnerPulse{0%,100%{transform:scale(1.08)}50%{transform:scale(1.14)}}
+@keyframes winnerRing{0%{opacity:0;transform:scale(1)}50%{opacity:0.6}100%{opacity:0;transform:scale(1.15)}}
+@keyframes wonPop{from{opacity:0;transform:scale(0) rotate(-15deg)}to{opacity:1;transform:scale(1) rotate(8deg)}}
 .caw-emj{font-size:18px;line-height:1;filter:drop-shadow(0 0 4px rgba(255,215,85,0.5))}
+.caw.winner .caw-emj{font-size:22px;filter:drop-shadow(0 0 8px #ffd755)}
 .caw-n{font-family:'Cinzel',serif;font-size:7px;color:#ffd755;font-weight:700;letter-spacing:.04em;margin-top:2px}
+.caw.winner .caw-n{font-size:8px;text-shadow:0 0 4px rgba(255,215,85,0.8)}
 .crown-tagline{font-family:'Cinzel',serif;font-size:11px;color:#a08060;letter-spacing:.1em;font-style:italic;text-align:center;margin-top:4px}
 
 /* Language toggle button */
