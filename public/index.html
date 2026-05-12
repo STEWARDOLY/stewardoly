@@ -240,6 +240,13 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 
 .mega-play{width:100%;height:50px;background:linear-gradient(180deg,#6ced8d,#2a9d4a);border:none;border-radius:12px;color:#0e2a14;font-family:'Cinzel',serif;font-size:14px;font-weight:700;letter-spacing:.08em;cursor:pointer;box-shadow:0 4px 0 #1a5028;transition:.12s;margin-top:6px;display:flex;align-items:center;justify-content:center;gap:8px}
 .mega-play:active{transform:translateY(4px);box-shadow:0 0 0 #1a5028}
+.lobby-footer{margin-top:18px;padding:14px 8px 8px;border-top:1px solid rgba(201,146,42,0.15);text-align:center}
+.footer-disclosure{font-size:10px;color:#a08060;font-style:italic;margin-bottom:8px;line-height:1.5;padding:0 4px}
+.footer-links{display:flex;justify-content:center;align-items:center;gap:8px;font-size:11px;margin-bottom:6px}
+.footer-links a{color:#c9922a;text-decoration:none;letter-spacing:.04em}
+.footer-links a:hover{color:#ffd755;text-decoration:underline}
+.footer-dot{color:#6a4818}
+.footer-copyright{font-family:'Cinzel',serif;font-size:9px;color:#6a4818;letter-spacing:.1em;margin-top:4px}
 .mega-play.gold{background:linear-gradient(180deg,#ffd755,#c9922a);box-shadow:0 4px 0 #6a4818;color:#1a0d05}
 
 .room-display{text-align:center;padding:12px}
@@ -353,6 +360,17 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     <button class="mega-play gold" onclick="startTutorial()">
       <span>🎓</span><span data-i18n="lobby.howToPlay">HOW TO PLAY</span>
     </button>
+
+    <!-- Legal footer with privacy/terms links and affiliate disclosure -->
+    <footer class="lobby-footer">
+      <div class="footer-disclosure" data-i18n="footer.affiliate">This site may contain affiliate links</div>
+      <div class="footer-links">
+        <a href="/privacy.html" target="_blank" data-i18n="footer.privacy">Privacy</a>
+        <span class="footer-dot">·</span>
+        <a href="/terms.html" target="_blank" data-i18n="footer.terms">Terms</a>
+      </div>
+      <div class="footer-copyright">© 大管家 · Kingdom Steward</div>
+    </footer>
   </div>
 </div>
 </div>
@@ -941,6 +959,10 @@ const LANG = {
     'lobby.startQuest': 'START QUEST',
     'lobby.shareCode': 'Share this code with friends',
     'lobby.players': 'Players',
+    // Footer
+    'footer.affiliate': 'This site may contain affiliate links',
+    'footer.privacy': 'Privacy',
+    'footer.terms': 'Terms',
     // HUD
     'hud.round': 'ROUND',
     'hud.room': 'ROOM',
@@ -1085,6 +1107,10 @@ const LANG = {
     'lobby.startQuest': '開始旅程',
     'lobby.shareCode': '分享代碼給朋友',
     'lobby.players': '玩家',
+    // Footer
+    'footer.affiliate': '本站可能包含聯盟連結',
+    'footer.privacy': '隱私政策',
+    'footer.terms': '服務條款',
     // HUD
     'hud.round': '回合',
     'hud.room': '房間',
