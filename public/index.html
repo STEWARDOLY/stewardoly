@@ -6,7 +6,26 @@
 <meta name="theme-color" content="#0a0603">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<title>Kingdom Steward</title>
+<title>Stewardoly · 大管家</title>
+
+<!-- SEO -->
+<meta name="description" content="Stewardoly · 大管家 — A Bible-themed multiplayer board game about faithful stewardship. Race the kingdom, build ministries, grow in virtue. Free to play.">
+<meta name="keywords" content="Stewardoly, 大管家, Bible game, Christian board game, biblical stewardship, multiplayer board game, 桌遊, 聖經遊戲, 基督教遊戲">
+<meta name="author" content="Stewardoly">
+
+<!-- Open Graph (Facebook, LinkedIn) -->
+<meta property="og:type" content="website">
+<meta property="og:title" content="Stewardoly · 大管家">
+<meta property="og:description" content="A Bible-themed multiplayer board game about faithful stewardship. Race the kingdom, build ministries, grow in virtue.">
+<meta property="og:site_name" content="Stewardoly">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="zh_TW">
+
+<!-- Twitter/X Card -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Stewardoly · 大管家">
+<meta name="twitter:description" content="A Bible-themed multiplayer board game about faithful stewardship. 信實管家的策略桌遊。">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&display=swap" rel="stylesheet">
 <script src="/socket.io/socket.io.js"></script>
@@ -303,7 +322,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     <button class="lang-btn" id="lang-btn" onclick="toggleLang()" title="Language / 語言">中</button>
     <div class="banner">
       <div class="banner-crown">👑</div>
-      <div class="banner-ttl" data-i18n="lobby.title">KINGDOM STEWARD</div>
+      <div class="banner-ttl" data-i18n="lobby.title">STEWARDOLY</div>
       <div class="banner-sub" data-i18n="lobby.subtitle">A quest of faith &amp; fortune</div>
     </div>
 
@@ -369,7 +388,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
         <span class="footer-dot">·</span>
         <a href="/terms.html" target="_blank" data-i18n="footer.terms">Terms</a>
       </div>
-      <div class="footer-copyright">© 大管家 · Kingdom Steward</div>
+      <div class="footer-copyright">© 大管家 · Stewardoly</div>
     </footer>
   </div>
 </div>
@@ -624,7 +643,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 
 <script>
 // ═══════════════════════════════════════════════════════════════
-// Kingdom Steward — Client
+// Stewardoly — Client
 // ═══════════════════════════════════════════════════════════════
 
 const HEROES = [
@@ -641,7 +660,7 @@ const HEROES = [
 // ═══════════════════════════════════════════════════════════════
 const TRANSLATIONS = {
   // Lobby & header
-  'KINGDOM STEWARD': '大管家',
+  'STEWARDOLY': '大管家',
   "A pilgrim's journey": '客旅的旅程',
   'CREATE A NEW ROOM': '建立新房間',
   'JOIN OR REJOIN A ROOM': '加入或重新加入房間',
@@ -939,7 +958,7 @@ let state = {
 const LANG = {
   en: {
     // Lobby
-    'lobby.title': 'KINGDOM STEWARD',
+    'lobby.title': 'STEWARDOLY',
     'lobby.subtitle': 'A journey of faith & fortune',
     'lobby.chooseHero': 'CHOOSE YOUR HERO',
     'lobby.gameMode': 'GAME MODE',
