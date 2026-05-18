@@ -978,6 +978,10 @@ const LANG = {
     'lobby.startQuest': 'START QUEST',
     'lobby.shareCode': 'Share this code with friends',
     'lobby.players': 'Players',
+    // Board center medallion
+    'board.subtitle': 'A Journey of Faithful Stewardship',
+    'board.tithePool': 'TITHE POOL',
+    'board.turnOf': "NOW PLAYING",
     // Footer
     'footer.affiliate': 'This site may contain affiliate links',
     'footer.privacy': 'Privacy',
@@ -1126,6 +1130,10 @@ const LANG = {
     'lobby.startQuest': '開始旅程',
     'lobby.shareCode': '分享代碼給朋友',
     'lobby.players': '玩家',
+    // Board center medallion
+    'board.subtitle': '信實管家的旅程',
+    'board.tithePool': '十一奉獻池',
+    'board.turnOf': '輪到',
     // Footer
     'footer.affiliate': '本站可能包含聯盟連結',
     'footer.privacy': '隱私政策',
@@ -1292,6 +1300,7 @@ function setLang(lang) {
   applyI18n();
   // Re-render dynamic content
   renderHeroPicker();
+  if (typeof BOARD_GEO !== 'undefined' && BOARD_GEO) drawBoard();
   if (state.game) {
     updateHUD();
     // Re-render any open card overlays
@@ -1553,32 +1562,109 @@ function goLobby() {
 // ═══════════════════════════════════════════════════════════════
 // CANVAS BOARD RENDERING
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// BOARD GEOMETRY — professional square perimeter layout
+// 40 spaces: 4 corners + 9 edge spaces per side
+// Positions computed dynamically into a centered square play-field
+// ═══════════════════════════════════════════════════════════════
 const SPACES = [
-  { n:'Begin',t:'corner',rx:0.96,ry:0.96 },{ n:'Capernaum',t:'property',rx:0.86,ry:0.96 },
-  { n:'Wisdom',t:'card-w',rx:0.78,ry:0.96 },{ n:'Bethsaida',t:'property',rx:0.70,ry:0.96 },
-  { n:'Tithe',t:'tax',rx:0.62,ry:0.96 },{ n:'Antioch',t:'property',rx:0.54,ry:0.96 },
-  { n:'Acts',t:'card-a',rx:0.46,ry:0.96 },{ n:'Babylon Gt',t:'property',rx:0.38,ry:0.96 },
-  { n:'Babylon Ct',t:'property',rx:0.30,ry:0.96 },{ n:'Temptation',t:'special',rx:0.22,ry:0.96 },
-  { n:'Wilderness',t:'corner',rx:0.04,ry:0.96 },{ n:'Jordan',t:'property',rx:0.04,ry:0.86 },
-  { n:'Parable',t:'card-p',rx:0.04,ry:0.78 },{ n:'Decapolis',t:'property',rx:0.04,ry:0.70 },
-  { n:'Peraea',t:'property',rx:0.04,ry:0.62 },{ n:'Wisdom',t:'card-w',rx:0.04,ry:0.54 },
-  { n:'Machaerus',t:'property',rx:0.04,ry:0.46 },{ n:'Dead Sea N',t:'property',rx:0.04,ry:0.38 },
-  { n:'Acts',t:'card-a',rx:0.04,ry:0.30 },{ n:'Dead Sea S',t:'property',rx:0.04,ry:0.22 },
-  { n:'Temple',t:'corner',rx:0.04,ry:0.04 },{ n:'Negev',t:'property',rx:0.14,ry:0.04 },
-  { n:'Parable',t:'card-p',rx:0.22,ry:0.04 },{ n:'Nile',t:'property',rx:0.30,ry:0.04 },
-  { n:'Sinai',t:'property',rx:0.38,ry:0.04 },{ n:'Tithe',t:'tax',rx:0.46,ry:0.04 },
-  { n:'Hebron',t:'property',rx:0.54,ry:0.04 },{ n:'Wisdom',t:'card-w',rx:0.62,ry:0.04 },
-  { n:'Judea',t:'property',rx:0.70,ry:0.04 },{ n:'Nazareth',t:'property',rx:0.78,ry:0.04 },
-  { n:'Mt Carmel',t:'corner',rx:0.96,ry:0.04 },{ n:'Jerusalem',t:'property',rx:0.96,ry:0.14 },
-  { n:'Acts',t:'card-a',rx:0.96,ry:0.22 },{ n:'Zion',t:'property',rx:0.96,ry:0.30 },
-  { n:'Samaria',t:'property',rx:0.96,ry:0.38 },{ n:'Temptation',t:'special',rx:0.96,ry:0.46 },
-  { n:'Sychar',t:'property',rx:0.96,ry:0.54 },{ n:'Mt Gerizim',t:'property',rx:0.96,ry:0.62 },
-  { n:'Parable',t:'card-p',rx:0.96,ry:0.70 },{ n:'Tiberias',t:'property',rx:0.96,ry:0.86 },
+  { n:'Begin',t:'corner' },{ n:'Capernaum',t:'property' },
+  { n:'Wisdom',t:'card-w' },{ n:'Bethsaida',t:'property' },
+  { n:'Tithe',t:'tax' },{ n:'Antioch',t:'property' },
+  { n:'Acts',t:'card-a' },{ n:'Babylon Gt',t:'property' },
+  { n:'Babylon Ct',t:'property' },{ n:'Temptation',t:'special' },
+  { n:'Wilderness',t:'corner' },{ n:'Jordan',t:'property' },
+  { n:'Parable',t:'card-p' },{ n:'Decapolis',t:'property' },
+  { n:'Peraea',t:'property' },{ n:'Wisdom',t:'card-w' },
+  { n:'Machaerus',t:'property' },{ n:'Dead Sea N',t:'property' },
+  { n:'Acts',t:'card-a' },{ n:'Dead Sea S',t:'property' },
+  { n:'Temple',t:'corner' },{ n:'Negev',t:'property' },
+  { n:'Parable',t:'card-p' },{ n:'Nile',t:'property' },
+  { n:'Sinai',t:'property' },{ n:'Tithe',t:'tax' },
+  { n:'Hebron',t:'property' },{ n:'Wisdom',t:'card-w' },
+  { n:'Judea',t:'property' },{ n:'Nazareth',t:'property' },
+  { n:'Mt Carmel',t:'corner' },{ n:'Jerusalem',t:'property' },
+  { n:'Acts',t:'card-a' },{ n:'Zion',t:'property' },
+  { n:'Samaria',t:'property' },{ n:'Temptation',t:'special' },
+  { n:'Sychar',t:'property' },{ n:'Mt Gerizim',t:'property' },
+  { n:'Parable',t:'card-p' },{ n:'Tiberias',t:'property' },
 ];
+
+// Board layout constants (computed in computeBoardGeometry)
+let BOARD_GEO = null; // { ox, oy, size, cell, corner, rects:[{x,y,w,h,cx,cy,side}] }
 
 let mapCv, fxCv, mapCtx, fxCtx;
 let boardSize = { w: 0, h: 0 };
 let tokenAnims = {}; // playerId -> { x, y, targetX, targetY }
+
+function computeBoardGeometry() {
+  const W = boardSize.w, H = boardSize.h;
+  // The board is a square that fits inside the container with breathing room
+  const pad = Math.max(8, Math.min(W, H) * 0.03);
+  const size = Math.min(W, H) - pad * 2;
+  const ox = (W - size) / 2;   // centered horizontally
+  const oy = (H - size) / 2;   // centered vertically
+
+  // 11 cells per side (2 corners + 9 edge spaces). Corners are bigger.
+  // cornerRatio: corner cell takes ~1.4x of an edge cell
+  const cornerRatio = 1.42;
+  // size = 2*corner + 9*cell  ;  corner = cornerRatio*cell
+  // => cell = size / (9 + 2*cornerRatio)
+  const cell = size / (9 + 2 * cornerRatio);
+  const corner = cell * cornerRatio;
+
+  const rects = new Array(40);
+
+  // Helper to place a space rectangle
+  // Bottom row: indices 0..10 (right→left), index 0 = bottom-right corner
+  // Left col:   indices 10..20 (bottom→top), index 20 = top-left corner
+  // Top row:    indices 20..30 (left→right), index 30 = top-right corner
+  // Right col:  indices 30..40/0 (top→bottom)
+
+  // Corner positions
+  const right = ox + size, bottom = oy + size;
+
+  // index 0: bottom-right corner
+  rects[0]  = { x: right - corner, y: bottom - corner, w: corner, h: corner, side:'corner' };
+  // index 10: bottom-left corner
+  rects[10] = { x: ox, y: bottom - corner, w: corner, h: corner, side:'corner' };
+  // index 20: top-left corner
+  rects[20] = { x: ox, y: oy, w: corner, h: corner, side:'corner' };
+  // index 30: top-right corner
+  rects[30] = { x: right - corner, y: oy, w: corner, h: corner, side:'corner' };
+
+  // Bottom edge: indices 1..9 (going right→left), between BR(0) and BL(10)
+  for (let i = 1; i <= 9; i++) {
+    const x = right - corner - i * cell;
+    rects[i] = { x, y: bottom - corner, w: cell, h: corner, side:'bottom' };
+  }
+  // Left edge: indices 11..19 (going bottom→top), between BL(10) and TL(20)
+  for (let i = 11; i <= 19; i++) {
+    const k = i - 10;
+    const y = bottom - corner - k * cell;
+    rects[i] = { x: ox, y, w: corner, h: cell, side:'left' };
+  }
+  // Top edge: indices 21..29 (going left→right), between TL(20) and TR(30)
+  for (let i = 21; i <= 29; i++) {
+    const k = i - 20;
+    const x = ox + corner + (k - 1) * cell;
+    rects[i] = { x, y: oy, w: cell, h: corner, side:'top' };
+  }
+  // Right edge: indices 31..39 (going top→bottom), between TR(30) and BR(0)
+  for (let i = 31; i <= 39; i++) {
+    const k = i - 30;
+    const y = oy + corner + (k - 1) * cell;
+    rects[i] = { x: right - corner, y, w: corner, h: cell, side:'right' };
+  }
+
+  // Add center point of each rect for token placement
+  for (let i = 0; i < 40; i++) {
+    rects[i].cx = rects[i].x + rects[i].w / 2;
+    rects[i].cy = rects[i].y + rects[i].h / 2;
+  }
+
+  BOARD_GEO = { ox, oy, size, cell, corner, rects, innerX: ox + corner, innerY: oy + corner, innerSize: size - corner * 2 };
+}
 
 function initCanvas() {
   mapCv = document.getElementById('map-c');
@@ -1602,25 +1688,43 @@ function resizeCanvas() {
   mapCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   fxCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
   boardSize = { w: r.width, h: r.height };
+  computeBoardGeometry();
   drawBoard();
 }
 
 function spaceColor(t) {
   switch(t) {
-    case 'corner':   return '#3a2c12';
-    case 'property': return '#2a1f0f';
-    case 'card-w':   return '#284b6e';
-    case 'card-a':   return '#2e5d3a';
-    case 'card-p':   return '#5d4a1f';
-    case 'tax':      return '#5d3528';
-    case 'special':  return '#5a2a4d';
+    case 'corner':   return '#4a3618';
+    case 'property': return '#241a0c';
+    case 'card-w':   return '#23415e';
+    case 'card-a':   return '#264e32';
+    case 'card-p':   return '#52401b';
+    case 'tax':      return '#542f23';
+    case 'special':  return '#4e2543';
     default:         return '#1f1808';
   }
 }
-function spaceIcon(t) {
+function spaceAccent(t) {
   switch(t) {
-    case 'corner':   return '⛰';
-    case 'property': return '';
+    case 'corner':   return '#ffd755';
+    case 'property': return '#6a4818';
+    case 'card-w':   return '#5b9bdc';
+    case 'card-a':   return '#6ced8d';
+    case 'card-p':   return '#e0a035';
+    case 'tax':      return '#dc6b5b';
+    case 'special':  return '#d76b9c';
+    default:         return '#6a4818';
+  }
+}
+function spaceIcon(t, idx) {
+  switch(t) {
+    case 'corner':
+      if (idx === 0)  return '✦';   // Begin
+      if (idx === 10) return '🏜';  // Wilderness
+      if (idx === 20) return '⛪';  // Temple
+      if (idx === 30) return '⛰';  // Mt Carmel
+      return '◆';
+    case 'property': return '🏛';
     case 'card-w':   return '📜';
     case 'card-a':   return '✉️';
     case 'card-p':   return '📖';
@@ -1631,123 +1735,280 @@ function spaceIcon(t) {
 }
 
 function drawBoard() {
-  if (!mapCtx) return;
+  if (!mapCtx || !BOARD_GEO) return;
   const W = boardSize.w, H = boardSize.h;
+  const G = BOARD_GEO;
   mapCtx.clearRect(0, 0, W, H);
-  // background
-  const grad = mapCtx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)/1.2);
-  grad.addColorStop(0, '#1a0e04');
-  grad.addColorStop(1, '#08050a');
-  mapCtx.fillStyle = grad;
+
+  // Ambient background
+  const bgGrad = mapCtx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W,H)/1.1);
+  bgGrad.addColorStop(0, '#1a0e04');
+  bgGrad.addColorStop(1, '#070409');
+  mapCtx.fillStyle = bgGrad;
   mapCtx.fillRect(0, 0, W, H);
 
-  // golden pilgrimage path (inner border)
-  mapCtx.strokeStyle = 'rgba(255,215,85,0.15)';
-  mapCtx.lineWidth = 2;
-  mapCtx.setLineDash([4, 6]);
-  const inset = Math.min(W, H) * 0.12;
-  mapCtx.strokeRect(inset, inset, W - inset*2, H - inset*2);
-  mapCtx.setLineDash([]);
+  // Outer board frame (subtle bevel)
+  roundRect(mapCtx, G.ox - 3, G.oy - 3, G.size + 6, G.size + 6, 8);
+  mapCtx.fillStyle = '#0e0704';
+  mapCtx.fill();
+  mapCtx.strokeStyle = 'rgba(255,215,85,0.25)';
+  mapCtx.lineWidth = 1;
+  mapCtx.stroke();
 
-  // spaces
-  const sw = Math.min(W, H) * 0.085;
-  const sh = sw * 1.05;
-  SPACES.forEach((sp, idx) => {
-    const cx = sp.rx * W, cy = sp.ry * H;
-    const isCorner = sp.t === 'corner';
-    const w = isCorner ? sw * 1.15 : sw;
-    const h = isCorner ? sh * 1.15 : sh;
-    drawSpace(cx, cy, w, h, sp, idx);
-  });
+  // Center play-field
+  drawCenterMedallion(G);
+
+  // Spaces
+  SPACES.forEach((sp, idx) => drawSpace(idx, sp));
 }
 
-function drawSpace(cx, cy, w, h, sp, idx) {
-  const x = cx - w/2, y = cy - h/2;
-  // shadow
-  mapCtx.fillStyle = 'rgba(0,0,0,0.6)';
-  mapCtx.fillRect(x+2, y+2, w, h);
-  // bg
-  mapCtx.fillStyle = spaceColor(sp.t);
-  mapCtx.fillRect(x, y, w, h);
-  // border
-  mapCtx.strokeStyle = '#ffd755';
-  mapCtx.lineWidth = sp.t === 'corner' ? 1.5 : 0.8;
-  mapCtx.strokeRect(x, y, w, h);
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
 
-  // ownership ribbon (top of space)
-  const owner = state.game?.players.find(p => p.owned?.includes(idx));
+function drawCenterMedallion(G) {
+  const cx = G.ox + G.size / 2;
+  const cy = G.oy + G.size / 2;
+  const inX = G.innerX, inY = G.innerY, inS = G.innerSize;
+
+  // Inner field background with golden glow
+  const fieldGrad = mapCtx.createRadialGradient(cx, cy, 0, cx, cy, inS / 1.4);
+  fieldGrad.addColorStop(0, '#241608');
+  fieldGrad.addColorStop(0.7, '#160c04');
+  fieldGrad.addColorStop(1, '#0e0704');
+  roundRect(mapCtx, inX, inY, inS, inS, 6);
+  mapCtx.fillStyle = fieldGrad;
+  mapCtx.fill();
+
+  // Decorative diagonal pilgrim rays
+  mapCtx.save();
+  roundRect(mapCtx, inX, inY, inS, inS, 6);
+  mapCtx.clip();
+  mapCtx.strokeStyle = 'rgba(255,215,85,0.05)';
+  mapCtx.lineWidth = 1;
+  for (let a = 0; a < 360; a += 30) {
+    const rad = a * Math.PI / 180;
+    mapCtx.beginPath();
+    mapCtx.moveTo(cx, cy);
+    mapCtx.lineTo(cx + Math.cos(rad) * inS, cy + Math.sin(rad) * inS);
+    mapCtx.stroke();
+  }
+  mapCtx.restore();
+
+  // Concentric rings
+  mapCtx.strokeStyle = 'rgba(255,215,85,0.12)';
+  mapCtx.lineWidth = 1;
+  [0.46, 0.34].forEach(f => {
+    mapCtx.beginPath();
+    mapCtx.arc(cx, cy, inS * f, 0, Math.PI * 2);
+    mapCtx.stroke();
+  });
+
+  // Game title — language-aware (no mixing)
+  const isZh = state.lang === 'zh';
+  const titleSize = Math.max(20, inS * 0.16);
+  mapCtx.fillStyle = '#ffd755';
+  mapCtx.font = `700 ${titleSize}px 'Cinzel', serif`;
+  mapCtx.textAlign = 'center';
+  mapCtx.textBaseline = 'middle';
+  mapCtx.shadowColor = 'rgba(255,215,85,0.5)';
+  mapCtx.shadowBlur = 12;
+  mapCtx.fillText(isZh ? '大管家' : 'STEWARDOLY', cx, cy - inS * 0.16);
+  mapCtx.shadowBlur = 0;
+
+  mapCtx.fillStyle = 'rgba(242,201,110,0.65)';
+  mapCtx.font = `600 ${Math.max(9, inS * 0.05)}px 'Cinzel', serif`;
+  mapCtx.fillText(t('board.subtitle'), cx, cy - inS * 0.035);
+
+  // Divider
+  mapCtx.strokeStyle = 'rgba(255,215,85,0.3)';
+  mapCtx.lineWidth = 1;
+  mapCtx.beginPath();
+  mapCtx.moveTo(cx - inS * 0.18, cy + inS * 0.02);
+  mapCtx.lineTo(cx + inS * 0.18, cy + inS * 0.02);
+  mapCtx.stroke();
+
+  // Tithe pool (live info in the center — fills the void with PURPOSE)
+  const pool = state.game?.tithePool ?? 0;
+  mapCtx.fillStyle = 'rgba(160,128,96,0.9)';
+  mapCtx.font = `600 ${Math.max(8, inS * 0.045)}px 'Cinzel', serif`;
+  mapCtx.fillText(t('board.tithePool'), cx, cy + inS * 0.10);
+  mapCtx.fillStyle = '#ffd755';
+  mapCtx.font = `700 ${Math.max(14, inS * 0.10)}px 'Cinzel', serif`;
+  mapCtx.fillText('💰 ' + pool, cx, cy + inS * 0.19);
+
+  // Current player turn indicator
+  const g = state.game;
+  if (g && g.players && g.players[g.currentPlayerIndex]) {
+    const cur = g.players[g.currentPlayerIndex];
+    mapCtx.fillStyle = 'rgba(160,128,96,0.8)';
+    mapCtx.font = `600 ${Math.max(8, inS * 0.04)}px 'Cinzel', serif`;
+    mapCtx.fillText('▼ ' + t('board.turnOf') + ' ▼', cx, cy + inS * 0.30);
+    mapCtx.fillStyle = cur.color || '#ffd755';
+    mapCtx.font = `700 ${Math.max(11, inS * 0.06)}px 'Cinzel', serif`;
+    mapCtx.fillText((cur.icon || '🕊') + ' ' + (cur.name || ''), cx, cy + inS * 0.38);
+  }
+}
+
+function drawSpace(idx, sp) {
+  const R = BOARD_GEO.rects[idx];
+  if (!R) return;
+  const isCorner = sp.t === 'corner';
+  const accent = spaceAccent(sp.t);
+
+  // Drop shadow
+  mapCtx.fillStyle = 'rgba(0,0,0,0.5)';
+  roundRect(mapCtx, R.x + 1.5, R.y + 1.5, R.w, R.h, 3);
+  mapCtx.fill();
+
+  // Cell background gradient
+  const g = mapCtx.createLinearGradient(R.x, R.y, R.x, R.y + R.h);
+  const base = spaceColor(sp.t);
+  g.addColorStop(0, lighten(base, 12));
+  g.addColorStop(1, base);
+  roundRect(mapCtx, R.x, R.y, R.w, R.h, 3);
+  mapCtx.fillStyle = g;
+  mapCtx.fill();
+
+  // Border
+  mapCtx.strokeStyle = isCorner ? '#ffd755' : 'rgba(255,215,85,0.28)';
+  mapCtx.lineWidth = isCorner ? 1.5 : 0.8;
+  mapCtx.stroke();
+
+  // Accent stripe along the inner edge (color-codes the space type)
+  mapCtx.fillStyle = accent;
+  const stripe = Math.max(3, R.w * 0.06);
+  if (R.side === 'bottom')      mapCtx.fillRect(R.x, R.y, R.w, stripe);
+  else if (R.side === 'top')    mapCtx.fillRect(R.x, R.y + R.h - stripe, R.w, stripe);
+  else if (R.side === 'left')   mapCtx.fillRect(R.x + R.w - stripe, R.y, stripe, R.h);
+  else if (R.side === 'right')  mapCtx.fillRect(R.x, R.y, stripe, R.h);
+
+  // Ownership glow (if a player owns this property)
+  const owner = state.game?.players?.find(p => p.owned?.includes(idx));
   if (owner) {
-    mapCtx.fillStyle = owner.color;
-    mapCtx.fillRect(x, y, w, 3);
+    mapCtx.save();
+    mapCtx.strokeStyle = owner.color;
+    mapCtx.lineWidth = 2;
+    mapCtx.shadowColor = owner.color;
+    mapCtx.shadowBlur = 8;
+    roundRect(mapCtx, R.x + 1, R.y + 1, R.w - 2, R.h - 2, 3);
+    mapCtx.stroke();
+    mapCtx.restore();
   }
 
-  // icon
-  const ic = spaceIcon(sp.t);
+  // Icon
+  const ic = spaceIcon(sp.t, idx);
+  const iconSize = isCorner ? R.w * 0.40 : Math.min(R.w, R.h) * 0.42;
   if (ic) {
-    mapCtx.font = `${Math.floor(w*0.45)}px serif`;
+    mapCtx.font = `${Math.floor(iconSize)}px serif`;
     mapCtx.textAlign = 'center';
     mapCtx.textBaseline = 'middle';
-    mapCtx.fillText(ic, cx, cy - 2);
+    mapCtx.fillText(ic, R.cx, R.cy - (isCorner ? R.h * 0.08 : R.h * 0.12));
   }
 
-  // name
-  mapCtx.fillStyle = '#f2c96e';
-  mapCtx.font = `${Math.max(7, Math.floor(w*0.13))}px Cinzel, serif`;
+  // Name label
+  const fontPx = Math.max(6, Math.min(isCorner ? 9 : 8, R.w * 0.16));
+  mapCtx.fillStyle = isCorner ? '#ffd755' : '#cdb088';
+  mapCtx.font = `600 ${fontPx}px 'Cinzel', serif`;
   mapCtx.textAlign = 'center';
-  mapCtx.textBaseline = 'bottom';
-  const name = sp.n.length > 10 ? sp.n.slice(0, 10) : sp.n;
-  mapCtx.fillText(name, cx, y + h - 3);
+  mapCtx.textBaseline = 'middle';
+  let label = t(sp.n);
+  // Truncate to fit
+  const maxChars = Math.floor(R.w / (fontPx * 0.62));
+  if (label.length > maxChars && maxChars > 2) label = label.slice(0, maxChars);
+  mapCtx.fillText(label, R.cx, R.cy + (isCorner ? R.h * 0.30 : R.h * 0.30));
+}
+
+// Lighten a hex color by percent
+function lighten(hex, pct) {
+  const n = parseInt(hex.slice(1), 16);
+  let r = (n >> 16) + Math.round(255 * pct / 100);
+  let gg = ((n >> 8) & 0xff) + Math.round(255 * pct / 100);
+  let b = (n & 0xff) + Math.round(255 * pct / 100);
+  r = Math.min(255, r); gg = Math.min(255, gg); b = Math.min(255, b);
+  return '#' + ((r << 16) | (gg << 8) | b).toString(16).padStart(6, '0');
 }
 
 function drawTokens() {
-  if (!fxCtx) return;
+  if (!fxCtx || !BOARD_GEO) return;
   const W = boardSize.w, H = boardSize.h;
   fxCtx.clearRect(0, 0, W, H);
   if (!state.game) return;
-  const sw = Math.min(W, H) * 0.085;
+  const cell = BOARD_GEO.cell;
+  const tokenR = Math.max(7, cell * 0.30);
+
   // group players by space
   const bySpace = {};
   state.game.players.forEach(p => {
     if (!bySpace[p.pos]) bySpace[p.pos] = [];
     bySpace[p.pos].push(p);
   });
+
   Object.keys(bySpace).forEach(pos => {
     const players = bySpace[pos];
-    const sp = SPACES[pos];
-    if (!sp) return;
-    const cx = sp.rx * W, cy = sp.ry * H;
+    const R = BOARD_GEO.rects[pos];
+    if (!R) return;
+    // Arrange multiple tokens in a tidy grid within the cell
     players.forEach((p, i) => {
-      const ox = (i - (players.length-1)/2) * sw * 0.18;
-      const oy = sw * 0.2;
-      drawToken(cx + ox, cy + oy, p, sw * 0.28);
+      const perRow = 2;
+      const col = i % perRow;
+      const row = Math.floor(i / perRow);
+      const spacing = tokenR * 1.5;
+      const offsetX = (col - (Math.min(players.length, perRow) - 1) / 2) * spacing;
+      const offsetY = (row - (Math.ceil(players.length / perRow) - 1) / 2) * spacing;
+      drawToken(R.cx + offsetX, R.cy + offsetY, p, tokenR);
     });
   });
 }
 
 function drawToken(x, y, p, r) {
   const isCurrent = state.game?.players[state.game?.currentPlayerIndex]?.id === p.id;
-  // shadow
+
+  // Pulsing ring for the active player
+  if (isCurrent) {
+    const pulse = 1 + Math.sin(Date.now() / 300) * 0.12;
+    fxCtx.beginPath();
+    fxCtx.arc(x, y, r * 1.5 * pulse, 0, Math.PI * 2);
+    fxCtx.strokeStyle = 'rgba(255,215,85,0.5)';
+    fxCtx.lineWidth = 2;
+    fxCtx.stroke();
+  }
+
+  // Shadow
   fxCtx.beginPath();
   fxCtx.arc(x, y + 2, r, 0, Math.PI*2);
-  fxCtx.fillStyle = 'rgba(0,0,0,0.5)';
+  fxCtx.fillStyle = 'rgba(0,0,0,0.55)';
   fxCtx.fill();
-  // body
+
+  // Body with subtle gradient
+  const tg = fxCtx.createRadialGradient(x - r*0.3, y - r*0.3, 0, x, y, r);
+  tg.addColorStop(0, lighten(p.color || '#888888', 18));
+  tg.addColorStop(1, p.color || '#888888');
   fxCtx.beginPath();
   fxCtx.arc(x, y, r, 0, Math.PI*2);
-  fxCtx.fillStyle = p.color || '#888';
+  fxCtx.fillStyle = tg;
   fxCtx.fill();
-  // ring
-  fxCtx.strokeStyle = isCurrent ? '#ffd755' : 'rgba(255,255,255,0.3)';
-  fxCtx.lineWidth = isCurrent ? 2.5 : 1;
+
+  // Ring
+  fxCtx.strokeStyle = isCurrent ? '#ffd755' : 'rgba(255,255,255,0.35)';
+  fxCtx.lineWidth = isCurrent ? 2.5 : 1.2;
   fxCtx.stroke();
-  // emoji
-  fxCtx.font = `${Math.floor(r*1.2)}px serif`;
+
+  // Emoji icon
+  fxCtx.font = `${Math.floor(r*1.15)}px serif`;
   fxCtx.textAlign = 'center';
   fxCtx.textBaseline = 'middle';
   fxCtx.fillText(p.icon || '🕊', x, y);
-  // disconnected fade
+
+  // Disconnected fade
   if (!p.connected) {
-    fxCtx.fillStyle = 'rgba(0,0,0,0.4)';
+    fxCtx.fillStyle = 'rgba(0,0,0,0.45)';
     fxCtx.beginPath();
     fxCtx.arc(x, y, r, 0, Math.PI*2);
     fxCtx.fill();
