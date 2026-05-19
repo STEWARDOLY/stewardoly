@@ -1394,6 +1394,7 @@ const SFX = {
   tap:        () => tone(880, 0.06, 'sine', 0.08),
   dice:       () => { tone(400, 0.05, 'square', 0.1); setTimeout(()=>tone(600, 0.05, 'square', 0.1), 60); setTimeout(()=>tone(800, 0.08, 'square', 0.1), 120); },
   step:       () => tone(523, 0.04, 'sine', 0.06),
+  land:       () => { tone(392, 0.07, 'sine', 0.12); setTimeout(()=>tone(523, 0.1, 'sine', 0.13), 60); setTimeout(()=>tone(659, 0.14, 'triangle', 0.12), 130); },
   coin:       () => { tone(1318, 0.08, 'triangle', 0.1); setTimeout(()=>tone(1760, 0.1, 'triangle', 0.08), 70); },
   reward:     () => { tone(523, 0.1, 'sine', 0.12); setTimeout(()=>tone(659, 0.1, 'sine', 0.12), 100); setTimeout(()=>tone(784, 0.15, 'sine', 0.12), 200); },
   penalty:    () => { tone(220, 0.15, 'sawtooth', 0.1); setTimeout(()=>tone(165, 0.2, 'sawtooth', 0.1), 100); },
@@ -1595,7 +1596,14 @@ let BOARD_GEO = null; // { ox, oy, size, cell, corner, rects:[{x,y,w,h,cx,cy,sid
 
 let mapCv, fxCv, mapCtx, fxCtx;
 let boardSize = { w: 0, h: 0 };
-let tokenAnims = {}; // playerId -> { x, y, targetX, targetY }
+
+// ── Token hop animation state ──
+// renderPos[playerId] = the position the token is currently DRAWN at (may differ
+// from the authoritative p.pos while a hop animation is playing).
+let renderPos = {};            // playerId -> integer space index (0-39)
+let hopAnim = null;            // { playerId, from, to, queue:[next spaces], startTime, duration } | null
+let hopQueue = [];             // remaining spaces to step through for the active mover
+const HOP_MS = 240;            // time per single-space hop
 
 function computeBoardGeometry() {
   const W = boardSize.w, H = boardSize.h;
@@ -1935,6 +1943,21 @@ function lighten(hex, pct) {
   return '#' + ((r << 16) | (gg << 8) | b).toString(16).padStart(6, '0');
 }
 
+function tokenDrawXY(pos, playerIndexInCell, cellCount) {
+  // Returns {x,y} center for a token sitting on `pos`, arranged in a tidy grid
+  const R = BOARD_GEO.rects[pos];
+  if (!R) return null;
+  const cell = BOARD_GEO.cell;
+  const tokenR = Math.max(7, cell * 0.30);
+  const perRow = 2;
+  const col = playerIndexInCell % perRow;
+  const row = Math.floor(playerIndexInCell / perRow);
+  const spacing = tokenR * 1.5;
+  const offsetX = (col - (Math.min(cellCount, perRow) - 1) / 2) * spacing;
+  const offsetY = (row - (Math.ceil(cellCount / perRow) - 1) / 2) * spacing;
+  return { x: R.cx + offsetX, y: R.cy + offsetY, r: tokenR };
+}
+
 function drawTokens() {
   if (!fxCtx || !BOARD_GEO) return;
   const W = boardSize.w, H = boardSize.h;
@@ -1943,28 +1966,49 @@ function drawTokens() {
   const cell = BOARD_GEO.cell;
   const tokenR = Math.max(7, cell * 0.30);
 
-  // group players by space
+  // Ensure every player has a renderPos (initialise to their authoritative pos)
+  state.game.players.forEach(p => {
+    if (renderPos[p.id] === undefined) renderPos[p.id] = p.pos;
+  });
+
+  // Group players by the position they are currently DRAWN at
   const bySpace = {};
   state.game.players.forEach(p => {
-    if (!bySpace[p.pos]) bySpace[p.pos] = [];
-    bySpace[p.pos].push(p);
+    const rp = renderPos[p.id] ?? p.pos;
+    if (!bySpace[rp]) bySpace[rp] = [];
+    bySpace[rp].push(p);
   });
 
   Object.keys(bySpace).forEach(pos => {
     const players = bySpace[pos];
-    const R = BOARD_GEO.rects[pos];
-    if (!R) return;
-    // Arrange multiple tokens in a tidy grid within the cell
     players.forEach((p, i) => {
-      const perRow = 2;
-      const col = i % perRow;
-      const row = Math.floor(i / perRow);
-      const spacing = tokenR * 1.5;
-      const offsetX = (col - (Math.min(players.length, perRow) - 1) / 2) * spacing;
-      const offsetY = (row - (Math.ceil(players.length / perRow) - 1) / 2) * spacing;
-      drawToken(R.cx + offsetX, R.cy + offsetY, p, tokenR);
+      const isHopping = hopAnim && hopAnim.playerId === p.id;
+      if (isHopping) return; // hopping token drawn separately (on top, with arc)
+      const xy = tokenDrawXY(parseInt(pos), i, players.length);
+      if (xy) drawToken(xy.x, xy.y, p, xy.r);
     });
   });
+
+  // Draw the actively hopping token last (on top), with a parabolic arc
+  if (hopAnim) {
+    const p = state.game.players.find(pl => pl.id === hopAnim.playerId);
+    if (p) {
+      const now = performance.now();
+      let tt = (now - hopAnim.startTime) / hopAnim.duration;
+      if (tt > 1) tt = 1;
+      const fromXY = tokenDrawXY(hopAnim.from, 0, 1);
+      const toXY   = tokenDrawXY(hopAnim.to, 0, 1);
+      if (fromXY && toXY) {
+        // ease-in-out
+        const e = tt < 0.5 ? 2*tt*tt : 1 - Math.pow(-2*tt+2, 2)/2;
+        const x = fromXY.x + (toXY.x - fromXY.x) * e;
+        const y = fromXY.y + (toXY.y - fromXY.y) * e;
+        // little hop arc (up then down) each single-space step
+        const arc = Math.sin(tt * Math.PI) * (tokenR * 0.9);
+        drawToken(x, y - arc, p, tokenR);
+      }
+    }
+  }
 }
 
 function drawToken(x, y, p, r) {
@@ -2015,7 +2059,101 @@ function drawToken(x, y, p, r) {
   }
 }
 
+// ── Hop animation engine ──
+// Call beginTokenJourney(playerId, fromPos, toPos) to animate a token stepping
+// space-by-space from fromPos to toPos (handles wrap-around past space 39→0).
+function beginTokenJourney(playerId, fromPos, toPos) {
+  if (fromPos === toPos) { renderPos[playerId] = toPos; return; }
+  // Build the path of single-space steps going forward around the 40-space loop
+  const steps = [];
+  let cur = fromPos;
+  let guard = 0;
+  while (cur !== toPos && guard < 60) {
+    cur = (cur + 1) % 40;
+    steps.push(cur);
+    guard++;
+  }
+  renderPos[playerId] = fromPos;
+  hopQueue = steps;
+  startNextHop(playerId);
+}
+
+function startNextHop(playerId) {
+  if (hopQueue.length === 0) {
+    hopAnim = null;
+    return;
+  }
+  const from = renderPos[playerId];
+  const to = hopQueue.shift();
+  hopAnim = {
+    playerId,
+    from,
+    to,
+    startTime: performance.now(),
+    duration: HOP_MS,
+  };
+}
+
+function updateHopAnim() {
+  if (!hopAnim) return;
+  const now = performance.now();
+  if (now - hopAnim.startTime >= hopAnim.duration) {
+    // Land on the step
+    renderPos[hopAnim.playerId] = hopAnim.to;
+    const pid = hopAnim.playerId;
+    // Step sound + corner cue
+    try {
+      if (hopQueue.length === 0) {
+        SFX.land ? SFX.land() : (SFX.coin && SFX.coin());
+      } else {
+        SFX.step && SFX.step();
+      }
+    } catch(e){}
+    hopAnim = null;
+    // Continue to the next hop (small gap for rhythm)
+    if (hopQueue.length > 0) {
+      setTimeout(() => startNextHop(pid), 40);
+    } else {
+      // Journey finished — fire any queued completion callback
+      if (typeof onJourneyComplete === 'function') {
+        const cb = onJourneyComplete;
+        onJourneyComplete = null;
+        cb();
+      }
+    }
+  }
+}
+
+let onJourneyComplete = null; // optional callback when a journey ends
+
+// Detect position changes when new server state arrives, and animate them.
+// Returns true if an animation was started (caller may delay UI accordingly).
+function syncTokenPositions(prevPlayers, nextPlayers) {
+  if (!prevPlayers) {
+    // First state — snap everyone to position, no animation
+    nextPlayers.forEach(p => { renderPos[p.id] = p.pos; });
+    return false;
+  }
+  let mover = null;
+  nextPlayers.forEach(np => {
+    const pp = prevPlayers.find(x => x.id === np.id);
+    const wasAt = pp ? pp.pos : np.pos;
+    if (renderPos[np.id] === undefined) renderPos[np.id] = wasAt;
+    if (np.pos !== renderPos[np.id]) {
+      // This player moved — pick the first detected mover to animate
+      if (!mover) mover = { id: np.id, from: renderPos[np.id], to: np.pos };
+      else renderPos[np.id] = np.pos; // snap any secondary movers
+    }
+  });
+  if (mover) {
+    beginTokenJourney(mover.id, mover.from, mover.to);
+    return true;
+  }
+  return false;
+}
+
 function pulseRender() {
+  updateHopAnim();
   drawTokens();
   requestAnimationFrame(pulseRender);
 }
@@ -2971,6 +3109,7 @@ function connectSocket() {
 
   state.socket.on('state', (g) => {
     state.myId = state.socket.id;
+    const prevPlayers = state.game ? state.game.players : null;
     state.game = g;
     if (g && g.hostId === state.myId) state.isHost = true;
     if (state.roomCode && document.getElementById('lobby-scr').classList.contains('active') && g.phase === 'playing') {
@@ -2986,6 +3125,12 @@ function connectSocket() {
         lp.innerHTML = '<div style="font-size:11px;color:#a08060;margin:6px 0">' + g.players.length + ' player(s)</div>'
           + g.players.map(p => `<div class="lobby-player" style="--c:${p.color}">${p.icon} ${escapeHtml(p.name)}${p.id===g.hostId?' 👑':''}</div>`).join('');
       }
+    }
+    // Animate any token that changed position (hop space-by-space)
+    if (g.phase === 'playing') {
+      syncTokenPositions(prevPlayers, g.players);
+    } else {
+      g.players.forEach(p => { renderPos[p.id] = p.pos; });
     }
     drawBoard();
     updateHUD();
