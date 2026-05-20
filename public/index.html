@@ -1607,9 +1607,20 @@ const HOP_MS = 240;            // time per single-space hop
 
 function computeBoardGeometry() {
   const W = boardSize.w, H = boardSize.h;
+  // Guard: if canvas hasn't been laid out yet (hidden, zero size), skip geometry build.
+  // This prevents IndexSizeError on createRadialGradient when init() runs before game screen visible.
+  if (W <= 0 || H <= 0) {
+    BOARD_GEO = null;
+    return;
+  }
   // The board is a square that fits inside the container with breathing room
   const pad = Math.max(8, Math.min(W, H) * 0.03);
   const size = Math.min(W, H) - pad * 2;
+  // If padding ate the whole container, also bail out
+  if (size <= 0) {
+    BOARD_GEO = null;
+    return;
+  }
   const ox = (W - size) / 2;   // centered horizontally
   const oy = (H - size) / 2;   // centered vertically
 
@@ -3206,9 +3217,12 @@ function init() {
   state.lang = detectLang();
   applyI18n();
 
-  renderHeroPicker();
-  initCanvas();
-  pulseRender();
+  // These can fail on first paint if game screen is hidden — must not block socket connection
+  try { renderHeroPicker(); } catch(e) { console.error('renderHeroPicker failed', e); }
+  try { initCanvas(); }       catch(e) { console.error('initCanvas failed', e); }
+  try { pulseRender(); }      catch(e) { console.error('pulseRender failed', e); }
+
+  // Socket is critical — must always run regardless of UI failures above
   connectSocket();
 
   // close overlay click outside
