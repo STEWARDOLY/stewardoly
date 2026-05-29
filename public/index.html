@@ -149,6 +149,20 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .overlay.on{display:flex;animation:fadeIn .2s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
+/* ── Rarity styles for card pulls (gacha feel) ── */
+.card-big.rarity-common{}
+.card-big.rarity-rare{box-shadow:0 0 50px #5b9bdc,0 0 80px rgba(91,155,220,.4),0 8px 24px rgba(0,0,0,.7);border-color:#5b9bdc}
+.card-big.rarity-epic{box-shadow:0 0 60px #a785e0,0 0 100px rgba(167,133,224,.5),0 8px 24px rgba(0,0,0,.7);border-color:#a785e0;animation:cardFlip .5s cubic-bezier(.5,1.5,.5,1),epicPulse 2s ease-in-out infinite alternate}
+@keyframes epicPulse{from{box-shadow:0 0 60px #a785e0,0 0 100px rgba(167,133,224,.5),0 8px 24px rgba(0,0,0,.7)}to{box-shadow:0 0 80px #d4b8ff,0 0 140px rgba(212,184,255,.7),0 8px 24px rgba(0,0,0,.7)}}
+.card-big.rarity-legendary{box-shadow:0 0 80px #ffd755,0 0 140px rgba(255,215,85,.6),0 8px 24px rgba(0,0,0,.7);border-color:#ffd755;border-width:4px;animation:cardFlip .5s cubic-bezier(.5,1.5,.5,1),legendaryGlow 1.8s ease-in-out infinite alternate}
+@keyframes legendaryGlow{from{box-shadow:0 0 80px #ffd755,0 0 140px rgba(255,215,85,.6),0 8px 24px rgba(0,0,0,.7)}to{box-shadow:0 0 120px #fff3a0,0 0 200px rgba(255,243,160,.9),0 8px 24px rgba(0,0,0,.7)}}
+.rarity-badge{display:inline-block;font-family:'Cinzel',serif;font-size:9px;font-weight:700;letter-spacing:.15em;padding:3px 9px;border-radius:10px;margin-bottom:4px;text-transform:uppercase}
+.rarity-badge.r-common{background:rgba(160,128,96,.2);color:#a08060}
+.rarity-badge.r-rare{background:rgba(91,155,220,.25);color:#7cb8f0;border:1px solid #5b9bdc}
+.rarity-badge.r-epic{background:rgba(167,133,224,.25);color:#d4b8ff;border:1px solid #a785e0}
+.rarity-badge.r-legendary{background:linear-gradient(90deg,#ffd755,#fff3a0,#ffd755);background-size:200% 100%;color:#1a0d05;border:1px solid #ffd755;animation:shimmerGold 2s linear infinite}
+@keyframes shimmerGold{from{background-position:0% 50%}to{background-position:200% 50%}}
+
 .card-big{width:100%;max-width:320px;max-height:calc(100dvh - 40px);max-height:calc(100vh - 40px);overflow-y:auto;background:linear-gradient(180deg,#2a180a,#1a0d05);border:3px solid var(--cc,#c9922a);border-radius:18px;padding:0;text-align:center;animation:cardFlip .5s cubic-bezier(.5,1.5,.5,1);position:relative;box-shadow:0 0 40px var(--cc,#c9922a),0 8px 24px rgba(0,0,0,.7);scrollbar-width:thin}
 @keyframes cardFlip{0%{transform:rotateY(70deg) scale(.7);opacity:0}50%{opacity:1}100%{transform:rotateY(0) scale(1);opacity:1}}
 .card-top{padding:14px 18px 10px;background:linear-gradient(180deg,var(--cc,#c9922a) 0%,transparent 100%)}
@@ -479,6 +493,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
   <div class="card-big" id="card-big">
     <div class="card-top">
       <div class="card-icon-big" id="c-icon">📜</div>
+      <div class="rarity-badge r-common" id="c-rarity-badge" style="display:none"></div>
       <div class="card-type" id="c-type">SCROLL OF WISDOM</div>
       <div class="card-name" id="c-name">The Generous Lender</div>
     </div>
@@ -717,6 +732,25 @@ const TRANSLATIONS = {
   'Deeply rooted! Gain 100T and Wisdom Card.': '根深蒂固！獲得 100 金幣和智慧卡。',
   "David's Song": '大衛之歌',
   'Joy! Gain 70 Talents.': '喜樂！獲得 70 金幣。',
+  // NEW Wisdom cards (rarity expansion)
+  'Mustard Seed Faith': '芥菜種的信心',
+  'Plant a seed. Gain 20T per ministry every future round.': '種下信心種子。日後每回合每事工獲得 20 金幣。',
+  'Anointing Oil': '膏油',
+  'Convert worldly to eternal — pay 50T, gain 3 Virtue.': '將屬世化為永恆——付出 50 金幣,獲得 3 品格。',
+  'Crossing the Red Sea': '過紅海',
+  'Move forward 7 spaces, ignoring all effects in between.': '前進 7 格,跳過途中所有效果。',
+  'Walking on Water': '海面行走',
+  'Until your next turn, your dice roll is DOUBLED.': '直到下一輪,你的骰子加倍!',
+  "Daniel's Den": '但以理的獅穴',
+  'Immune to next 2 temptations and penalties.': '免疫下兩次試探與懲罰。',
+  'Promised Land': '應許之地',
+  'Move directly to the next corner space.': '直接移動到下一個角落格。',
+  "Noah's Covenant": '挪亞之約',
+  "God remembers His promise. +400T and +5 Virtue.": '神記念祂的應許。+400 金幣、+5 品格。',
+  'Pentecost': '五旬節',
+  'Draw 3 Wisdom cards, keep all of them.': '抽 3 張智慧卡,全部保留。',
+  'Year of Jubilee': '禧年',
+  'All debts forgiven! Each player with under 200T gets to 500T. You gain +5 Virtue.': '債務一律豁免!每位低於 200 金幣的玩家提升到 500 金幣。你獲得 +5 品格。',
   // Acts Cards
   'Acts of Apostles': '使徒行傳',
   'All Things in Common': '凡物公用',
@@ -779,6 +813,17 @@ const TRANSLATIONS = {
   'Sun & moon': '日和月', 'Sheaves': '禾捆', 'Stars': '星辰',
   'Melchizedek': '麥基洗德', 'Pharaoh': '法老', 'Abimelech': '亞比米勒',
   'Elisha': '以利沙', 'Daniel': '但以理',
+  // NEW Acts cards (rarity expansion)
+  'Manna from Heaven': '從天降下的嗎哪',
+  'Each player gains 50T from the Tithe Pool.': '每位玩家從十一奉獻池獲得 50 金幣。',
+  'Lazarus Rises': '拉撒路復活',
+  'If you have less than 100T, instantly gain 250T.': '若你低於 100 金幣,立即獲得 250 金幣。',
+  'Healing at Bethesda': '畢士大池治癒',
+  'Remove any skip-turn or penalty effect on you. +2 Virtue.': '解除身上的停一回合或懲罰效果。+2 品格。',
+  "Esther's Courage": '以斯帖的勇氣',
+  "'For such a time as this.' Steal 100T from the richest player.": '「現今的機會。」從最富有的玩家奪取 100 金幣。',
+  'The Risen Lord': '復活的主',
+  'Heart filled with hope! +350T, +6 Virtue, +2 Wisdom.': '心中滿了盼望!+350 金幣、+6 品格、+2 智慧。',
   // Temptation
   'Temptation': '試探',
   'Love of Money': '貪愛錢財',
@@ -805,6 +850,15 @@ const TRANSLATIONS = {
   'Look back longingly. Take 100T or press on.': '依戀回望。拿 100 金幣或繼續前行。',
   'Look back (+100T)': '回望 (+100 金幣)',
   'Press on (+2 Virtue)': '繼續前行 (+2 品格)',
+  // NEW Temptations (rarity expansion)
+  "Spider's Web": '蛛網',
+  'Accept 180T, but the richest player chooses what you lose (1 Wisdom OR 2 Virtue). Or refuse cleanly.': '接受 180 金幣,但最富者選擇你失去什麼(1 智慧或 2 品格)。或乾淨拒絕。',
+  'Take it (+180T, lose something)': '接受 (+180 金幣,失去某物)',
+  'Walk free (+3 Virtue)': '清白離去 (+3 品格)',
+  'Tower of Babel': '巴別塔',
+  'Build a name for yourself: +250T, but ALL other players also gain 50T (you boost rivals). Or refuse.': '為自己立名:+250 金幣,但其他玩家也各得 50 金幣(你助長對手)。或拒絕。',
+  'Build tower (+250T, rivals gain too)': '建塔 (+250 金幣,對手亦得益)',
+  'Stay humble (+4 Virtue)': '保持謙卑 (+4 品格)',
   // Apostles
   'Apostle': '使徒',
   '"Run the race set before you." Tithe 50T to receive +1 Wisdom & +1 Virtue.': '「奔那擺在我們前頭的路程。」十一奉獻 50 金幣換 +1 智慧 & +1 品格。',
@@ -817,6 +871,19 @@ const TRANSLATIONS = {
   '"My Lord and my God!" +1 Wisdom card if you correctly answer trivia.': '「我的主，我的神！」答對問答即得 +1 智慧卡。',
   'Paul': '保羅', 'Peter': '彼得', 'John': '約翰', 'James': '雅各',
   'Mary': '馬利亞', 'Andrew': '安得烈', 'Barnabas': '巴拿巴', 'Thomas': '多馬',
+  // Legendary apostles
+  'Mary Magdalene': '抹大拉的馬利亞',
+  'Mary Magdalene appears in joyful witness!': '抹大拉的馬利亞滿懷喜樂見證!',
+  '"He is risen indeed! Share the good news. Give 80T and receive a great blessing."': '「祂真的復活了!傳揚好消息。給予 80 金幣,領受大祝福。」',
+  'I have seen the Lord. (John 20:18)': '我已經看見主。(約翰福音 20:18)',
+  'Stephen the Martyr': '殉道者司提反',
+  'Stephen, filled with grace, appears!': '滿有恩典的司提反顯現!',
+  '"Speak boldly — sacrifice 100T for the kingdom. Great virtue awaits."': '「放膽傳道——為國度獻上 100 金幣。大品格賞賜等候。」',
+  'Lord, do not hold this sin against them. (Acts 7:60)': '主啊,不要將這罪歸於他們。(使徒行傳 7:60)',
+  'The Risen Christ': '復活的基督',
+  'A divine encounter — the Risen Lord meets you!': '神聖的相遇——復活的主與你相見!',
+  '"Walk with Me. Receive grace upon grace."': '「與我同行。領受恩上加恩。」',
+  'Did not our hearts burn within us? (Luke 24:32)': '我們的心豈不是火熱的嗎?(路加福音 24:32)',
   // Apostle quotes (paraphrased, original wording — not direct verse quotes)
   'God multiplies the seed that the generous sow. (2 Cor 9:10)': '神使慷慨之人所撒的種子倍增。（哥林多後書 9:10）',
   'When faith calls, step out of the boat. (Matt 14:28-29)': '信心呼召時，便要踏出船外。（馬太福音 14:28-29）',
@@ -1395,6 +1462,8 @@ const SFX = {
   dice:       () => { tone(400, 0.05, 'square', 0.1); setTimeout(()=>tone(600, 0.05, 'square', 0.1), 60); setTimeout(()=>tone(800, 0.08, 'square', 0.1), 120); },
   step:       () => tone(523, 0.04, 'sine', 0.06),
   land:       () => { tone(392, 0.07, 'sine', 0.12); setTimeout(()=>tone(523, 0.1, 'sine', 0.13), 60); setTimeout(()=>tone(659, 0.14, 'triangle', 0.12), 130); },
+  epic:       () => { tone(523, 0.08, 'triangle', 0.12); setTimeout(()=>tone(784, 0.10, 'triangle', 0.13), 80); setTimeout(()=>tone(1046, 0.15, 'triangle', 0.14), 180); },
+  legendary:  () => { tone(523, 0.08, 'triangle', 0.13); setTimeout(()=>tone(659, 0.08, 'triangle', 0.13), 90); setTimeout(()=>tone(784, 0.08, 'triangle', 0.13), 180); setTimeout(()=>tone(1046, 0.12, 'triangle', 0.14), 270); setTimeout(()=>tone(1568, 0.25, 'triangle', 0.15), 390); },
   coin:       () => { tone(1318, 0.08, 'triangle', 0.1); setTimeout(()=>tone(1760, 0.1, 'triangle', 0.08), 70); },
   reward:     () => { tone(523, 0.1, 'sine', 0.12); setTimeout(()=>tone(659, 0.1, 'sine', 0.12), 100); setTimeout(()=>tone(784, 0.15, 'sine', 0.12), 200); },
   penalty:    () => { tone(220, 0.15, 'sawtooth', 0.1); setTimeout(()=>tone(165, 0.2, 'sawtooth', 0.1), 100); },
@@ -2334,6 +2403,24 @@ function showCard(card) {
   const c_btns = document.getElementById('c-btns');
   const c_watch = document.getElementById('c-watch-btns');
   state.triviaIdx = null;
+
+  // Apply rarity styling
+  const cardBig = document.getElementById('card-big');
+  cardBig.classList.remove('rarity-common','rarity-rare','rarity-epic','rarity-legendary');
+  const rarity = card.rarity || 'common';
+  cardBig.classList.add('rarity-' + rarity);
+  const badge = document.getElementById('c-rarity-badge');
+  if (rarity === 'common') {
+    badge.style.display = 'none';
+  } else {
+    badge.style.display = 'inline-block';
+    badge.className = 'rarity-badge r-' + rarity;
+    const labels = { rare:'★ RARE', epic:'★★ EPIC', legendary:'★★★ LEGENDARY' };
+    badge.textContent = labels[rarity];
+  }
+  // Sound effect for rare draws
+  if (rarity === 'legendary' && SFX.legendary) SFX.legendary();
+  else if (rarity === 'epic' && SFX.epic) SFX.epic();
 
   // type/icon by shape
   let typeLbl = 'CARD', icon = '📜';

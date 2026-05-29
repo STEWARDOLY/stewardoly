@@ -67,61 +67,95 @@ const SPACES = [
 // Communal/giving cards reward MORE Virtue (since they cost real money)
 // Trivia: Skip costs -1 VP (lazy mind); correct = VP based on difficulty
 // ═══════════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
+// CARDS — with rarity system: common (60%), rare (25%), epic (12%), legendary (3%)
+// Cards have a `rarity` field used for weighted random draw.
+// ═══════════════════════════════════════════════════════════════
 const CARDS = {
   'card-w': [
-    { icon: '📜', badge: 'Scroll of Wisdom', title: 'The Generous Lender', body: 'You lent to many and borrowed from none. Walk forward 3 spaces and collect 150T.', verse: 'Deut 28:12', fx: 150, advance: 3, vp: 1 },
-    { icon: '👑', badge: 'Scroll of Wisdom', title: 'King Solomon Visits', body: 'Solomon shares his wisdom! Gain 180 Talents.', verse: '1 Kings 3:9', fx: 180 },
-    { icon: '🌾', badge: 'Scroll of Wisdom', title: 'Year of Abundance', body: 'Bumper harvest! Gain 50T per ministry you own.', verse: 'Lev 26:4', fx: 0, perMinistry: 50 },
-    { icon: '🦅', badge: 'Scroll of Wisdom', title: 'Soar on Eagles\' Wings', body: 'Strength renewed! Advance to nearest Wisdom space.', verse: 'Isaiah 40:31', fx: 50, advance: 'wisdom' },
-    { icon: '💧', badge: 'Scroll of Wisdom', title: 'Well of Provision', body: 'Living water provides! Gain 120 Talents.', verse: 'John 4:14', fx: 120 },
-    { icon: '🍞', badge: 'Scroll of Wisdom', title: 'Daily Bread', body: 'Daily needs met. Collect 90 Talents.', verse: 'Matt 6:11', fx: 90 },
-    { icon: '🕊️', badge: 'Scroll of Wisdom', title: 'Peace Be With You', body: 'All players give you 20T.', verse: 'John 14:27', fx: 0, fromAll: 20 },
-    { icon: '⭐', badge: 'Scroll of Wisdom', title: 'Star of Bethlehem', body: 'Advance to the Temple corner.', verse: 'Matt 2:9', fx: 0, advanceToCorner: 20 },
-    { icon: '🌳', badge: 'Scroll of Wisdom', title: 'Tree by Living Water', body: 'Deeply rooted! Gain 100T and Wisdom Card.', verse: 'Psalm 1:3', fx: 100 },
-    { icon: '🎵', badge: 'Scroll of Wisdom', title: "David's Song", body: 'Joy! Gain 70 Talents.', verse: 'Psalm 23', fx: 70 },
+    // ─── COMMON (everyday blessings) ───
+    { rarity:'common', icon: '🍞', badge: 'Scroll of Wisdom', title: 'Daily Bread', body: 'Daily needs met. Collect 90 Talents.', verse: 'Matt 6:11', fx: 90 },
+    { rarity:'common', icon: '🎵', badge: 'Scroll of Wisdom', title: "David's Song", body: 'Joy! Gain 70 Talents.', verse: 'Psalm 23', fx: 70 },
+    { rarity:'common', icon: '💧', badge: 'Scroll of Wisdom', title: 'Well of Provision', body: 'Living water provides! Gain 120 Talents.', verse: 'John 4:14', fx: 120 },
+    { rarity:'common', icon: '🌳', badge: 'Scroll of Wisdom', title: 'Tree by Living Water', body: 'Deeply rooted! Gain 100T.', verse: 'Psalm 1:3', fx: 100 },
+    { rarity:'common', icon: '📜', badge: 'Scroll of Wisdom', title: 'The Generous Lender', body: 'You lent to many. Walk forward 3 spaces, +150T.', verse: 'Deut 28:12', fx: 150, advance: 3, vp: 1 },
+    { rarity:'common', icon: '🦅', badge: 'Scroll of Wisdom', title: "Soar on Eagles' Wings", body: 'Strength renewed! Advance to nearest Wisdom space, +50T.', verse: 'Isaiah 40:31', fx: 50, advance: 'wisdom' },
+    // ─── RARE ───
+    { rarity:'rare', icon: '🌾', badge: 'Scroll of Wisdom', title: 'Year of Abundance', body: 'Bumper harvest! Gain 50T per ministry you own.', verse: 'Lev 26:4', fx: 0, perMinistry: 50 },
+    { rarity:'rare', icon: '🕊️', badge: 'Scroll of Wisdom', title: 'Peace Be With You', body: 'All players give you 20T.', verse: 'John 14:27', fx: 0, fromAll: 20 },
+    { rarity:'rare', icon: '👑', badge: 'Scroll of Wisdom', title: 'King Solomon Visits', body: "Solomon's wisdom! +180T, +1 Wisdom.", verse: '1 Kings 3:9', fx: 180, wisdom: 1 },
+    { rarity:'rare', icon: '🌟', badge: 'Scroll of Wisdom', title: 'Star of Bethlehem', body: 'Advance to the Temple corner.', verse: 'Matt 2:9', fx: 0, advanceToCorner: 20 },
+    { rarity:'rare', icon: '🍇', badge: 'Scroll of Wisdom', title: 'Mustard Seed Faith', body: 'Plant a seed. Gain 20T per ministry every future round.', verse: 'Matt 17:20', fx: 0, plantMustardSeed: 20 },
+    { rarity:'rare', icon: '⚜️', badge: 'Scroll of Wisdom', title: 'Anointing Oil', body: 'Convert worldly to eternal — pay 50T, gain 3 Virtue.', verse: '1 Sam 16:13', fx: -50, vp: 3 },
+    // ─── EPIC (board-changing) ───
+    { rarity:'epic', icon: '🌊', badge: 'Scroll of Wisdom', title: 'Crossing the Red Sea', body: 'Move forward 7 spaces, ignoring all effects in between.', verse: 'Exodus 14:21', fx: 0, sprint: 7 },
+    { rarity:'epic', icon: '👣', badge: 'Scroll of Wisdom', title: 'Walking on Water', body: 'Until your next turn, your dice roll is DOUBLED.', verse: 'Matt 14:25', fx: 0, doubleNextRoll: true },
+    { rarity:'epic', icon: '🛡️', badge: 'Scroll of Wisdom', title: "Daniel's Den", body: 'Immune to next 2 temptations and penalties.', verse: 'Daniel 6:22', fx: 0, shield: 2 },
+    { rarity:'epic', icon: '🌅', badge: 'Scroll of Wisdom', title: 'Promised Land', body: 'Move directly to the next corner space.', verse: 'Deut 8:7', fx: 0, advanceToNextCorner: true },
+    // ─── LEGENDARY (game-changing) ───
+    { rarity:'legendary', icon: '🌈', badge: '⭐ Scroll of Wisdom', title: "Noah's Covenant", body: 'God remembers His promise. +400T and +5 Virtue.', verse: 'Genesis 9:13', fx: 400, vp: 5 },
+    { rarity:'legendary', icon: '🔥', badge: '⭐ Scroll of Wisdom', title: 'Pentecost', body: 'Draw 3 Wisdom cards, keep all of them.', verse: 'Acts 2:4', fx: 0, drawAndKeep: 3 },
+    { rarity:'legendary', icon: '🎉', badge: '⭐ Scroll of Wisdom', title: 'Year of Jubilee', body: 'All debts forgiven! Each player with under 200T gets to 500T. You gain +5 Virtue.', verse: 'Lev 25:10', fx: 0, jubilee: true, vp: 5 },
   ],
   'card-a': [
-    { icon: '🤝', badge: 'Acts of Apostles', title: 'All Things in Common', body: 'Give 60T to the poorest player. Generous love.', verse: 'Acts 2:44', fx: -60, communal: true, vp: 3 },
-    { icon: '💬', badge: 'Acts of Apostles', title: 'Barnabas Encourages', body: 'Life-giving words! Gain 70T.', verse: 'Acts 11:24', fx: 70 },
-    { icon: '🏠', badge: 'Acts of Apostles', title: "Lydia's Hospitality", body: 'All players gain 40T from the Tithe Pool.', verse: 'Acts 16:15', fx: 40, allPlayers: true, vp: 2 },
-    { icon: '⛪', badge: 'Acts of Apostles', title: 'Paul Plants a Church', body: 'Free Ministry at your space (if eligible)!', verse: '1 Cor 3:6', fx: 0, freeMinistry: true },
-    { icon: '🍇', badge: 'Acts of Apostles', title: 'Vineyard Workers', body: 'Each player receives 30T.', verse: 'Matt 20:1-16', fx: 30, allPlayers: true, vp: 1 },
-    { icon: '🐟', badge: 'Acts of Apostles', title: 'Loaves & Fishes', body: 'Multiplication miracle! Gain up to 200T.', verse: 'John 6:1-13', fx: 0, doubleUpTo: 200 },
-    { icon: '🦴', badge: 'Acts of Apostles', title: 'The Good Samaritan', body: 'Pay 50T to the poorest player.', verse: 'Luke 10:25-37', fx: -50, communal: true, vp: 3 },
-    { icon: '🏺', badge: 'Acts of Apostles', title: "Widow's Oil Multiplied", body: 'Faith pays! Gain 80T.', verse: '2 Kings 4:1-7', fx: 80 },
-    { icon: '🎁', badge: 'Acts of Apostles', title: 'Mission Offering', body: 'Pay 40T to Tithe Pool. Gain Wisdom.', verse: '2 Cor 9:7', fx: -40, toTithePool: true, vp: 2 },
-    { icon: '🌿', badge: 'Acts of Apostles', title: 'Wash Their Feet', body: 'Each player gives you 25T.', verse: 'John 13:14', fx: 0, fromAll: 25, vp: 1 },
+    // ─── COMMON ───
+    { rarity:'common', icon: '💬', badge: 'Acts of Apostles', title: 'Barnabas Encourages', body: 'Life-giving words! Gain 70T.', verse: 'Acts 11:24', fx: 70 },
+    { rarity:'common', icon: '🏺', badge: 'Acts of Apostles', title: "Widow's Oil Multiplied", body: 'Faith pays! Gain 80T.', verse: '2 Kings 4:1-7', fx: 80 },
+    { rarity:'common', icon: '🐟', badge: 'Acts of Apostles', title: 'Loaves & Fishes', body: 'Multiplication miracle! Gain up to 200T (double your wallet, capped at 200).', verse: 'John 6:1-13', fx: 0, doubleUpTo: 200 },
+    { rarity:'common', icon: '🌿', badge: 'Acts of Apostles', title: 'Wash Their Feet', body: 'Each player gives you 25T.', verse: 'John 13:14', fx: 0, fromAll: 25, vp: 1 },
+    // ─── RARE ───
+    { rarity:'rare', icon: '🤝', badge: 'Acts of Apostles', title: 'All Things in Common', body: 'Give 60T to the poorest player. +3 Virtue.', verse: 'Acts 2:44', fx: -60, communal: true, vp: 3 },
+    { rarity:'rare', icon: '🏠', badge: 'Acts of Apostles', title: "Lydia's Hospitality", body: 'All players gain 40T from the Tithe Pool. +2 Virtue.', verse: 'Acts 16:15', fx: 40, allPlayers: true, vp: 2 },
+    { rarity:'rare', icon: '🍇', badge: 'Acts of Apostles', title: 'Vineyard Workers', body: 'Each player receives 30T.', verse: 'Matt 20:1-16', fx: 30, allPlayers: true, vp: 1 },
+    { rarity:'rare', icon: '🦴', badge: 'Acts of Apostles', title: 'The Good Samaritan', body: 'Pay 50T to the poorest player. +3 Virtue.', verse: 'Luke 10:25-37', fx: -50, communal: true, vp: 3 },
+    { rarity:'rare', icon: '🎁', badge: 'Acts of Apostles', title: 'Mission Offering', body: 'Pay 40T to Tithe Pool. +2 Virtue, +1 Wisdom.', verse: '2 Cor 9:7', fx: -40, toTithePool: true, vp: 2, wisdom: 1 },
+    { rarity:'rare', icon: '🍞', badge: 'Acts of Apostles', title: 'Manna from Heaven', body: 'Each player gains 50T from the Tithe Pool.', verse: 'Exodus 16:4', fx: 0, mannaFromTithe: 50 },
+    // ─── EPIC ───
+    { rarity:'epic', icon: '⛪', badge: 'Acts of Apostles', title: 'Paul Plants a Church', body: 'Free Ministry at your space (if eligible)!', verse: '1 Cor 3:6', fx: 0, freeMinistry: true },
+    { rarity:'epic', icon: '⚰️', badge: 'Acts of Apostles', title: 'Lazarus Rises', body: 'If you have less than 100T, instantly gain 250T.', verse: 'John 11:43', fx: 0, lazarus: true },
+    { rarity:'epic', icon: '🌿', badge: 'Acts of Apostles', title: 'Healing at Bethesda', body: 'Remove any skip-turn or penalty effect on you. +2 Virtue.', verse: 'John 5:8', fx: 0, healAll: true, vp: 2 },
+    // ─── LEGENDARY ───
+    { rarity:'legendary', icon: '👼', badge: '⭐ Acts of Apostles', title: "Esther's Courage", body: "'For such a time as this.' Steal 100T from the richest player.", verse: 'Esther 4:14', fx: 0, stealFromRichest: 100, vp: 2 },
+    { rarity:'legendary', icon: '✝️', badge: '⭐ Acts of Apostles', title: 'The Risen Lord', body: 'Heart filled with hope! +350T, +6 Virtue, +2 Wisdom.', verse: 'Matt 28:6', fx: 350, vp: 6, wisdom: 2 },
   ],
   'card-p': [
-    { icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'How many disciples did Jesus call?', options: ['7', '12', '40'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
-    { icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'Who built the ark?', options: ['Moses', 'Noah', 'Abraham'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
-    { icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'What did David use to defeat Goliath?', options: ['Sword', 'Sling and stone', 'Spear'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
-    { icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'In what city was Jesus born?', options: ['Jerusalem', 'Nazareth', 'Bethlehem'], correct: 2, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
-    { icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'Who led Israel out of Egypt?', options: ['Joshua', 'Moses', 'Aaron'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
-    { icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'How many days did God create in?', options: ['6', '7', '40'], correct: 0, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
-    { icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'In Parable of the Talents, what happened to the lazy servant?', options: ['Praised', 'Cast out', 'Gained more'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
-    { icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'Zacchaeus promised to give the poor what?', options: ['A tenth', 'Half', 'All'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
-    { icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'How long was Jonah in the great fish?', options: ['1 day', '3 days', '7 days'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
-    { icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'In Parable of the Sower, which soil produced fruit?', options: ['Rocky', 'Thorny', 'Good'], correct: 2, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
-    { icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'The widow with 2 coins gave more because?', options: ['Pretty gift', 'All she had', 'Public'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
-    { icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'Which book has the Beatitudes?', options: ['Matthew', 'Romans', 'Genesis'], correct: 0, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
-    { icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'Whom did Jacob meet at the well in Haran?', options: ['Leah', 'Rachel', 'Rebekah'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
-    { icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'Unmerciful Servant owed his master?', options: ['100 denarii', '10,000 talents', '1 mina'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
-    { icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'Which prophet anointed Saul AND David?', options: ['Nathan', 'Samuel', 'Elijah'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
-    { icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: "In Joseph's dream, what bowed first?", options: ['Sun & moon', 'Sheaves', 'Stars'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
-    { icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'How many silver pieces did Judas receive?', options: ['12', '30', '50'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
-    { icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'King of Salem who blessed Abraham?', options: ['Melchizedek', 'Pharaoh', 'Abimelech'], correct: 0, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
-    { icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: "Hannah's son who became prophet?", options: ['Elisha', 'Samuel', 'Daniel'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
+    // ─── TRIVIA — Easy (common) ───
+    { rarity:'common', icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'How many disciples did Jesus call?', options: ['7', '12', '40'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
+    { rarity:'common', icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'Who built the ark?', options: ['Moses', 'Noah', 'Abraham'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
+    { rarity:'common', icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'What did David use to defeat Goliath?', options: ['Sword', 'Sling and stone', 'Spear'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
+    { rarity:'common', icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'In what city was Jesus born?', options: ['Jerusalem', 'Nazareth', 'Bethlehem'], correct: 2, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
+    { rarity:'common', icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'Who led Israel out of Egypt?', options: ['Joshua', 'Moses', 'Aaron'], correct: 1, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
+    { rarity:'common', icon: '🟢', badge: 'Trivia · Easy', title: 'Easy Trivia', difficulty: 'easy', question: 'How many days did God create in?', options: ['6', '7', '40'], correct: 0, fx: 60, penalty: -30, vp: 1, vpSkip: -1 },
+    // ─── TRIVIA — Medium (rare) ───
+    { rarity:'rare', icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'In the Parable of the Talents, what happened to the lazy servant?', options: ['Praised', 'Cast out', 'Gained more'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
+    { rarity:'rare', icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'Zacchaeus promised to give the poor what?', options: ['A tenth', 'Half', 'All'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
+    { rarity:'rare', icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'How long was Jonah in the great fish?', options: ['1 day', '3 days', '7 days'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
+    { rarity:'rare', icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'In the Parable of the Sower, which soil produced fruit?', options: ['Rocky', 'Thorny', 'Good'], correct: 2, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
+    { rarity:'rare', icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'The widow with 2 coins gave more because?', options: ['Pretty gift', 'All she had', 'Public'], correct: 1, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
+    { rarity:'rare', icon: '🔵', badge: 'Trivia · Medium', title: 'Medium Trivia', difficulty: 'medium', question: 'Which book has the Beatitudes?', options: ['Matthew', 'Romans', 'Genesis'], correct: 0, fx: 150, penalty: -100, vp: 2, vpSkip: -1 },
+    // ─── TRIVIA — Hard (epic) ───
+    { rarity:'epic', icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'Whom did Jacob meet at the well in Haran?', options: ['Leah', 'Rachel', 'Rebekah'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
+    { rarity:'epic', icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'Unmerciful Servant owed his master?', options: ['100 denarii', '10,000 talents', '1 mina'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
+    { rarity:'epic', icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'Which prophet anointed both Saul AND David?', options: ['Nathan', 'Samuel', 'Elijah'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
+    { rarity:'epic', icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: "In Joseph's dream, what bowed first?", options: ['Sun & moon', 'Sheaves', 'Stars'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
+    { rarity:'epic', icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'How many silver pieces did Judas receive?', options: ['12', '30', '50'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
+    { rarity:'epic', icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: 'King of Salem who blessed Abraham?', options: ['Melchizedek', 'Pharaoh', 'Abimelech'], correct: 0, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
+    { rarity:'epic', icon: '🔴', badge: 'Trivia · Hard', title: 'Hard Trivia', difficulty: 'hard', question: "Hannah's son who became a prophet?", options: ['Elisha', 'Samuel', 'Daniel'], correct: 1, fx: 300, penalty: -250, vp: 3, vpSkip: -1, hardBonus: true },
   ],
 
   // ═══ TEMPTATION FLIP ═══
   'special': [
-    { icon: '🐍', badge: 'Temptation', title: 'Love of Money', body: 'Hoard 120T from a shady deal. Or refuse — let go of greed.', verse: '1 Tim 6:10', acceptFx: 120, declineVp: 2, acceptText: 'Take gold (+120T)', declineText: 'Refuse (+2 Virtue)' },
-    { icon: '👑', badge: 'Temptation', title: 'Pride of Babylon', body: 'Babylon offers honor & riches: +150T but skip next turn. Or stay humble.', verse: 'Prov 16:18', acceptFx: 150, acceptSkipTurn: true, declineVp: 3, acceptText: 'Take throne (+150T, skip turn)', declineText: 'Walk humbly (+3 Virtue)' },
-    { icon: '🍷', badge: 'Temptation', title: 'Excess & Riot', body: 'Indulge for 80T (lose 1 Wisdom). Or self-control.', verse: 'Prov 23:21', acceptFx: 80, acceptLoseWisdom: 1, declineVp: 2, acceptText: 'Indulge (+80T, -1W)', declineText: 'Self-control (+2 Virtue)' },
-    { icon: '🐂', badge: 'Temptation', title: 'Golden Calf', body: 'The crowd worships gold. Bow with them for +200T, or stand alone.', verse: 'Exodus 32:4', acceptFx: 200, declineVp: 4, acceptText: 'Bow (+200T)', declineText: 'No idols (+4 Virtue)' },
-    { icon: '⚔️', badge: 'Temptation', title: 'Wandering 40 Years', body: 'Take the shortcut: +150T but skip next turn. Or obey first time.', verse: 'Num 14:33', acceptFx: 150, acceptSkipTurn: true, declineVp: 2, acceptText: 'Shortcut (+150T, skip)', declineText: 'Obey (+2 Virtue)' },
-    { icon: '🧂', badge: 'Temptation', title: "Lot's Wife", body: 'Look back — seize 100T from old comfort. Or face forward.', verse: 'Genesis 19:26', acceptFx: 100, declineVp: 2, acceptText: 'Look back (+100T)', declineText: 'Face forward (+2 Virtue)' },
+    // ─── COMMON ───
+    { rarity:'common', icon: '🐍', badge: 'Temptation', title: 'Love of Money', body: 'Hoard 120T from a shady deal. Or refuse — let go of greed.', verse: '1 Tim 6:10', acceptFx: 120, declineVp: 2, acceptText: 'Take gold (+120T)', declineText: 'Refuse (+2 Virtue)' },
+    { rarity:'common', icon: '🍷', badge: 'Temptation', title: 'Excess & Riot', body: 'Indulge for 80T (lose 1 Wisdom). Or self-control.', verse: 'Prov 23:21', acceptFx: 80, acceptLoseWisdom: 1, declineVp: 2, acceptText: 'Indulge (+80T, -1W)', declineText: 'Self-control (+2 Virtue)' },
+    { rarity:'common', icon: '🧂', badge: 'Temptation', title: "Lot's Wife", body: 'Look back — seize 100T from old comfort. Or face forward.', verse: 'Genesis 19:26', acceptFx: 100, declineVp: 2, acceptText: 'Look back (+100T)', declineText: 'Face forward (+2 Virtue)' },
+    // ─── RARE ───
+    { rarity:'rare', icon: '👑', badge: 'Temptation', title: 'Pride of Babylon', body: 'Babylon offers honor & riches: +150T but skip next turn. Or stay humble.', verse: 'Prov 16:18', acceptFx: 150, acceptSkipTurn: true, declineVp: 3, acceptText: 'Take throne (+150T, skip turn)', declineText: 'Walk humbly (+3 Virtue)' },
+    { rarity:'rare', icon: '⚔️', badge: 'Temptation', title: 'Wandering 40 Years', body: 'Take the shortcut: +150T but skip next turn. Or obey first time.', verse: 'Num 14:33', acceptFx: 150, acceptSkipTurn: true, declineVp: 2, acceptText: 'Shortcut (+150T, skip)', declineText: 'Obey (+2 Virtue)' },
+    { rarity:'rare', icon: '🐂', badge: 'Temptation', title: 'Golden Calf', body: 'The crowd worships gold. Bow with them for +200T, or stand alone.', verse: 'Exodus 32:4', acceptFx: 200, declineVp: 4, acceptText: 'Bow (+200T)', declineText: 'No idols (+4 Virtue)' },
+    // ─── EPIC ───
+    { rarity:'epic', icon: '🕷️', badge: 'Temptation', title: "Spider's Web", body: 'Accept 180T, but the richest player chooses what you lose (1 Wisdom OR 2 Virtue). Or refuse cleanly.', verse: 'Prov 14:12', acceptFx: 180, acceptWebPenalty: true, declineVp: 3, acceptText: 'Take it (+180T, lose something)', declineText: 'Walk free (+3 Virtue)' },
+    { rarity:'epic', icon: '🏛️', badge: 'Temptation', title: 'Tower of Babel', body: 'Build a name for yourself: +250T, but ALL other players also gain 50T (you boost rivals). Or refuse.', verse: 'Genesis 11:4', acceptFx: 250, acceptBabel: true, declineVp: 4, acceptText: 'Build tower (+250T, rivals gain too)', declineText: 'Stay humble (+4 Virtue)' },
   ],
 };
 
@@ -184,6 +218,7 @@ const PLACE_CARDS = {
 // APOSTLE NPCs
 // ═══════════════════════════════════════════════════════════════
 const APOSTLES = [
+  // Common apostles (most appearances)
   { id:'paul', emj:'✉️', name:'Paul of Tarsus', intro:'Paul appears with a mission!', body:'"Support the church-planting mission. Give 100T?"', verse:'2 Cor 9:7', task:'donate100', acceptFx:-100, acceptVp:3, acceptWisdom:2, declineVp:-1, quote:'God multiplies the seed that the generous sow. (2 Cor 9:10)' },
   { id:'peter', emj:'🗝️', name:'Simon Peter', intro:'Peter calls you to step out in faith!', body:'"Cast your nets! Risk 80T — flip a coin: win 200T or lose your stake."', verse:'John 21:6', task:'gamble', acceptFx:-80, gamble:true, gambleWin:200, acceptVp:1, quote:'When faith calls, step out of the boat. (Matt 14:28-29)' },
   { id:'john', emj:'❤️', name:'John the Beloved', intro:'John meets you on the road!', body:'"Love your neighbor — give 60T to the poorest."', verse:'1 John 4:7', task:'giveToPoorest', acceptFx:-60, acceptVp:3, acceptWisdom:1, declineVp:-1, quote:'Love one another, for love is from God. (1 John 4:7)' },
@@ -192,7 +227,21 @@ const APOSTLES = [
   { id:'andrew', emj:'🐟', name:'Andrew', intro:'Andrew brings a friend to meet you!', body:'"Share 25T with each fellow pilgrim — generosity multiplied!"', verse:'John 1:42', task:'shareToAll', shareToAll:25, acceptVp:2, acceptWisdom:1, quote:'The first thing Andrew did was bring a friend to Jesus. (John 1:41-42)' },
   { id:'barnabas', emj:'💛', name:'Barnabas', intro:'Barnabas the Encourager comes alongside.', body:'"Sell some land — give 50T, gain 100T net for the cause."', verse:'Acts 4:36', task:'sellForKingdom', acceptFx:-50, acceptBonusFx:100, acceptVp:2, acceptWisdom:1, quote:"Barnabas sold what he owned and laid it at the apostles' feet. (Acts 4:37)" },
   { id:'thomas', emj:'🔍', name:'Thomas', intro:'Thomas appears with a question of faith.', body:'"Trust without seeing? Risk 50T — flip a coin: 150T or lose."', verse:'John 20:29', task:'gambleSmall', acceptFx:-50, gamble:true, gambleWin:150, acceptVp:1, declineVp:-1, quote:'Blessing belongs to those who believe without seeing. (John 20:29)' },
+  // Legendary apostles (very rare appearances — major rewards)
+  { id:'mary-mag', emj:'👑', name:'Mary Magdalene', legendary:true, intro:'Mary Magdalene appears in joyful witness!', body:'"He is risen indeed! Share the good news. Give 80T and receive a great blessing."', verse:'John 20:18', task:'donate100', acceptFx:-80, acceptBonusFx:300, acceptVp:5, acceptWisdom:2, declineVp:-1, quote:'I have seen the Lord. (John 20:18)' },
+  { id:'stephen', emj:'⭐', name:'Stephen the Martyr', legendary:true, intro:'Stephen, filled with grace, appears!', body:'"Speak boldly — sacrifice 100T for the kingdom. Great virtue awaits."', verse:'Acts 7:55', task:'sellForKingdom', acceptFx:-100, acceptBonusFx:250, acceptVp:6, acceptWisdom:2, declineVp:-2, quote:'Lord, do not hold this sin against them. (Acts 7:60)' },
+  { id:'risen-christ', emj:'✝️', name:'The Risen Christ', legendary:true, intro:'A divine encounter — the Risen Lord meets you!', body:'"Walk with Me. Receive grace upon grace."', verse:'Luke 24:32', task:'donate100', acceptFx:0, acceptBonusFx:400, acceptVp:8, acceptWisdom:3, declineVp:-3, quote:'Did not our hearts burn within us? (Luke 24:32)' },
 ];
+
+// Apostle picker: legendaries appear 8% of the time (when an apostle is triggered)
+function pickApostle() {
+  const legendaries = APOSTLES.filter(a => a.legendary);
+  const commons = APOSTLES.filter(a => !a.legendary);
+  if (Math.random() < 0.08 && legendaries.length) {
+    return legendaries[Math.floor(Math.random() * legendaries.length)];
+  }
+  return commons[Math.floor(Math.random() * commons.length)];
+}
 
 const INTERACTIONS = [
   { id:'encourage', emj:'💛', name:'Encourage', desc:'Pay 30T to give them a 50T blessing.', cost:30, requiresAccept:false, vpInitiator:1 },
@@ -255,10 +304,10 @@ function generateCode() {
 function modeConfig(mode) {
   return mode === 'full' ? {
     roundCap: 20, startTalents: 1500, salary: 200,
-    stewardXp: 250, minMinistries: 5, apostleRate: 0.12,
+    stewardXp: 250, minMinistries: 5, apostleRate: 0.22,
   } : {
     roundCap: 12, startTalents: 1200, salary: 250,
-    stewardXp: 200, minMinistries: 4, apostleRate: 0.15,
+    stewardXp: 200, minMinistries: 4, apostleRate: 0.25,
   };
 }
 
@@ -268,6 +317,8 @@ function newPlayer(socketId, name, hero, startTalents) {
     pos: 0, talents: startTalents, ministries: 0, owned: [],
     wisdomCards: 0, titheTokens: 0, virtuePoints: 0, xp: 0, tier: 1,
     skipTurn: false, connected: true, missedTithes: 0, generosityBonus: 0,
+    // New buffs/effects
+    doubleNextRoll: false, shield: 0, mustardSeed: 0,
   };
 }
 
@@ -314,8 +365,38 @@ function broadcastState(roomCode) {
   io.to(roomCode).emit('state', getPublicState(state));
 }
 
+// Rarity-weighted card picker.
+// Probabilities: common 60% / rare 25% / epic 12% / legendary 3%.
+// Falls back to lower tier if a rarity has no cards in this deck.
+const RARITY_WEIGHTS = [
+  { tier: 'legendary', p: 0.03 },
+  { tier: 'epic',      p: 0.12 },
+  { tier: 'rare',      p: 0.25 },
+  { tier: 'common',    p: 0.60 },
+];
+function rollRarity() {
+  const r = Math.random();
+  // Cumulative: legendary 0-0.03, epic 0.03-0.15, rare 0.15-0.40, common 0.40-1.0
+  if (r < 0.03) return 'legendary';
+  if (r < 0.15) return 'epic';
+  if (r < 0.40) return 'rare';
+  return 'common';
+}
 function pickCard(type) {
   const deck = CARDS[type] || CARDS['special'];
+  let tier = rollRarity();
+  // Try requested tier first, then fall back through cheaper tiers if empty.
+  const fallbackOrder = {
+    legendary: ['legendary','epic','rare','common'],
+    epic:      ['epic','rare','common'],
+    rare:      ['rare','common'],
+    common:    ['common','rare','epic'],
+  };
+  for (const t of fallbackOrder[tier]) {
+    const pool = deck.filter(c => c.rarity === t);
+    if (pool.length) return pool[Math.floor(Math.random() * pool.length)];
+  }
+  // ultimate fallback — any card
   return deck[Math.floor(Math.random() * deck.length)];
 }
 
@@ -327,8 +408,14 @@ function cardTypeLabel(t) {
 // processRoll — moves player, triggers space, handles co-location
 // ═══════════════════════════════════════════════════════════════
 function processRoll(state, d1, d2) {
-  const total = d1 + d2;
+  let total = d1 + d2;
   const p = state.players[state.currentPlayerIndex];
+  // NEW: consume doubleNextRoll buff if active
+  if (p.doubleNextRoll) {
+    total *= 2;
+    p.doubleNextRoll = false;
+    addLog(state, `✨ ${p.name}'s blessing — dice doubled to ${total}!`);
+  }
   const oldPos = p.pos;
   const newPos = (p.pos + total) % 40;
   p.pos = newPos;
@@ -373,7 +460,7 @@ function processRoll(state, d1, d2) {
     handleCorner(state, p, newPos);
   } else if (CARDS[sp.t] || sp.t === 'special') {
     if (Math.random() < state.config.apostleRate) {
-      const apostle = APOSTLES[Math.floor(Math.random() * APOSTLES.length)];
+      const apostle = pickApostle();
       state.apostleEncounter = { ...apostle, playerId: p.id, placeName: sp.n };
       addLog(state, `✨ ${apostle.emj} ${apostle.name} appears!`);
     } else {
@@ -382,7 +469,7 @@ function processRoll(state, d1, d2) {
     }
   } else if (sp.t === 'property' && PLACE_CARDS[sp.n]) {
     if (Math.random() < state.config.apostleRate * 0.6) {
-      const apostle = APOSTLES[Math.floor(Math.random() * APOSTLES.length)];
+      const apostle = pickApostle();
       state.apostleEncounter = { ...apostle, playerId: p.id, placeName: sp.n };
       addLog(state, `✨ ${apostle.emj} ${apostle.name} appears!`);
     } else {
@@ -465,10 +552,32 @@ function applyCard(state, accepted, triviaAnswerIdx) {
   // TEMPTATION FLIP
   if (card.acceptFx !== undefined && card.declineVp !== undefined) {
     if (accepted) {
-      p.talents += card.acceptFx;
-      if (card.acceptSkipTurn) p.skipTurn = true;
-      if (card.acceptLoseWisdom) p.wisdomCards = Math.max(0, p.wisdomCards - card.acceptLoseWisdom);
-      addLog(state, `${p.name} took the gold (+${card.acceptFx}T from "${card.title}")`);
+      // Shield check — if player has a shield, it negates the temptation penalty
+      if (p.shield && p.shield > 0 && (card.acceptSkipTurn || card.acceptLoseWisdom || card.acceptWebPenalty)) {
+        p.shield--;
+        p.talents += card.acceptFx; // gain talents but no penalty
+        addLog(state, `🛡️ ${p.name} shielded from "${card.title}" — gained ${card.acceptFx}T cleanly`);
+      } else {
+        p.talents += card.acceptFx;
+        if (card.acceptSkipTurn) p.skipTurn = true;
+        if (card.acceptLoseWisdom) p.wisdomCards = Math.max(0, p.wisdomCards - card.acceptLoseWisdom);
+        // NEW: Spider's Web — lose 1 Wisdom (simplified: auto-applied)
+        if (card.acceptWebPenalty) {
+          if (p.wisdomCards > 0) {
+            p.wisdomCards--;
+            addLog(state, `🕷️ ${p.name} caught in web — lost 1 Wisdom`);
+          } else if (p.virtuePoints >= 2) {
+            p.virtuePoints -= 2;
+            addLog(state, `🕷️ ${p.name} caught in web — lost 2 Virtue`);
+          }
+        }
+        // NEW: Tower of Babel — gain T but ALL other players also gain 50T
+        if (card.acceptBabel) {
+          state.players.filter(pl => pl.id !== p.id && pl.connected).forEach(pl => pl.talents += 50);
+          addLog(state, `🏛️ Tower of Babel — rivals also gained 50T each`);
+        }
+        addLog(state, `${p.name} took the gold (+${card.acceptFx}T from "${card.title}")`);
+      }
     } else {
       p.virtuePoints += card.declineVp;
       awardXp(p, 15);
@@ -529,6 +638,10 @@ function applyCard(state, accepted, triviaAnswerIdx) {
       vpGained = card.vp;
       addLog(state, `${p.name} +${card.vp}V ✦`);
     }
+    if (card.wisdom) {
+      p.wisdomCards += card.wisdom;
+      addLog(state, `${p.name} +${card.wisdom} Wisdom`);
+    }
     if (card.advance && typeof card.advance === 'number') {
       p.pos = (p.pos + card.advance) % 40;
       addLog(state, `${p.name} advanced ${card.advance} to ${SPACES[p.pos].n}`);
@@ -536,6 +649,82 @@ function applyCard(state, accepted, triviaAnswerIdx) {
     if (card.advanceToCorner !== undefined) {
       p.pos = card.advanceToCorner;
       addLog(state, `${p.name} advanced to ${SPACES[p.pos].n}`);
+    }
+    // NEW: sprint forward N spaces, ignoring intermediate effects
+    if (card.sprint) {
+      p.pos = (p.pos + card.sprint) % 40;
+      addLog(state, `${p.name} sprinted ${card.sprint} spaces → ${SPACES[p.pos].n}`);
+    }
+    // NEW: advance to next corner from current position
+    if (card.advanceToNextCorner) {
+      const corners = [0, 10, 20, 30];
+      const next = corners.find(c => c > p.pos) ?? 0;
+      p.pos = next;
+      addLog(state, `${p.name} advanced to ${SPACES[next].n}`);
+    }
+    // NEW: double the next dice roll (consumed on next processRoll)
+    if (card.doubleNextRoll) {
+      p.doubleNextRoll = true;
+      addLog(state, `${p.name} blessed — next dice roll DOUBLES!`);
+    }
+    // NEW: shield against next N temptations/penalties
+    if (card.shield) {
+      p.shield = (p.shield || 0) + card.shield;
+      addLog(state, `${p.name} gains ${card.shield} shield(s)`);
+    }
+    // NEW: plant a mustard seed — passive +N talents per ministry every round
+    if (card.plantMustardSeed) {
+      p.mustardSeed = (p.mustardSeed || 0) + card.plantMustardSeed;
+      addLog(state, `${p.name} planted Mustard Seed — +${card.plantMustardSeed}T/ministry/round`);
+    }
+    // NEW: Year of Jubilee — boost all players under 200T to 500T
+    if (card.jubilee) {
+      let blessed = 0;
+      state.players.forEach(pl => {
+        if (pl.connected && pl.talents < 200) {
+          pl.talents = 500;
+          blessed++;
+        }
+      });
+      addLog(state, `🎉 Year of Jubilee! ${blessed} pilgrim(s) blessed with 500T`);
+    }
+    // NEW: draw N cards and keep them all (legendary Pentecost effect)
+    if (card.drawAndKeep) {
+      p.wisdomCards += card.drawAndKeep;
+      addLog(state, `${p.name} received ${card.drawAndKeep} Wisdom cards!`);
+    }
+    // NEW: manna from tithe pool — each player gets N from the pool
+    if (card.mannaFromTithe) {
+      const each = card.mannaFromTithe;
+      const total = each * state.players.filter(pl => pl.connected).length;
+      const available = Math.min(total, state.tithePool);
+      const perPerson = Math.floor(available / state.players.filter(pl => pl.connected).length);
+      state.players.filter(pl => pl.connected).forEach(pl => pl.talents += perPerson);
+      state.tithePool -= perPerson * state.players.filter(pl => pl.connected).length;
+      addLog(state, `🍞 Manna from heaven! Each pilgrim received ${perPerson}T`);
+    }
+    // NEW: Lazarus — if poor, get a big boost
+    if (card.lazarus && p.talents < 100) {
+      p.talents += 250;
+      addLog(state, `⚰️ Lazarus rises! ${p.name} +250T`);
+    }
+    // NEW: heal — remove skipTurn
+    if (card.healAll) {
+      if (p.skipTurn) {
+        p.skipTurn = false;
+        addLog(state, `${p.name} healed at Bethesda — skip-turn removed`);
+      }
+    }
+    // NEW: Esther — steal from the richest player
+    if (card.stealFromRichest) {
+      const richest = state.players
+        .filter(pl => pl.id !== p.id && pl.connected)
+        .sort((a, b) => b.talents - a.talents)[0];
+      if (richest && richest.talents >= card.stealFromRichest) {
+        richest.talents -= card.stealFromRichest;
+        p.talents += card.stealFromRichest;
+        addLog(state, `👑 ${p.name} took ${card.stealFromRichest}T from ${richest.name} (Esther's courage)`);
+      }
     }
     if (card.skipTurn) {
       p.skipTurn = true;
@@ -640,6 +829,14 @@ function endTurn(state) {
   state.currentPlayerIndex = state.players.indexOf(nextActive);
   if (state.currentPlayerIndex === state.players.findIndex(p => p.connected)) {
     state.round++;
+    // NEW: Mustard Seed passive — each round, plant-owners gain per-ministry talents
+    state.players.forEach(pl => {
+      if (pl.connected && pl.mustardSeed && pl.ministries > 0) {
+        const yield_ = pl.mustardSeed * pl.ministries;
+        pl.talents += yield_;
+        addLog(state, `🌱 ${pl.name}'s Mustard Seed yields ${yield_}T (${pl.ministries} ministries)`);
+      }
+    });
   }
   state.rolled = false;
   state.pendingCard = null;
