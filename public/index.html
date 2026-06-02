@@ -58,6 +58,29 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .vp-icon{font-size:13px;line-height:1}
 .vp-val{font-family:'Cinzel',serif;font-weight:700;color:#d4b3ff;font-size:12px}
 
+/* Score chip — tappable, opens breakdown */
+.score-chip{display:flex;align-items:center;gap:3px;background:linear-gradient(180deg,#4a3a14,#2a1f0a);padding:5px 8px;border-radius:12px;border:1.5px solid #ffd755;min-width:48px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.score-chip:hover,.score-chip:active{transform:scale(1.05);box-shadow:0 0 12px rgba(255,215,85,.5)}
+.score-icon{font-size:13px;line-height:1}
+.score-val{font-family:'Cinzel',serif;font-weight:700;color:#ffd755;font-size:12px}
+/* Score-breakdown row inside the overlay */
+.score-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;background:rgba(255,215,85,.05)}
+.score-row .sr-icon{font-size:16px;width:22px;text-align:center}
+.score-row .sr-name{flex:1;color:#f2c96e;font-family:'Cinzel',serif;font-size:11px}
+.score-row .sr-count{color:#a08060;font-size:11px;min-width:50px;text-align:right}
+.score-row .sr-pts{color:#ffd755;font-weight:700;font-size:11px;min-width:42px;text-align:right;font-family:'Cinzel',serif}
+.score-row.total{background:linear-gradient(90deg,rgba(255,215,85,.15),rgba(255,215,85,.05));border:1px solid rgba(255,215,85,.3);margin-top:4px}
+.score-row.total .sr-name,.score-row.total .sr-pts{color:#ffd755;font-weight:700}
+.score-row.bonus{background:rgba(167,133,224,.1);border-left:3px solid #a785e0}
+/* All-players summary list */
+.score-allp-row{display:flex;align-items:center;gap:6px;padding:3px 6px;border-radius:4px;background:rgba(0,0,0,.3)}
+.score-allp-row.me{background:rgba(255,215,85,.12);border:1px solid rgba(255,215,85,.4)}
+.score-allp-row .ap-rank{font-family:'Cinzel',serif;font-weight:700;color:#ffd755;min-width:18px;font-size:11px}
+.score-allp-row .ap-icon{font-size:14px}
+.score-allp-row .ap-name{flex:1;color:#f2c96e;font-size:11px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.score-allp-row .ap-stats{color:#a08060;font-size:10px;font-family:monospace}
+.score-allp-row .ap-pts{color:#ffd755;font-weight:700;font-family:'Cinzel',serif;font-size:11px;min-width:32px;text-align:right}
+
 /* 3-tier stars */
 .tier-box{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;max-width:120px}
 .tier-stars{display:flex;gap:2px;font-size:13px;line-height:1}
@@ -419,6 +442,10 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
     <span class="vp-icon">⚜️</span>
     <span class="vp-val" id="vp">0</span>
   </div>
+  <div class="score-chip" id="score-box" onclick="showScoreBreakdown()" title="Tap for score breakdown">
+    <span class="score-icon">🏆</span>
+    <span class="score-val" id="my-score">0</span>
+  </div>
   <div class="tier-box" id="tier-box">
     <div class="tier-stars" id="tier-stars">
       <span class="tier-star" id="ts-1">⭐</span>
@@ -631,6 +658,28 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
       </div>
       <div class="card-btns" style="margin-top:10px">
         <button class="card-btn skip" onclick="closeInteractPicker()">Cancel</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Score breakdown overlay -->
+<div class="overlay" id="score-ov" onclick="if(event.target===this)closeScoreOverlay()">
+  <div class="card-big" style="--cc:#ffd755;max-width:340px">
+    <div class="card-top">
+      <div class="card-icon-big">🏆</div>
+      <div class="card-type" data-i18n="score.title">YOUR SCORE</div>
+      <div class="card-name" id="score-headline">0 points</div>
+    </div>
+    <div class="card-body">
+      <div id="score-rank-line" style="text-align:center;color:#a08060;font-size:12px;margin-bottom:8px"></div>
+      <div id="score-breakdown" style="display:flex;flex-direction:column;gap:4px;margin-bottom:10px;font-size:12px"></div>
+      <div style="border-top:1px solid #3d2410;padding-top:8px;margin-top:4px">
+        <div style="font-family:'Cinzel',serif;font-size:10px;letter-spacing:.1em;color:#ffd755;margin-bottom:6px;text-align:center" data-i18n="score.everyone">ALL PILGRIMS</div>
+        <div id="score-allplayers" style="display:flex;flex-direction:column;gap:4px;font-size:11px"></div>
+      </div>
+      <div class="card-btns" style="margin-top:12px">
+        <button class="card-btn watch" onclick="closeScoreOverlay()" data-i18n="score.close">Got it</button>
       </div>
     </div>
   </div>
@@ -1049,6 +1098,22 @@ const LANG = {
     'board.subtitle': 'A Journey of Faithful Stewardship',
     'board.tithePool': 'TITHE POOL',
     'board.turnOf': "NOW PLAYING",
+    // Score breakdown
+    'score.title': 'YOUR SCORE',
+    'score.points': 'points',
+    'score.rankOf': 'You are #{n} of {total} pilgrims',
+    'score.everyone': 'ALL PILGRIMS',
+    'score.close': 'Got it',
+    'score.talents': 'Talents',
+    'score.ministries': 'Ministries',
+    'score.wisdom': 'Wisdom Cards',
+    'score.tithes': 'Tithe Tokens',
+    'score.virtue': 'Virtue Points',
+    'score.tierBonus': 'Tier bonus',
+    'score.generosity': 'Generosity bonus',
+    'score.total': 'TOTAL',
+    // Tier names (English UI fallback)
+    'NOVICE': 'NOVICE', 'PILGRIM': 'PILGRIM', 'STEWARD': 'STEWARD',
     // Footer
     'footer.affiliate': 'This site may contain affiliate links',
     'footer.privacy': 'Privacy',
@@ -1201,6 +1266,20 @@ const LANG = {
     'board.subtitle': '信實管家的旅程',
     'board.tithePool': '十一奉獻池',
     'board.turnOf': '輪到',
+    // Score breakdown
+    'score.title': '你的分數',
+    'score.points': '分',
+    'score.rankOf': '你在 {total} 位旅人中排第 {n} 名',
+    'score.everyone': '所有旅人',
+    'score.close': '了解',
+    'score.talents': '金幣',
+    'score.ministries': '事工',
+    'score.wisdom': '智慧卡',
+    'score.tithes': '十一奉獻',
+    'score.virtue': '品格',
+    'score.tierBonus': '階級加分',
+    'score.generosity': '慷慨加分',
+    'score.total': '總分',
     // Footer
     'footer.affiliate': '本站可能包含聯盟連結',
     'footer.privacy': '隱私政策',
@@ -2250,6 +2329,11 @@ function updateHUD() {
   document.getElementById('coins').textContent = (me.talents || 0).toLocaleString();
   document.getElementById('vp').textContent = me.virtuePoints || 0;
 
+  // Live score chip in HUD — recomputed every state update
+  const myScore = calcScoreClient(me);
+  const scoreEl = document.getElementById('my-score');
+  if (scoreEl) scoreEl.textContent = myScore;
+
   // tier stars
   const tier = me.tier || 1;
   for (let i = 1; i <= 3; i++) {
@@ -2300,10 +2384,13 @@ function renderRankStrip(g) {
     const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
     const isMe = p.id === myId;
     const isTurn = p.id === curId;
-    return `<div class="rank-item ${isMe?'me':''} ${isTurn?'turn':''}" style="--c:${p.color}">
+    // Inline mini-stats so players see WHY their score is what it is
+    const stats = `<span class="rank-stats">🏛${p.ministries||0} 📜${p.wisdomCards||0} ⚖${p.titheTokens||0} ⚜${p.virtuePoints||0}</span>`;
+    return `<div class="rank-item ${isMe?'me':''} ${isTurn?'turn':''}" style="--c:${p.color}" onclick="showScoreBreakdown()">
       <span class="rank-pos">${medal||(i+1)}</span>
       <span class="rank-icon">${p.icon}</span>
       <span class="rank-name">${escapeHtml(p.name)}</span>
+      ${stats}
       <span class="rank-score">${p.score}</span>
       ${isTurn?'<span class="rank-arrow">▼</span>':''}
     </div>`;
@@ -2314,6 +2401,81 @@ function calcScoreClient(p) {
   const tierBonus = p.tier === 3 ? 50 : p.tier === 2 ? 25 : 10;
   return Math.floor((p.talents||0)/100) + (p.ministries||0)*8 + (p.wisdomCards||0)*4
        + (p.titheTokens||0)*3 + ((p.virtuePoints)||0)*5 + tierBonus + (p.generosityBonus||0);
+}
+
+// Returns a labeled breakdown of how a player's score was built
+function scoreBreakdown(p) {
+  const tierBonus = p.tier === 3 ? 50 : p.tier === 2 ? 25 : 10;
+  const tierName  = p.tier === 3 ? t('STEWARD') : p.tier === 2 ? t('PILGRIM') : t('NOVICE');
+  const fromTalents = Math.floor((p.talents||0) / 100);
+  const fromMinistries = (p.ministries||0) * 8;
+  const fromWisdom = (p.wisdomCards||0) * 4;
+  const fromTithes = (p.titheTokens||0) * 3;
+  const fromVirtue = (p.virtuePoints||0) * 5;
+  const fromGenerosity = p.generosityBonus || 0;
+  return {
+    rows: [
+      { icon:'💰', name:t('score.talents'),   count: `${(p.talents||0).toLocaleString()} ÷ 100`, pts: fromTalents },
+      { icon:'🏛', name:t('score.ministries'),count: `${p.ministries||0} × 8`,                   pts: fromMinistries },
+      { icon:'📜', name:t('score.wisdom'),    count: `${p.wisdomCards||0} × 4`,                  pts: fromWisdom },
+      { icon:'⚖',  name:t('score.tithes'),    count: `${p.titheTokens||0} × 3`,                  pts: fromTithes },
+      { icon:'⚜', name:t('score.virtue'),    count: `${p.virtuePoints||0} × 5`,                 pts: fromVirtue },
+      { icon:'⭐', name:`${t('score.tierBonus')} (${tierName})`, count:'', pts: tierBonus },
+      ...(fromGenerosity ? [{ icon:'🤲', name:t('score.generosity'), count:'', pts: fromGenerosity, bonus:true }] : []),
+    ],
+    total: fromTalents + fromMinistries + fromWisdom + fromTithes + fromVirtue + tierBonus + fromGenerosity,
+  };
+}
+
+function showScoreBreakdown() {
+  const g = state.game;
+  if (!g) return;
+  const me = g.players.find(p => p.id === state.myId);
+  if (!me) return;
+  const bd = scoreBreakdown(me);
+  document.getElementById('score-headline').textContent = `${bd.total} ${t('score.points')}`;
+
+  // Rank line — "You are #2 of 4"
+  const ranked = [...g.players].map(p => ({ id:p.id, s: calcScoreClient(p) })).sort((a,b) => b.s - a.s);
+  const myRank = ranked.findIndex(r => r.id === state.myId) + 1;
+  document.getElementById('score-rank-line').textContent = t('score.rankOf').replace('{n}', myRank).replace('{total}', g.players.length);
+
+  // Build my breakdown rows
+  const bdEl = document.getElementById('score-breakdown');
+  bdEl.innerHTML = bd.rows.map(r => `
+    <div class="score-row ${r.bonus?'bonus':''}">
+      <span class="sr-icon">${r.icon}</span>
+      <span class="sr-name">${r.name}</span>
+      <span class="sr-count">${r.count}</span>
+      <span class="sr-pts">+${r.pts}</span>
+    </div>`).join('') + `
+    <div class="score-row total">
+      <span class="sr-icon">🏆</span>
+      <span class="sr-name">${t('score.total')}</span>
+      <span class="sr-count"></span>
+      <span class="sr-pts">${bd.total}</span>
+    </div>`;
+
+  // All players summary (sorted by score)
+  const allEl = document.getElementById('score-allplayers');
+  const allRanked = [...g.players].map(p => ({...p, score: calcScoreClient(p)})).sort((a,b) => b.score - a.score);
+  allEl.innerHTML = allRanked.map((p, i) => {
+    const medal = i===0?'🥇':i===1?'🥈':i===2?'🥉':(i+1)+'.';
+    const isMe = p.id === state.myId;
+    return `<div class="score-allp-row ${isMe?'me':''}" style="--c:${p.color}">
+      <span class="ap-rank">${medal}</span>
+      <span class="ap-icon">${p.icon}</span>
+      <span class="ap-name">${escapeHtml(p.name)}</span>
+      <span class="ap-stats">🏛${p.ministries||0} 📜${p.wisdomCards||0} ⚖${p.titheTokens||0} ⚜${p.virtuePoints||0}</span>
+      <span class="ap-pts">${p.score}</span>
+    </div>`;
+  }).join('');
+
+  document.getElementById('score-ov').classList.add('on');
+}
+
+function closeScoreOverlay() {
+  document.getElementById('score-ov').classList.remove('on');
 }
 
 function escapeHtml(s) {
@@ -3330,11 +3492,13 @@ document.addEventListener('DOMContentLoaded', init);
 <style>
 /* additional runtime styles */
 .rank-strip{position:absolute;top:54px;left:0;right:0;display:flex;gap:4px;padding:4px 6px;overflow-x:auto;background:rgba(10,6,3,0.7);z-index:5;-webkit-overflow-scrolling:touch}
-.rank-item{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.4);border:1px solid var(--c,#444);border-radius:4px;padding:3px 6px;font-size:11px;position:relative}
+.rank-item{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.4);border:1px solid var(--c,#444);border-radius:4px;padding:3px 6px;font-size:11px;position:relative;cursor:pointer;transition:transform .1s}
+.rank-item:hover,.rank-item:active{transform:translateY(-1px);background:rgba(255,215,85,0.08)}
 .rank-item.me{box-shadow:0 0 6px var(--c,#ffd755)}
 .rank-item.turn{background:rgba(255,215,85,0.15)}
 .rank-pos{font-weight:700;min-width:14px;text-align:center}
 .rank-name{max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-stats{color:#a08060;font-size:10px;font-family:monospace;letter-spacing:-.5px;white-space:nowrap}
 .rank-score{color:#ffd755;font-weight:700}
 .rank-arrow{position:absolute;left:50%;top:-10px;color:#ffd755;font-size:10px;transform:translateX(-50%)}
 .lobby-player{padding:6px 10px;background:rgba(255,215,85,0.05);border:1px solid var(--c);border-radius:4px;margin-bottom:4px;font-size:13px}
