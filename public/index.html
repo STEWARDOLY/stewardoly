@@ -44,9 +44,9 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 }
 
 /* ─── HUD ─── */
-.hud{display:flex;align-items:center;gap:6px;padding:6px 8px;background:#160b05;border-bottom:2px solid #3d2410;flex-shrink:0;z-index:5}
-.coins{display:flex;align-items:center;gap:5px;background:linear-gradient(180deg,#3a2410,#1e1208);padding:5px 9px;border-radius:14px;border:1.5px solid #c9922a;min-width:70px}
-.coin-icon{width:16px;height:16px;background:radial-gradient(circle at 30% 30%,#ffd755,#c9922a 50%,#7a5510);border-radius:50%;flex-shrink:0;box-shadow:0 0 6px rgba(201,146,42,.5)}
+.hud{display:flex;align-items:center;gap:5px;padding:6px 6px;background:#160b05;border-bottom:2px solid #3d2410;flex-shrink:0;z-index:5}
+.coins{display:flex;align-items:center;gap:5px;background:linear-gradient(180deg,#3a2410,#1e1208);padding:5px 8px;border-radius:14px;border:1.5px solid #c9922a;min-width:0}
+.coin-icon{width:14px;height:14px;background:radial-gradient(circle at 30% 30%,#ffd755,#c9922a 50%,#7a5510);border-radius:50%;flex-shrink:0;box-shadow:0 0 6px rgba(201,146,42,.5)}
 .coin-val{font-family:'Cinzel',serif;font-weight:700;color:#ffd755;font-size:13px;text-shadow:0 1px 2px #000}
 .coin-delta{position:fixed;font-family:'Cinzel',serif;font-weight:700;color:#6ced8d;font-size:14px;pointer-events:none;animation:riseUp 1.2s ease-out forwards;text-shadow:0 1px 3px rgba(0,0,0,.8);z-index:60}
 @keyframes riseUp{0%{transform:translateY(0);opacity:1}100%{transform:translateY(-40px);opacity:0}}
@@ -54,14 +54,14 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .coin-delta.vp{color:#a785e0}
 
 /* VP chip */
-.vp-chip{display:flex;align-items:center;gap:3px;background:linear-gradient(180deg,#3b1f4a,#1e0d28);padding:5px 8px;border-radius:12px;border:1.5px solid #a785e0;min-width:48px}
-.vp-icon{font-size:13px;line-height:1}
+.vp-chip{display:flex;align-items:center;gap:3px;background:linear-gradient(180deg,#3b1f4a,#1e0d28);padding:4px 7px;border-radius:12px;border:1.5px solid #a785e0;min-width:0}
+.vp-icon{font-size:12px;line-height:1}
 .vp-val{font-family:'Cinzel',serif;font-weight:700;color:#d4b3ff;font-size:12px}
 
 /* Score chip — tappable, opens breakdown */
-.score-chip{display:flex;align-items:center;gap:3px;background:linear-gradient(180deg,#4a3a14,#2a1f0a);padding:5px 8px;border-radius:12px;border:1.5px solid #ffd755;min-width:48px;cursor:pointer;transition:transform .12s,box-shadow .12s}
+.score-chip{display:flex;align-items:center;gap:3px;background:linear-gradient(180deg,#4a3a14,#2a1f0a);padding:4px 7px;border-radius:12px;border:1.5px solid #ffd755;min-width:0;cursor:pointer;transition:transform .12s,box-shadow .12s}
 .score-chip:hover,.score-chip:active{transform:scale(1.05);box-shadow:0 0 12px rgba(255,215,85,.5)}
-.score-icon{font-size:13px;line-height:1}
+.score-icon{font-size:12px;line-height:1}
 .score-val{font-family:'Cinzel',serif;font-weight:700;color:#ffd755;font-size:12px}
 /* Score-breakdown row inside the overlay */
 .score-row{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;background:rgba(255,215,85,.05)}
@@ -82,27 +82,45 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .score-allp-row .ap-pts{color:#ffd755;font-weight:700;font-family:'Cinzel',serif;font-size:11px;min-width:32px;text-align:right}
 
 /* 3-tier stars */
-.tier-box{flex:1;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;max-width:120px}
-.tier-stars{display:flex;gap:2px;font-size:13px;line-height:1}
+.tier-box{flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:1px;min-width:0;max-width:90px}
+.tier-stars{display:flex;gap:2px;font-size:12px;line-height:1}
 .tier-star{filter:grayscale(1) opacity(.25);transition:.4s}
 .tier-star.on{filter:none;animation:starPop .5s cubic-bezier(.5,1.8,.5,1);text-shadow:0 0 8px #ffd755}
 @keyframes starPop{0%{transform:scale(.3)}60%{transform:scale(1.4)}100%{transform:scale(1)}}
-.tier-name{font-family:'Cinzel',serif;font-size:8px;font-weight:700;color:#ffd755;letter-spacing:.1em;text-shadow:0 1px 2px #000}
+.tier-name{font-family:'Cinzel',serif;font-size:8px;font-weight:700;color:#ffd755;letter-spacing:.1em;text-shadow:0 1px 2px #000;white-space:nowrap}
 
 /* Round counter */
-.round-box{display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,#3a2410,#1e1208);padding:3px 7px;border-radius:7px;border:1.5px solid #6a4818;min-width:46px}
+.round-box{display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,#3a2410,#1e1208);padding:3px 6px;border-radius:7px;border:1.5px solid #6a4818;min-width:0}
 .round-lbl{font-family:'Cinzel',serif;font-size:7px;color:#a08060;letter-spacing:.1em;line-height:1}
-.round-val{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:#f2c96e;line-height:1.1}
+.round-val{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:#f2c96e;line-height:1.1;white-space:nowrap}
 
 /* Room badge */
-.room-badge{display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,#3a2410,#1e1208);padding:3px 7px;border-radius:7px;border:1.5px solid #6a4818;cursor:pointer;min-width:48px}
+.room-badge{display:flex;flex-direction:column;align-items:center;background:linear-gradient(180deg,#3a2410,#1e1208);padding:3px 6px;border-radius:7px;border:1.5px solid #6a4818;cursor:pointer;min-width:0}
 .room-badge:active{transform:scale(.94)}
 .rb-lbl{font-family:'Cinzel',serif;font-size:7px;color:#a08060;letter-spacing:.1em;line-height:1}
 .rb-code{font-family:'Cinzel',serif;font-size:12px;font-weight:700;color:#ffd755;letter-spacing:.08em;line-height:1.1}
 
-.hud-right{display:flex;gap:5px;margin-left:auto}
-.icon-btn{width:30px;height:30px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1.5px solid #6a4818;border-radius:7px;color:#f2c96e;font-size:14px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s}
+.hud-right{display:flex;gap:4px;margin-left:auto}
+.icon-btn{width:28px;height:28px;background:linear-gradient(180deg,#3a2410,#1e1208);border:1.5px solid #6a4818;border-radius:7px;color:#f2c96e;font-size:13px;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.1s;flex-shrink:0}
 .icon-btn:active{transform:scale(.92);background:#2a180a}
+
+/* Narrow phones: hide the long tier name label and tighten chips further so stars stay visible */
+@media (max-width: 420px){
+  .hud{gap:4px;padding:5px 5px}
+  .coins{padding:4px 7px}
+  .coin-val{font-size:12px}
+  .vp-chip,.score-chip{padding:3px 6px}
+  .tier-name{font-size:7px}
+  .tier-box{max-width:70px}
+  .round-box,.room-badge{padding:3px 5px}
+  .round-val,.rb-code{font-size:11px}
+  .icon-btn{width:26px;height:26px;font-size:12px}
+}
+/* Very narrow: stars-only (drop the tier name text) */
+@media (max-width: 360px){
+  .tier-name{display:none}
+  .round-lbl,.rb-lbl{font-size:6px}
+}
 
 /* Live ranking strip */
 .rank-strip{display:flex;gap:5px;padding:5px 8px;background:#0e0704;overflow-x:auto;flex-shrink:0;scrollbar-width:none;border-bottom:1px solid #1e1208}
@@ -3639,13 +3657,14 @@ document.addEventListener('DOMContentLoaded', init);
 
 <style>
 /* additional runtime styles */
-.rank-strip{position:absolute;top:54px;left:0;right:0;display:flex;gap:4px;padding:4px 6px;overflow-x:auto;background:rgba(10,6,3,0.7);z-index:5;-webkit-overflow-scrolling:touch}
+.rank-strip{position:relative;display:flex;gap:4px;padding:4px 6px;overflow-x:auto;background:rgba(10,6,3,0.85);z-index:5;-webkit-overflow-scrolling:touch;flex-shrink:0;border-bottom:1px solid #1e1208;scrollbar-width:none}
+.rank-strip::-webkit-scrollbar{display:none}
 .rank-item{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.4);border:1px solid var(--c,#444);border-radius:4px;padding:3px 6px;font-size:11px;position:relative;cursor:pointer;transition:transform .1s}
 .rank-item:hover,.rank-item:active{transform:translateY(-1px);background:rgba(255,215,85,0.08)}
 .rank-item.me{box-shadow:0 0 6px var(--c,#ffd755)}
 .rank-item.turn{background:rgba(255,215,85,0.15)}
 .rank-pos{font-weight:700;min-width:14px;text-align:center}
-.rank-name{max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name{max-width:56px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-stats{color:#a08060;font-size:10px;font-family:monospace;letter-spacing:-.5px;white-space:nowrap}
 .rank-score{color:#ffd755;font-weight:700}
 .rank-arrow{position:absolute;left:50%;top:-10px;color:#ffd755;font-size:10px;transform:translateX(-50%)}
