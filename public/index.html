@@ -65,10 +65,10 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .trophy-val{font-family:'Cinzel',serif;font-weight:700;color:#ffd755;font-size:13px;text-shadow:0 1px 2px #000}
 
 /* Compact round + room meta */
-.meta-line{display:flex;flex-direction:column;align-items:flex-start;gap:1px;margin-left:auto;font-family:'Cinzel',serif;line-height:1.1}
-.meta-round,.meta-room{display:flex;align-items:baseline;gap:3px;font-size:11px;color:#f2c96e;font-weight:600;white-space:nowrap}
-.meta-room{cursor:pointer;color:#ffd755}
-.meta-room:active{opacity:.7}
+.meta-line{display:flex;align-items:center;gap:8px;margin-left:auto;font-family:'Cinzel',serif;line-height:1}
+.meta-round,.meta-room{display:flex;align-items:baseline;gap:2px;font-size:11px;color:#f2c96e;font-weight:600;white-space:nowrap;flex-shrink:0}
+.meta-room{cursor:pointer;color:#ffd755;background:rgba(255,215,85,.08);border:1px solid rgba(255,215,85,.25);padding:3px 7px;border-radius:6px}
+.meta-room:active{transform:scale(.94);opacity:.7}
 .meta-lbl{color:#a08060;font-size:9px;letter-spacing:.05em}
 
 /* Score-breakdown row inside the overlay */
@@ -100,12 +100,15 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
   .coin-val{font-size:12px}
   .trophy-chip{padding:3px 8px;gap:4px}
   .trophy-val{font-size:12px}
+  .meta-line{gap:5px}
   .meta-round,.meta-room{font-size:10px}
+  .meta-room{padding:2px 6px}
   .icon-btn{width:28px;height:28px;font-size:13px}
 }
-/* Very narrow phones */
+/* Very narrow phones: drop the round counter, KEEP the room code (players need it to invite) */
 @media (max-width: 360px){
-  .meta-line{display:none}
+  .meta-round{display:none}
+  .meta-room{font-size:10px}
   .icon-btn{width:26px;height:26px;font-size:12px}
 }
 
