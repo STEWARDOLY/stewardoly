@@ -461,7 +461,7 @@ function processRoll(state, d1, d2) {
   } else if (CARDS[sp.t] || sp.t === 'special') {
     if (Math.random() < state.config.apostleRate) {
       const apostle = pickApostle();
-      state.apostleEncounter = { ...apostle, playerId: p.id, placeName: sp.n };
+      state.apostleEncounter = { ...apostle, playerId: p.id, playerName: p.name, playerIcon: p.icon, placeName: sp.n };
       addLog(state, `✨ ${apostle.emj} ${apostle.name} appears!`);
     } else {
       const cardType = sp.t === 'special' ? 'special' : sp.t;
@@ -470,7 +470,7 @@ function processRoll(state, d1, d2) {
   } else if (sp.t === 'property' && PLACE_CARDS[sp.n]) {
     if (Math.random() < state.config.apostleRate * 0.6) {
       const apostle = pickApostle();
-      state.apostleEncounter = { ...apostle, playerId: p.id, placeName: sp.n };
+      state.apostleEncounter = { ...apostle, playerId: p.id, playerName: p.name, playerIcon: p.icon, placeName: sp.n };
       addLog(state, `✨ ${apostle.emj} ${apostle.name} appears!`);
     } else {
       state.cardOffer = { cardType: 'place', playerId: p.id, placeName: sp.n };
@@ -507,10 +507,15 @@ function drawOfferedCard(state) {
   } else {
     card = pickCard(offer.cardType);
   }
-  state.pendingCard = { ...card, drawerId: offer.playerId };
+  const drawerP = state.players.find(pl => pl.id === offer.playerId);
+  state.pendingCard = {
+    ...card,
+    drawerId: offer.playerId,
+    drawerName: drawerP ? drawerP.name : '',
+    drawerIcon: drawerP ? drawerP.icon : '',
+  };
   state.cardOffer = null;
-  const p = state.players.find(pl => pl.id === offer.playerId);
-  if (p) addLog(state, `${p.name} drew: ${card.title}`);
+  if (drawerP) addLog(state, `${drawerP.name} drew: ${card.title}`);
   return card;
 }
 
@@ -1075,6 +1080,11 @@ io.on('connection', (socket) => {
       outcome = { type:'apostle-declined', apostle, accepted:false, vpDelta:apostle.declineVp||0, message:`${p.name} declined ${apostle.name}` };
     }
     state.apostleEncounter = null;
+    // Attach player identity so clients can render watcher toasts
+    if (outcome) {
+      outcome.playerName = p.name;
+      outcome.playerIcon = p.icon;
+    }
     broadcastState(state.code);
     io.to(state.code).emit('apostle_resolved', outcome);
     cb?.({ ok: true });

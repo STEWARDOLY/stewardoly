@@ -168,7 +168,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 @keyframes hotPulse{0%,100%{box-shadow:0 2px 0 #1e1208}50%{box-shadow:0 2px 0 #1e1208,0 0 14px rgba(224,101,64,.7)}}
 
 /* ─── OVERLAYS ─── */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,.85);z-index:200;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px)}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;display:none;align-items:center;justify-content:center;padding:16px;backdrop-filter:blur(4px);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .overlay.on{display:flex;animation:fadeIn .2s}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 
@@ -192,7 +192,10 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 .card-icon-big{font-size:42px;margin-bottom:4px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5));animation:bounceIn .6s ease}
 @keyframes bounceIn{0%{transform:scale(0)}60%{transform:scale(1.3)}100%{transform:scale(1)}}
 .card-type{font-family:'Cinzel',serif;font-size:9px;letter-spacing:.15em;color:#1a0d05;font-weight:700;margin-bottom:3px}
-.card-name{font-family:'Cinzel',serif;font-size:15px;color:#fff;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.5)}
+.card-name{font-family:'Cinzel',serif;font-size:15px;color:#fff;font-weight:700;text-shadow:0 2px 4px rgba(0,0,0,.5);line-height:1.3;word-wrap:break-word;overflow-wrap:break-word;padding:0 4px}
+/* Spectator banner — shown to non-active players in card/apostle overlays */
+.watcher-badge{background:linear-gradient(180deg,rgba(255,215,85,.15),rgba(255,215,85,.05));border:1px solid rgba(255,215,85,.35);border-radius:8px;padding:8px 10px;font-size:12px;color:#ffd755;text-align:center;margin-bottom:10px;line-height:1.4}
+.watcher-badge b{color:#fff}
 .card-body{padding:12px 18px 14px}
 .card-desc{font-size:12px;color:#f2c96e;line-height:1.5;margin-bottom:10px;text-align:left}
 .card-reward{display:flex;align-items:center;justify-content:center;gap:8px;margin-bottom:10px;padding:10px;background:rgba(0,0,0,.3);border-radius:10px;border:1px solid var(--cc,#c9922a);flex-wrap:wrap}
@@ -1114,6 +1117,26 @@ const LANG = {
     'score.total': 'TOTAL',
     // Tier names (English UI fallback)
     'NOVICE': 'NOVICE', 'PILGRIM': 'PILGRIM', 'STEWARD': 'STEWARD',
+    // Spectator banners (watchers see what the active player is doing)
+    'spectator.aPlayer': 'A pilgrim',
+    'spectator.deciding': 'is deciding...',
+    'spectator.claiming': 'is choosing...',
+    'spectator.answering': 'is answering...',
+    'spectator.choosingDraw': 'is choosing whether to draw',
+    'spectator.respondingToApostle': 'is responding to the apostle...',
+    'spectator.resisted': 'resisted the temptation!',
+    'spectator.acceptedTemptation': 'took the gold',
+    'spectator.answeredCorrect': 'answered correctly!',
+    'spectator.wrongAnswer': 'answered wrong — correct was',
+    'spectator.skippedTrivia': 'skipped the trivia',
+    'spectator.skippedCard': 'skipped the card',
+    'spectator.claimed': 'claimed the card',
+    'spectator.acceptedApostle': 'answered the call',
+    'spectator.declinedApostle': 'declined the apostle',
+    'spectator.declinedInteraction': 'declined the interaction',
+    // Connection
+    'connect.lost': 'Connection lost. Reconnecting...',
+    'connect.rejoined': 'Rejoined the game',
     // Footer
     'footer.affiliate': 'This site may contain affiliate links',
     'footer.privacy': 'Privacy',
@@ -1280,6 +1303,26 @@ const LANG = {
     'score.tierBonus': '階級加分',
     'score.generosity': '慷慨加分',
     'score.total': '總分',
+    // Spectator banners (watchers see what the active player is doing)
+    'spectator.aPlayer': '一位旅人',
+    'spectator.deciding': '正在抉擇...',
+    'spectator.claiming': '正在選擇...',
+    'spectator.answering': '正在答題...',
+    'spectator.choosingDraw': '正在選擇是否抽卡',
+    'spectator.respondingToApostle': '正在回應使徒...',
+    'spectator.resisted': '抵擋了試探!',
+    'spectator.acceptedTemptation': '接受了金錢',
+    'spectator.answeredCorrect': '答對了!',
+    'spectator.wrongAnswer': '答錯了 — 正確答案是',
+    'spectator.skippedTrivia': '跳過了問答',
+    'spectator.skippedCard': '跳過了卡牌',
+    'spectator.claimed': '領取了卡牌',
+    'spectator.acceptedApostle': '回應了呼召',
+    'spectator.declinedApostle': '拒絕了使徒',
+    'spectator.declinedInteraction': '拒絕了互動',
+    // Connection
+    'connect.lost': '連線中斷,正在重新連線...',
+    'connect.rejoined': '已重新加入遊戲',
     // Footer
     'footer.affiliate': '本站可能包含聯盟連結',
     'footer.privacy': '隱私政策',
@@ -1623,6 +1666,10 @@ function showError(id, msg) {
   if (!el) return;
   el.textContent = msg || '';
   if (msg) setTimeout(() => { el.textContent = ''; }, 4000);
+}
+function hideError(id) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = '';
 }
 
 function doCreate() {
@@ -2550,10 +2597,20 @@ function showCardOffer(offer) {
   const icons  = { 'card-w':'📜', 'card-a':'✉️', 'card-p':'📖', 'special':'🔥', 'place':'🏛' };
   document.getElementById('o-icon').textContent = icons[offer.cardType] || '📜';
   document.getElementById('o-type').textContent = t(labels[offer.cardType] || 'Card').toUpperCase();
-  const curName = state.game.players[state.game.currentPlayerIndex].name;
+  const cur = state.game.players[state.game.currentPlayerIndex];
   const place = t(offer.placeName);
-  document.getElementById('o-name').textContent = isMe ? t('Draw a card?') : `${curName} ${t('stops at')} ${place}`;
+  document.getElementById('o-name').textContent = isMe ? t('Draw a card?') : `${cur.name} ${t('stops at')} ${place}`;
   document.getElementById('o-desc').textContent = isMe ? `${t('You landed on')} ${place}. ${t('Draw the card?')}` : t('Watching...');
+  // Spectator banner
+  const oWatcher = document.getElementById('o-watcher');
+  if (oWatcher) {
+    if (!isMe) {
+      oWatcher.style.display = 'block';
+      oWatcher.innerHTML = `<div class="watcher-badge">👀 <b>${cur.icon} ${escapeHtml(cur.name)}</b> ${t('spectator.choosingDraw')}</div>`;
+    } else {
+      oWatcher.style.display = 'none';
+    }
+  }
   document.getElementById('o-btns').style.display = isMe ? 'flex' : 'none';
   document.getElementById('o-watch-btns').style.display = isMe ? 'none' : 'flex';
   ov.classList.add('on');
@@ -2597,6 +2654,24 @@ function showCard(card) {
   document.getElementById('c-name').textContent = t(card.title || 'Card');
   document.getElementById('c-desc').textContent = t(card.body || card.description || '');
   document.getElementById('c-verse').textContent = card.verse ? `"${t(card.verse)}"` : '';
+
+  // ── Spectator banner: tell watchers who's deciding and what kind ──
+  const watcher = document.getElementById('c-watcher');
+  if (watcher) {
+    if (!isMe) {
+      // What action label fits this card?
+      let actionLbl;
+      if (card.options && typeof card.correct === 'number') actionLbl = t('spectator.answering');
+      else if (card.acceptFx !== undefined) actionLbl = t('spectator.deciding');
+      else actionLbl = t('spectator.claiming');
+      const drawerName = card.drawerName || t('spectator.aPlayer');
+      const drawerIcon = card.drawerIcon || '';
+      watcher.style.display = 'block';
+      watcher.innerHTML = `<div class="watcher-badge">👀 <b>${drawerIcon} ${escapeHtml(drawerName)}</b> ${actionLbl}</div>`;
+    } else {
+      watcher.style.display = 'none';
+    }
+  }
 
   // trivia mode
   const cTriv = document.getElementById('c-trivia');
@@ -2654,6 +2729,18 @@ function showApostleEncounter(ap) {
   if (body) body.textContent = t(ap.body || ap.intro || '');
   const intro = document.getElementById('ap-intro');
   if (intro) intro.textContent = t(ap.intro || '');
+  // Spectator banner
+  const apWatcher = document.getElementById('ap-watcher');
+  if (apWatcher) {
+    if (!isMe) {
+      const name = ap.playerName || t('spectator.aPlayer');
+      const ico = ap.playerIcon || '';
+      apWatcher.style.display = 'block';
+      apWatcher.innerHTML = `<div class="watcher-badge">👀 <b>${ico} ${escapeHtml(name)}</b> ${t('spectator.respondingToApostle')}</div>`;
+    } else {
+      apWatcher.style.display = 'none';
+    }
+  }
   document.getElementById('ap-btns').style.display = isMe ? 'flex' : 'none';
   document.getElementById('ap-watch-btns').style.display = isMe ? 'none' : 'flex';
   ov.classList.add('on');
@@ -3346,6 +3433,7 @@ function connectSocket() {
 
   state.socket.on('connect', () => {
     state.myId = state.socket.id;
+    state.reconnecting = true;
     // try auto-rejoin
     const sess = loadSession();
     if (sess && sess.code && sess.name) {
@@ -3354,17 +3442,45 @@ function connectSocket() {
       state.myHero = hero;
       state.myName = sess.name;
       state.socket.emit('join_room', { code: sess.code, name: sess.name, heroN }, (resp) => {
+        state.reconnecting = false;
         if (resp && resp.ok) {
           state.roomCode = sess.code;
           state.isHost = false;
+          // Always enter the room view first
           enterLobbyRoom();
+          // If the game is already in progress, jump straight to the game screen
+          const phase = resp.state?.phase;
+          if (phase === 'playing' || phase === 'ended') {
+            const lobby = document.getElementById('lobby-scr');
+            const game = document.getElementById('game-scr');
+            if (lobby && game) {
+              lobby.classList.remove('active');
+              game.classList.add('active');
+              // Allow layout to settle before sizing the board
+              setTimeout(() => { try { resizeCanvas(); } catch(e){} }, 100);
+            }
+          }
+          // Clear any "Connection lost" banner
+          hideError('lobby-err');
+          // Friendly toast
+          if (typeof showCombo === 'function') showCombo('🔄 ' + t('connect.rejoined'));
+        } else {
+          // Session likely expired or room gone — wipe stale session, but stay on lobby
+          clearSession();
         }
       });
+    } else {
+      state.reconnecting = false;
     }
   });
 
   state.socket.on('disconnect', () => {
-    showError('lobby-err', 'Connection lost. Reconnecting...');
+    // Show a non-blocking banner; auto-reconnect happens on next 'connect'
+    showError('lobby-err', t('connect.lost'));
+  });
+
+  state.socket.on('reconnect_attempt', () => {
+    state.reconnecting = true;
   });
 
   state.socket.on('state', (g) => {
@@ -3427,19 +3543,51 @@ function connectSocket() {
 
   state.socket.on('card_drawn', () => { /* state updates */ });
   state.socket.on('card_resolved', (r) => {
-    if (r.type === 'temptation-decline') showCombo(`✦ ${r.playerName} resisted!`);
-    if (r.type === 'temptation-accept')  showCombo(`💸 ${r.playerName} took the gold...`);
-    if (r.type === 'trivia' && r.correct) { showCombo(`✓ Correct! +${r.delta}T`); SFX.reward(); }
-    if (r.type === 'trivia' && !r.correct) { SFX.penalty(); }
-    if (r.vpDelta && r.vpDelta > 0) { /* small toast handled by combo */ }
+    const name = r.playerName || t('spectator.aPlayer');
+    const ico = r.playerIcon || '';
+    if (r.type === 'temptation-decline') {
+      showCombo(`${ico} ${name} ${t('spectator.resisted')}`);
+      if (SFX.virtue) SFX.virtue(); else SFX.reward();
+    } else if (r.type === 'temptation-accept') {
+      showCombo(`${ico} ${name} ${t('spectator.acceptedTemptation')} +${r.card.acceptFx}T`);
+    } else if (r.type === 'trivia') {
+      if (r.correct) {
+        showCombo(`✓ ${ico} ${name} ${t('spectator.answeredCorrect')} +${r.delta}T`);
+        SFX.reward();
+      } else {
+        const right = r.card.options ? r.card.options[r.card.correct] : '';
+        showCombo(`✗ ${ico} ${name} ${t('spectator.wrongAnswer')} (${t(right)})`);
+        SFX.penalty();
+      }
+    } else if (r.type === 'trivia-skipped') {
+      showCombo(`${ico} ${name} ${t('spectator.skippedTrivia')}`);
+    } else if (r.type === 'card-skipped') {
+      showCombo(`${ico} ${name} ${t('spectator.skippedCard')}`);
+    } else if (r.type === 'card') {
+      const tDelta = r.delta || 0;
+      const vDelta = r.vpDelta || 0;
+      const parts = [];
+      if (tDelta) parts.push((tDelta >= 0 ? '+' : '') + tDelta + 'T');
+      if (vDelta) parts.push('+' + vDelta + 'V');
+      showCombo(`${ico} ${name} ${t('spectator.claimed')} ${parts.join(' · ')}`);
+      SFX.reward();
+    }
   });
 
   state.socket.on('apostle_resolved', (r) => {
-    SFX.reward();
+    const name = r.playerName || t('spectator.aPlayer');
+    const ico = r.playerIcon || '';
+    if (r.accepted) {
+      showCombo(`✦ ${ico} ${name} ${t('spectator.acceptedApostle')}`);
+      SFX.reward();
+    } else {
+      showCombo(`${ico} ${name} ${t('spectator.declinedApostle')}`);
+    }
   });
 
   state.socket.on('interaction_resolved', (r) => {
     if (r.accepted) showCombo(`🤝 ${r.initiatorName} & ${r.targetName}`);
+    else showCombo(`${r.targetName} ${t('spectator.declinedInteraction')}`);
     SFX.tap();
   });
 
