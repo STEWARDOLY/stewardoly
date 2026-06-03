@@ -105,10 +105,20 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
   .meta-room{padding:2px 6px}
   .icon-btn{width:28px;height:28px;font-size:13px}
 }
-/* Very narrow phones: drop the round counter, KEEP the room code (players need it to invite) */
+/* Very narrow phones: shrink further but keep BOTH round and room visible */
 @media (max-width: 360px){
-  .meta-round{display:none}
-  .meta-room{font-size:10px}
+  .hud{gap:3px;padding:4px 5px}
+  .coins{padding:3px 7px}
+  .coin-val{font-size:11px}
+  .trophy-chip{padding:3px 6px;gap:3px}
+  .trophy-chip .tier-stars{font-size:9px}
+  .trophy-icon{font-size:11px}
+  .trophy-val{font-size:11px}
+  .trophy-divider{font-size:8px}
+  .meta-line{gap:4px}
+  .meta-round,.meta-room{font-size:9px}
+  .meta-round .meta-lbl,.meta-room .meta-lbl{font-size:8px}
+  .meta-room{padding:2px 5px}
   .icon-btn{width:26px;height:26px;font-size:12px}
 }
 
@@ -2025,21 +2035,39 @@ function drawCenterMedallion(G) {
     mapCtx.stroke();
   });
 
-  // Game title — language-aware (no mixing)
+  // Game title — language-aware, auto-fit to inner width so STEWARDOLY never gets clipped
   const isZh = state.lang === 'zh';
-  const titleSize = Math.max(20, inS * 0.16);
+  const title = isZh ? '大管家' : 'STEWARDOLY';
+  let titleSize = Math.max(20, inS * 0.16);
+  // Measure and shrink if it overflows
+  const maxTitleWidth = inS * 0.86; // leave a comfortable margin
+  mapCtx.font = `700 ${titleSize}px 'Cinzel', serif`;
+  let measured = mapCtx.measureText(title).width;
+  if (measured > maxTitleWidth) {
+    titleSize = titleSize * (maxTitleWidth / measured);
+    titleSize = Math.max(14, titleSize); // floor so it stays readable
+  }
   mapCtx.fillStyle = '#ffd755';
   mapCtx.font = `700 ${titleSize}px 'Cinzel', serif`;
   mapCtx.textAlign = 'center';
   mapCtx.textBaseline = 'middle';
   mapCtx.shadowColor = 'rgba(255,215,85,0.5)';
   mapCtx.shadowBlur = 12;
-  mapCtx.fillText(isZh ? '大管家' : 'STEWARDOLY', cx, cy - inS * 0.16);
+  mapCtx.fillText(title, cx, cy - inS * 0.16);
   mapCtx.shadowBlur = 0;
 
+  // Subtitle — also fit to width
+  let subSize = Math.max(9, inS * 0.05);
+  mapCtx.font = `600 ${subSize}px 'Cinzel', serif`;
+  const subText = t('board.subtitle');
+  const measuredSub = mapCtx.measureText(subText).width;
+  if (measuredSub > maxTitleWidth) {
+    subSize = subSize * (maxTitleWidth / measuredSub);
+    subSize = Math.max(7, subSize);
+  }
   mapCtx.fillStyle = 'rgba(242,201,110,0.65)';
-  mapCtx.font = `600 ${Math.max(9, inS * 0.05)}px 'Cinzel', serif`;
-  mapCtx.fillText(t('board.subtitle'), cx, cy - inS * 0.035);
+  mapCtx.font = `600 ${subSize}px 'Cinzel', serif`;
+  mapCtx.fillText(subText, cx, cy - inS * 0.035);
 
   // Divider
   mapCtx.strokeStyle = 'rgba(255,215,85,0.3)';
