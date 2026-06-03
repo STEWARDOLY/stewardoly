@@ -2462,7 +2462,7 @@ function renderRankStrip(g) {
     const isTurn = p.id === curId;
     // Inline mini-stats so players see WHY their score is what it is
     const stats = `<span class="rank-stats">🏛${p.ministries||0} 📜${p.wisdomCards||0} ⚖${p.titheTokens||0} ⚜${p.virtuePoints||0}</span>`;
-    return `<div class="rank-item ${isMe?'me':''} ${isTurn?'turn':''}" style="--c:${p.color}" onclick="showScoreBreakdown()">
+    return `<div class="rank-item ${isMe?'me':''} ${isTurn?'turn':''}" data-pid="${p.id}" style="--c:${p.color}" onclick="showScoreBreakdown()">
       <span class="rank-pos">${medal||(i+1)}</span>
       <span class="rank-icon">${p.icon}</span>
       <span class="rank-name">${escapeHtml(p.name)}</span>
@@ -2471,6 +2471,26 @@ function renderRankStrip(g) {
       ${isTurn?'<span class="rank-arrow">▼</span>':''}
     </div>`;
   }).join('');
+
+  // Auto-scroll: bring the active player's chip into view (smooth)
+  // Run on next frame so the new DOM has measurable widths
+  requestAnimationFrame(() => {
+    const focusId = curId || myId;
+    if (!focusId) return;
+    const el = strip.querySelector(`.rank-item[data-pid="${focusId}"]`);
+    if (!el) return;
+    // Only auto-scroll if the chip is outside the visible area
+    const sr = strip.getBoundingClientRect();
+    const er = el.getBoundingClientRect();
+    if (er.left < sr.left + 4 || er.right > sr.right - 4) {
+      try {
+        el.scrollIntoView({ behavior:'smooth', inline:'center', block:'nearest' });
+      } catch(e) {
+        // fallback for older browsers
+        strip.scrollLeft = el.offsetLeft - strip.clientWidth / 2 + el.clientWidth / 2;
+      }
+    }
+  });
 }
 
 function calcScoreClient(p) {
@@ -3668,16 +3688,19 @@ document.addEventListener('DOMContentLoaded', init);
 
 <style>
 /* additional runtime styles */
-.rank-strip{position:relative;display:flex;gap:4px;padding:4px 6px;overflow-x:auto;background:rgba(10,6,3,0.85);z-index:5;-webkit-overflow-scrolling:touch;flex-shrink:0;border-bottom:1px solid #1e1208;scrollbar-width:none}
-.rank-strip::-webkit-scrollbar{display:none}
-.rank-item{flex-shrink:0;display:flex;align-items:center;gap:4px;background:rgba(0,0,0,0.4);border:1px solid var(--c,#444);border-radius:4px;padding:3px 6px;font-size:11px;position:relative;cursor:pointer;transition:transform .1s}
+.rank-strip{position:relative;display:flex;gap:6px;padding:4px 14px;overflow-x:auto;background:rgba(10,6,3,0.85);z-index:5;-webkit-overflow-scrolling:touch;flex-shrink:0;border-bottom:1px solid #1e1208;scrollbar-width:thin;scrollbar-color:#6a4818 transparent;scroll-snap-type:x mandatory;scroll-padding-left:8px;mask-image:linear-gradient(to right,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%);-webkit-mask-image:linear-gradient(to right,transparent 0,#000 14px,#000 calc(100% - 14px),transparent 100%)}
+.rank-strip::-webkit-scrollbar{height:3px;display:block}
+.rank-strip::-webkit-scrollbar-track{background:transparent}
+.rank-strip::-webkit-scrollbar-thumb{background:#6a4818;border-radius:2px}
+.rank-strip::-webkit-scrollbar-thumb:hover{background:#ffd755}
+.rank-item{flex-shrink:0;display:flex;align-items:center;gap:5px;background:rgba(0,0,0,0.4);border:1px solid var(--c,#444);border-radius:6px;padding:3px 8px;font-size:11px;position:relative;cursor:pointer;transition:transform .1s;scroll-snap-align:start}
 .rank-item:hover,.rank-item:active{transform:translateY(-1px);background:rgba(255,215,85,0.08)}
 .rank-item.me{box-shadow:0 0 6px var(--c,#ffd755)}
 .rank-item.turn{background:rgba(255,215,85,0.15)}
 .rank-pos{font-weight:700;min-width:14px;text-align:center}
-.rank-name{max-width:56px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rank-name{max-width:60px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .rank-stats{color:#a08060;font-size:10px;font-family:monospace;letter-spacing:-.5px;white-space:nowrap}
-.rank-score{color:#ffd755;font-weight:700}
+.rank-score{color:#ffd755;font-weight:700;font-size:12px}
 .rank-arrow{position:absolute;left:50%;top:-10px;color:#ffd755;font-size:10px;transform:translateX(-50%)}
 .lobby-player{padding:6px 10px;background:rgba(255,215,85,0.05);border:1px solid var(--c);border-radius:4px;margin-bottom:4px;font-size:13px}
 .tok{padding:8px;border-radius:6px;border:2px solid #444;background:rgba(0,0,0,0.3);text-align:center;cursor:pointer;transition:all 0.15s}
