@@ -485,7 +485,7 @@ html,body{height:100%;overflow:hidden;background:#0a0603;color:#f2c96e;touch-act
 
 <div class="rank-strip" id="rank-strip"></div>
 <div class="final-lap-banner" id="final-lap-banner">⭐ FINAL LAP — ONE MORE TURN EACH ⭐</div>
-<div class="waiting-bar" id="waiting-bar">Waiting for <span id="waiting-name"></span>...</div>
+<div class="waiting-bar" id="waiting-bar"><span id="waiting-prefix">Waiting for</span> <span id="waiting-name"></span>...</div>
 
 <div id="map-wrap">
   <canvas id="map-c"></canvas>
@@ -962,6 +962,7 @@ const TRANSLATIONS = {
   'meets': '遇見',
   'at': '於',
   'Waiting for': '等待',
+  'built': '建造',
   'Encourage': '鼓勵', 'Pray': '禱告', 'Pray Together': '一起禱告', 'Trade': '交易',
   'Tithe-Trade': '十一交易', 'Wisdom Duel': '智慧較量', 'Tax Collector': '稅吏',
   'Encourage (+1V both)': '鼓勵 (+1 品格 雙方)',
@@ -2443,6 +2444,8 @@ function updateHUD() {
   const wb = document.getElementById('waiting-bar');
   if (!isMyTurn && phase === 'playing') {
     const cur = g.players[g.currentPlayerIndex];
+    const wp = document.getElementById('waiting-prefix');
+    if (wp) wp.textContent = t('Waiting for');
     document.getElementById('waiting-name').textContent = cur ? cur.name : '—';
     wb.classList.add('on');
   } else {
@@ -3641,7 +3644,7 @@ function connectSocket() {
   });
 
   state.socket.on('ministry_built', (r) => {
-    showCombo(`🏛 ${r.playerName} built ${r.placeName}!`);
+    showCombo(`🏛 ${r.playerName} ${t('built')} ${t(r.placeName)}!`);
     SFX.build();
   });
 
